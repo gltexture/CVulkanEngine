@@ -5,10 +5,9 @@
 #include "render/client_renderer.h"
 
 namespace cvulkan::client {
-    [[noreturn]] void initializeClient(const EngineData& engineData) {
+    void initializeClient(const EngineData& engineData) {
         window::createWindow(engineData);
-        control::setup(*window::g_window.get());
-        renderer::
+        control::setup(*window::g_window);
     }
 
     void loop() {

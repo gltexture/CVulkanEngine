@@ -14,7 +14,7 @@ namespace cvulkan {
 
     void EngineContext::start() const {
         logging::info("Init application:Start");
-        EngineContext::printData(this->m_engineData);
+        printData(this->m_engineData);
         {
             client::initializeClient(this->m_engineData);
             client::loop();

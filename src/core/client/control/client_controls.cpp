@@ -14,27 +14,21 @@ namespace cvulkan::client::control {
         logging::info("Init control:Start");
         g_keyboardControl = std::make_unique<KeyboardControl>(window);
         g_mouseControl = std::make_unique<MouseControl>(window);
-        logging::info("Init control:Start");
+        logging::info("Init control:End");
     }
 
     void updateInput() {
         glfwPollEvents();
         if (g_keyboardControl != nullptr) {
-            g_keyboardControl.get()->updateInput();
+            g_keyboardControl->updateInput();
         }
         if (g_mouseControl != nullptr) {
-            g_mouseControl.get()->updateInput();
+            g_mouseControl->updateInput();
         }
     }
 
     void cleanUp() {
-        {
-            const auto ptr = g_keyboardControl.release();
-            delete ptr;
-        }
-        {
-            const auto ptr = g_mouseControl.release();
-            delete ptr;
-        }
+        g_keyboardControl.reset();
+        g_mouseControl.reset();
     }
 }

@@ -34,23 +34,21 @@ namespace cvulkan::client::window {
         g_window = std::make_unique<Window>(glfw_win, glm::ivec2{engineData.m_default_windowSize.x, engineData.m_default_windowSize.y});
     }
 
-    void cleanUp() {
-        if (g_window.get() != nullptr)
+    void cleanUp()
+    {
+        if (g_window != nullptr)
         {
-            glfwDestroyWindow(g_window.get()->m_windowDescriptor);
-            {
-                const auto ptr = g_window.release();
-                delete ptr;
-            }
+            glfwDestroyWindow(g_window->m_windowDescriptor);
+            g_window.reset();
         }
         glfwTerminate();
     }
 
     void closeWindow() {
-        glfwSetWindowShouldClose(window::g_window.get()->m_windowDescriptor, GLFW_TRUE);
+        glfwSetWindowShouldClose(g_window->m_windowDescriptor, GLFW_TRUE);
     }
 
     [[nodiscard]] bool shouldBeClosed() {
-        return glfwWindowShouldClose(window::g_window.get()->m_windowDescriptor) == GLFW_TRUE;
+        return glfwWindowShouldClose(g_window->m_windowDescriptor) == GLFW_TRUE;
     }
 }

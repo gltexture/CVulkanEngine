@@ -1,6 +1,5 @@
 #include "client_renderer.h"
 #include <vulkan/vulkan.h>
-
 #include "client_render_config.h"
 
 namespace cvulkan::client::renderer {
@@ -56,8 +55,6 @@ namespace cvulkan::client::renderer {
     }
 
     void cleanUp() {
-        if (const auto* vulkanInst = g_vulkanInstance.release(); vulkanInst != nullptr) {
-            delete vulkanInst;
-        }
+        g_vulkanInstance.reset();
     }
 }
