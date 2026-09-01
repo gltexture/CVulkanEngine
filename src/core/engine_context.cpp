@@ -1,11 +1,11 @@
 #include "engine_context.h"
 
 #include "client/client_runtime.h"
+#include "client/render/vulkanPrograms/vulkan_utility.h"
 #include "util/logger.inl"
 
 namespace cvulkan {
-    EngineContext::EngineContext(EngineData&& engineData) {
-        this->m_engineData = std::move(engineData);
+    EngineContext::EngineContext(EngineData&& engineData) : m_engineData(std::move(engineData)) {
     }
 
     EngineContext::~EngineContext() {
@@ -13,17 +13,19 @@ namespace cvulkan {
     };
 
     void EngineContext::start() const {
+        {
+            utility::initialize();
+        }
         logging::info("Init application:Start");
         printData(this->m_engineData);
-        {
-            client::initializeClient(this->m_engineData);
-            client::loop();
-        }
+        client::initializeClient(this->m_engineData);
+        client::loop();
         logging::info("Init application:Complete");
     }
 
     void EngineContext::global_cleanUp()
     {
+        logging::info("Global cleanup!");
         client::cleanUp();
     }
 

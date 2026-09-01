@@ -8,6 +8,7 @@ namespace cvulkan::client {
     void initializeClient(const EngineData& engineData) {
         window::createWindow(engineData);
         control::setup(*window::g_window);
+        renderer::init();
     }
 
     void loop() {
@@ -18,7 +19,8 @@ namespace cvulkan::client {
     }
 
     void cleanUp() {
-        window::cleanUp();
         control::cleanUp();
+        renderer::cleanUp();
+        window::cleanUp();
     }
 }
