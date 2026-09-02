@@ -10,38 +10,46 @@
 namespace cvulkan::client::renderer {
     class VulkanContext {
     public:
-        VulkanContext() {
-        };
+        VulkanContext() = default;
         ~VulkanContext() {
             this->cleanUp();
         }
 
         VkDebugUtilsMessengerEXT vkDebugMessenger = {};
         VkInstance vkInstance = {};
-        std::vector<VkPhysicalDevice> m_physicalDevices = {};
-        std::unordered_set<std::string> enabledRequiredLayers = {};
-        std::unordered_set<std::string> enabledRequiredExtensions = {};
+        VkPhysicalDevice vkPhysicalDevice = {};
+        std::unordered_set<std::string> enabledVulkanInstanceLayers = {};
+        std::unordered_set<std::string> enabledVulkanInstanceExtensions = {};
+        std::unordered_set<std::string> enabledVulkanDeviceLayers = {};
+        std::unordered_set<std::string> enabledVulkanDeviceExtensions = {};
 
-        bool isValid() const {
-            return this->vkInstance != VK_NULL_HANDLE;
+        bool hasVkInstanceRequiredLayer(const std::string& layerName) const {
+            return this->enabledVulkanInstanceLayers.contains(layerName);
         }
 
-        bool hasRequiredLayer(const std::string& layerName) const {
-            return this->enabledRequiredLayers.contains(layerName);
+        bool hasVkInstanceRequiredExtension(const std::string& extName) const {
+            return this->enabledVulkanInstanceExtensions.contains(extName);
         }
 
-        bool hasRequiredExtension(const std::string& extName) const {
-            return this->enabledRequiredExtensions.contains(extName);
+        bool hasVkDeviceRequiredLayer(const std::string& layerName) const {
+            return this->enabledVulkanDeviceLayers.contains(layerName);
+        }
+
+        bool hasVkDeviceRequiredExtension(const std::string& extName) const {
+            return this->enabledVulkanDeviceExtensions.contains(extName);
         }
 
         void cleanUp();
-        void checkRequiredLayer(const std::unordered_set<std::string>& available, const std::string &layer);
-        void checkRequiredExtension(const std::unordered_set<std::string> &available, const std::string &layer);
+        void tryIncludeInstanceLayer(const std::unordered_set<std::string>& available, const std::string &layer);
+        void tryIncludeInstanceExtension(const std::unordered_set<std::string> &available, const std::string &layer);
 
-        [[nodiscard]] VkResult initVulkan(bool debugMode);
+        void initVulkanInstance(bool debugMode, std::initializer_list<std::string> requiredLayers, std::initializer_list<std::string>requiredExtensions);
+        void initVulkanDevice(std::initializer_list<std::string> requiredLayers, std::initializer_list<std::string> requiredExtensions);
 
-        static std::unordered_set<std::string> availableLayers();
-        static std::unordered_set<std::string> availableExtensions();
+        static std::unordered_set<std::string> availableInstanceLayers();
+        static std::unordered_set<std::string> availableDeviceExtensions(const VkPhysicalDevice& device);
+        static std::unordered_set<std::string> availableDeviceLayers(const VkPhysicalDevice& device);
+        static std::unordered_set<std::string> availableInstanceExtensions();
         static std::unordered_set<std::string> getGLFWExtensions();
     };
 
