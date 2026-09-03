@@ -39,17 +39,18 @@ namespace cvulkan::client::renderer {
             return this->enabledVulkanDeviceExtensions.contains(extName);
         }
 
+        void initVulkanInstance(bool debugMode, std::initializer_list<std::string> requiredLayers, std::initializer_list<std::string>requiredExtensions);
+        void initVulkanPhysicalDevice(std::initializer_list<std::string> requiredLayers, std::initializer_list<std::string> requiredExtensions);
+
+    protected:
         void cleanUp();
         void tryIncludeInstanceLayer(const std::unordered_set<std::string>& available, const std::string &layer);
         void tryIncludeInstanceExtension(const std::unordered_set<std::string> &available, const std::string &layer);
 
-        void initVulkanInstance(bool debugMode, std::initializer_list<std::string> requiredLayers, std::initializer_list<std::string>requiredExtensions);
-        void initVulkanDevice(std::initializer_list<std::string> requiredLayers, std::initializer_list<std::string> requiredExtensions);
-
-        static std::unordered_set<std::string> availableInstanceLayers();
+        static std::unordered_set<std::string> availableInstanceLayers(const VkInstance& instance);
         static std::unordered_set<std::string> availableDeviceExtensions(const VkPhysicalDevice& device);
         static std::unordered_set<std::string> availableDeviceLayers(const VkPhysicalDevice& device);
-        static std::unordered_set<std::string> availableInstanceExtensions();
+        static std::unordered_set<std::string> availableInstanceExtensions(const VkInstance& instance);
         static std::unordered_set<std::string> getGLFWExtensions();
     };
 
@@ -63,6 +64,10 @@ namespace cvulkan::client::renderer {
 
     inline std::string EXT_VK_EXT_DEBUG_REPORT_EXTENSION_NAME() {
         return VK_EXT_DEBUG_REPORT_EXTENSION_NAME;
+    }
+
+    inline std::string EXT_VK_KHR_SWAPCHAIN_EXTENSION_NAME() {
+        return VK_KHR_SWAPCHAIN_EXTENSION_NAME;
     }
 
     inline std::string LR_VK_LAYER_KHRONOS_validation() {

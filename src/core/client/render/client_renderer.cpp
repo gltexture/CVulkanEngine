@@ -46,7 +46,7 @@ namespace cvulkan::client::renderer {
         }
     }
 
-    std::unordered_set<std::string> VulkanContext::availableInstanceExtensions() {
+    std::unordered_set<std::string> VulkanContext::availableInstanceExtensions(const VkInstance &instance) {
         std::unordered_set<std::string> set = {};
         uint32_t extensionsCount = 0;
         std::vector<VkExtensionProperties> extensionProperties = {};
@@ -66,7 +66,7 @@ namespace cvulkan::client::renderer {
         return set;
     }
 
-    std::unordered_set<std::string> VulkanContext::availableInstanceLayers() {
+    std::unordered_set<std::string> VulkanContext::availableInstanceLayers(const VkInstance &instance) {
         std::unordered_set<std::string> set = {};
         uint32_t layerCount = 0;
         std::vector<VkLayerProperties> layerProperties = {};
@@ -145,8 +145,8 @@ namespace cvulkan::client::renderer {
         const std::initializer_list<std::string> requiredExtensions) {
 
         bool USE_PORTABILITY_MODE = false;
-        const std::unordered_set<std::string> setOfExtensions = availableInstanceExtensions();
-        const std::unordered_set<std::string> setOfLayers = availableInstanceLayers();
+        const std::unordered_set<std::string> setOfExtensions = availableInstanceExtensions(this->vkInstance);
+        const std::unordered_set<std::string> setOfLayers = availableInstanceLayers(this->vkInstance);
         {
             for (const auto& t : requiredLayers) {
                 this->tryIncludeInstanceLayer(setOfLayers, t);
@@ -218,7 +218,7 @@ namespace cvulkan::client::renderer {
         }
     }
 
-    void VulkanContext::initVulkanDevice(
+    void VulkanContext::initVulkanPhysicalDevice(
         const std::initializer_list<std::string> requiredLayers,
         const std::initializer_list<std::string> requiredExtensions) {
 
@@ -248,16 +248,34 @@ namespace cvulkan::client::renderer {
                         }
                     }
 
+                    for (const auto& extension : requiredExtensions) {
+                        if (!availableExtensions.contains(extension)) {
+                            logging::warn("Device {} doesn't support extension {}, skipping", physicalDeviceProperties.deviceName, extension);
+                            success = false;
+                        }
+                    }
+
                     if (!success) {
                         continue;
                     }
 
-                    uint32_t queueFamilyCount = 0;
-                    vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, nullptr);
+                    {
+                        uint32_t queueFamilyCount = 0;
+                        vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, nullptr);
 
-                    if (queueFamilyCount == 0) {
-                        logging::warn("Device {} doesn't support queue families, skipping", physicalDeviceProperties.deviceName);
+                        if (queueFamilyCount == 0) {
+                            logging::warn("Device {} doesn't support queue families, skipping", physicalDeviceProperties.deviceName);
+                            continue;
+                        }
+
                         success = false;
+                        std::vector<VkQueueFamilyProperties> family_properties = {};
+                        vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, family_properties.data());
+                        for (const auto& t : family_properties) {
+                            if ((t.queueFlags & VK_QUEUE_GRAPHICS_BIT) != 0) {
+                                success = true;
+                            }
+                        }
                     }
 
                     if (!success) {
@@ -286,7 +304,7 @@ namespace cvulkan::client::renderer {
     void init() {
         vulkanContext = std::make_unique<VulkanContext>();
         vulkanContext->initVulkanInstance(utility::debug_mode,{},{});
-        vulkanContext->initVulkanDevice({}, {});
+        vulkanContext->initVulkanPhysicalDevice({}, {EXT_VK_KHR_SWAPCHAIN_EXTENSION_NAME()});
     }
 
     void render() {
