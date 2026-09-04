@@ -9,7 +9,7 @@ namespace cvulkan::client::control {
 
     class KeyboardControl {
     public:
-        explicit KeyboardControl(const window::Window& window) : m_window{window} {
+        explicit KeyboardControl(const window::CVWindow& window) : m_window{window} {
             this->glfwCallbacks();
         };
         ~KeyboardControl() = default;
@@ -23,6 +23,6 @@ namespace cvulkan::client::control {
 
     protected:
         std::unordered_multimap<int, KeyCallback> m_key_callbacks = {};
-        const window::Window& m_window;
+        const window::CVWindow& m_window;
     };
 }

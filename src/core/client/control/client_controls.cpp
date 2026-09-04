@@ -10,14 +10,14 @@ namespace cvulkan::client::control {
     std::unique_ptr<KeyboardControl> g_keyboardControl;
     std::unique_ptr<MouseControl> g_mouseControl;
 
-    void setup(const window::Window& window) {
+    void setup(const window::CVWindow& window) {
         logging::info("Init control:Start");
         g_keyboardControl = std::make_unique<KeyboardControl>(window);
         g_mouseControl = std::make_unique<MouseControl>(window);
         logging::info("Init control:End");
     }
 
-    void updateInput() {
+    void update_input() {
         glfwPollEvents();
         if (g_keyboardControl != nullptr) {
             g_keyboardControl->updateInput();

@@ -1,14 +1,21 @@
 #include "client_window.h"
 
-#include <memory>
 #include <stdexcept>
 #include "GLFW/glfw3.h"
 #include "engine_context.h"
 
 namespace cvulkan::client::window {
-    std::unique_ptr<Window> g_window;
+    std::unique_ptr<CVWindow> glfwWindow = {};
 
-    void createWindow(const EngineData& engineData)
+    void CVWindow::closeWindow() const {
+        glfwSetWindowShouldClose(this->glfwWindowDescriptor, GLFW_TRUE);
+    }
+
+    bool CVWindow::shouldBeClosed() const {
+        return glfwWindowShouldClose(this->glfwWindowDescriptor) == GLFW_TRUE;
+    }
+
+    void create_window(const EngineData& engineData)
     {
         if (!glfwInit()) {
             throw std::runtime_error("failed to initialize glfw");
@@ -31,24 +38,14 @@ namespace cvulkan::client::window {
             throw std::runtime_error("failed to create window");
         }
 
-        g_window = std::make_unique<Window>(glfw_win, glm::ivec2{engineData.m_default_windowSize.x, engineData.m_default_windowSize.y});
+        glfwWindow = std::make_unique<CVWindow>(glfw_win);
     }
 
-    void cleanUp()
-    {
-        if (g_window != nullptr)
-        {
-            glfwDestroyWindow(g_window->m_windowDescriptor);
-            g_window.reset();
+    void cleanUp() {
+        if (glfwWindow != nullptr && glfwWindow->glfw_window_descriptor() != nullptr) {
+            glfwDestroyWindow(glfwWindow->glfw_window_descriptor());
+            glfwWindow.reset();
         }
         glfwTerminate();
-    }
-
-    void closeWindow() {
-        glfwSetWindowShouldClose(g_window->m_windowDescriptor, GLFW_TRUE);
-    }
-
-    [[nodiscard]] bool shouldBeClosed() {
-        return glfwWindowShouldClose(g_window->m_windowDescriptor) == GLFW_TRUE;
     }
 }

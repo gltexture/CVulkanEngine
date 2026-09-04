@@ -4,11 +4,13 @@
 #include <unordered_set>
 #include <vector>
 #include <vulkan/vulkan.h>
+
+#include "client_window.h"
 #include "vulkanPrograms/vulkan_utility.h"
 #include "util/logger.inl"
 
 namespace cvulkan::client::renderer {
-    struct LayersExtensions_Data {
+    struct CVVulkanLayersAndExtensionsData {
         std::unordered_set<std::string> enabledLayers = {};
         std::unordered_set<std::string> enabledExtensions = {};
 
@@ -21,12 +23,20 @@ namespace cvulkan::client::renderer {
         }
     };
 
-    struct VulkanInstance_Data {
-        VkInstance vkInstance = {};
-        LayersExtensions_Data vkInstanceLrExtData = {};
+    struct CVVulkanSurfaceData {
+        VkSurfaceKHR vkSurface = {};
+        VkSurfaceCapabilitiesKHR vkSurfaceCapabilities = {};
+
+        VkFormat format = {};
+        VkColorSpaceKHR colorSpace = {};
     };
 
-    struct VulkanPhysicalDevice_Data {
+    struct CVVulkanInstanceData {
+        VkInstance vkInstance = {};
+        CVVulkanLayersAndExtensionsData vkInstanceLrExtData = {};
+    };
+
+    struct CVVulkanPhysicalDeviceData {
         VkPhysicalDevice vkPhysicalDevice{};
         std::vector<VkExtensionProperties> vkDeviceExtensions{};
         VkPhysicalDeviceMemoryProperties vkMemoryProperties{};
@@ -34,21 +44,30 @@ namespace cvulkan::client::renderer {
         VkPhysicalDeviceProperties vkPhysicalDeviceProperties{};
         VkPhysicalDeviceProperties2 vkPhysicalDeviceProperties2{.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2};
         std::vector<VkQueueFamilyProperties> vkQueueFamilyProps;
-        LayersExtensions_Data vkDeviceLrExtData = {};
+        CVVulkanLayersAndExtensionsData vkDeviceLrExtData = {};
     };
 
-    struct VulkanLogicalDevice_Data {
+    struct CVVulkanQueue {
+        VkQueue vkQueue = {};
+        uint32_t queueFamilyIndex = {};
+
+        void queue_wait_dle() const {
+            vkQueueWaitIdle(this->vkQueue);
+        }
+    };
+
+    struct CVVulkanLogicalDeviceData {
         VkDevice vkDevice = {};
 
-        void deviceWaitIdle() const {
+        void device_wait_dle() const {
             vkDeviceWaitIdle(this->vkDevice);
         }
     };
 
-    class VulkanContext {
+    class CVVulkanContext {
     public:
-        VulkanContext() = default;
-        ~VulkanContext() {
+        explicit CVVulkanContext(const window::CVWindow& window) : glfwWindow{window} {}
+        ~CVVulkanContext() {
             this->cleanUp();
             this->vkInstanceData.vkInstanceLrExtData.enabledExtensions.clear();
             this->vkInstanceData.vkInstanceLrExtData.enabledLayers.clear();
@@ -56,16 +75,50 @@ namespace cvulkan::client::renderer {
             this->vkPhysicalDeviceData.vkDeviceLrExtData.enabledLayers.clear();
         }
 
+        void setup_GLFWSurface(const CVVulkanInstanceData &instanceData, const CVVulkanPhysicalDeviceData &physical_device_data);
+        void init_vulkan_instance(bool debugMode, std::initializer_list<std::string> requiredLayers, std::initializer_list<std::string>requiredExtensions);
+        void init_vulkan_physicalDevice(std::initializer_list<std::string> requiredLayers, std::initializer_list<std::string> requiredExtensions);
+        void init_vulkan_logicalDevice(const CVVulkanPhysicalDeviceData &data);
+
+        [[nodiscard]] CVVulkanSurfaceData vk_surface_data() const {
+            return vkSurfaceData;
+        }
+
+        [[nodiscard]] VkDebugUtilsMessengerEXT vk_debug_messenger() const {
+            return vkDebugMessenger;
+        }
+
+        [[nodiscard]] CVVulkanInstanceData vk_instance_data() const {
+            return vkInstanceData;
+        }
+
+        [[nodiscard]] CVVulkanPhysicalDeviceData vk_physical_device_data() const {
+            return vkPhysicalDeviceData;
+        }
+
+        [[nodiscard]] CVVulkanLogicalDeviceData vk_device_data() const {
+            return vkDeviceData;
+        }
+
+        [[nodiscard]] window::CVWindow glfw_window() const {
+            return glfwWindow;
+        }
+
+        [[nodiscard]] CVVulkanQueue graphics_queue() const {
+            return graphicsQueue;
+        }
+
+    private:
+        CVVulkanSurfaceData vkSurfaceData = {};
         VkDebugUtilsMessengerEXT vkDebugMessenger = {};
+        CVVulkanInstanceData vkInstanceData = {};
+        CVVulkanPhysicalDeviceData vkPhysicalDeviceData = {};
+        CVVulkanLogicalDeviceData vkDeviceData = {};
+        CVVulkanQueue graphicsQueue = {};
+        const window::CVWindow& glfwWindow;
 
-        VulkanInstance_Data vkInstanceData = {};
-        VulkanPhysicalDevice_Data vkPhysicalDeviceData = {};
-        VulkanLogicalDevice_Data vkDeviceData = {};
-
-        void initVulkanInstance(bool debugMode, std::initializer_list<std::string> requiredLayers, std::initializer_list<std::string>requiredExtensions);
-        void initVulkanPhysicalDevice(std::initializer_list<std::string> requiredLayers, std::initializer_list<std::string> requiredExtensions);
-        void initVulkanLogicalDevice(const VulkanPhysicalDevice_Data &data);
     protected:
+        void calc_surface_format(const CVVulkanPhysicalDeviceData &physical_device_data);
         void cleanUp();
 
         void tryIncludeInstanceLayer(const std::unordered_set<std::string> &available, const std::string &layer) {
@@ -135,9 +188,9 @@ namespace cvulkan::client::renderer {
         return "VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME";
     }
 
-    extern std::unique_ptr<VulkanContext> vulkanContext;
+    extern std::unique_ptr<CVVulkanContext> vulkanContext;
 
-    void init();
+    void init(const window::CVWindow& window);
     void render();
-    void cleanUp();
+    void clean_up();
 }

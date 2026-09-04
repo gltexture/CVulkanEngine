@@ -1,4 +1,4 @@
-#include "client_renderer.h"
+#include "client_render_core.h"
 #include "util/logger.h"
 #include <unordered_set>
 
@@ -7,9 +7,12 @@
 #include "vulkanPrograms/vulkan_ext.h"
 
 namespace cvulkan::client::renderer {
-    std::unique_ptr<VulkanContext> vulkanContext;
+    std::unique_ptr<CVVulkanContext> vulkanContext;
 
-    void VulkanContext::cleanUp() {
+    void CVVulkanContext::cleanUp() {
+        if (this->vkSurfaceData.vkSurface != VK_NULL_HANDLE) {
+            vkDestroySurfaceKHR(this->vkInstanceData.vkInstance, this->vkSurfaceData.vkSurface, nullptr);
+        }
         if (this->vkDebugMessenger != VK_NULL_HANDLE) {
             const auto func = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(this->vkInstanceData.vkInstance,"vkDestroyDebugUtilsMessengerEXT"));
             if (func == nullptr) {
@@ -20,7 +23,7 @@ namespace cvulkan::client::renderer {
             logging::debug("Vulkan debug messenger destroyed");
         }
         if (this->vkDeviceData.vkDevice != VK_NULL_HANDLE) {
-            this->vkDeviceData.deviceWaitIdle();
+            this->vkDeviceData.device_wait_dle();
             vkDestroyDevice(this->vkDeviceData.vkDevice, nullptr);
             this->vkDeviceData.vkDevice = VK_NULL_HANDLE;
             logging::info("Vulkan device destroyed");
@@ -32,7 +35,7 @@ namespace cvulkan::client::renderer {
         }
     }
 
-    std::unordered_set<std::string> VulkanContext::availableInstanceExtensions(const VkInstance &instance) {
+    std::unordered_set<std::string> CVVulkanContext::availableInstanceExtensions(const VkInstance &instance) {
         std::unordered_set<std::string> set = {};
         uint32_t extensionsCount = 0;
         std::vector<VkExtensionProperties> extensionProperties = {};
@@ -52,7 +55,7 @@ namespace cvulkan::client::renderer {
         return set;
     }
 
-    std::unordered_set<std::string> VulkanContext::availableInstanceLayers(const VkInstance &instance) {
+    std::unordered_set<std::string> CVVulkanContext::availableInstanceLayers(const VkInstance &instance) {
         std::unordered_set<std::string> set = {};
         uint32_t layerCount = 0;
         std::vector<VkLayerProperties> layerProperties = {};
@@ -72,7 +75,7 @@ namespace cvulkan::client::renderer {
         return set;
     }
 
-    std::unordered_set<std::string> VulkanContext::availableDeviceExtensions(const VkPhysicalDevice& device) {
+    std::unordered_set<std::string> CVVulkanContext::availableDeviceExtensions(const VkPhysicalDevice& device) {
         std::unordered_set<std::string> set = {};
         uint32_t extensionsCount = 0;
         std::vector<VkExtensionProperties> extensionProperties = {};
@@ -92,7 +95,7 @@ namespace cvulkan::client::renderer {
         return set;
     }
 
-    std::unordered_set<std::string> VulkanContext::availableDeviceLayers(const VkPhysicalDevice& device) {
+    std::unordered_set<std::string> CVVulkanContext::availableDeviceLayers(const VkPhysicalDevice& device) {
         std::unordered_set<std::string> set = {};
         uint32_t layerCount = 0;
         std::vector<VkLayerProperties> layerProperties = {};
@@ -112,7 +115,7 @@ namespace cvulkan::client::renderer {
         return set;
     }
 
-    std::unordered_set<std::string> VulkanContext::getGLFWExtensions() {
+    std::unordered_set<std::string> CVVulkanContext::getGLFWExtensions() {
         std::unordered_set<std::string> set = {};
         uint32_t countGlfwExtensions = 0;
         const char** extensions = glfwGetRequiredInstanceExtensions(&countGlfwExtensions);
@@ -126,7 +129,7 @@ namespace cvulkan::client::renderer {
         return set;
     }
 
-    void VulkanContext::initVulkanInstance(const bool debugMode,
+    void CVVulkanContext::init_vulkan_instance(const bool debugMode,
         const std::initializer_list<std::string> requiredLayers,
         const std::initializer_list<std::string> requiredExtensions) {
 
@@ -204,7 +207,7 @@ namespace cvulkan::client::renderer {
         }
     }
 
-    void VulkanContext::initVulkanPhysicalDevice(
+    void CVVulkanContext::init_vulkan_physicalDevice(
         const std::initializer_list<std::string> requiredLayers,
         const std::initializer_list<std::string> requiredExtensions) {
 
@@ -319,7 +322,7 @@ namespace cvulkan::client::renderer {
         }
     }
 
-    void VulkanContext::initVulkanLogicalDevice(const VulkanPhysicalDevice_Data& data) {
+    void CVVulkanContext::init_vulkan_logicalDevice(const CVVulkanPhysicalDeviceData& data) {
         VkDeviceQueueCreateInfo queueCreateInfo = {.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO};
 
         float priority = 1.0f;
@@ -366,19 +369,50 @@ namespace cvulkan::client::renderer {
 
         utility::vkCheck(vkCreateDevice(data.vkPhysicalDevice, &vkDeviceCreateInfo, nullptr, &this->vkDeviceData.vkDevice));
         logging::info("Created logical device: {} queue families", queueCreateInfo.queueCount);
+
+        {
+            vkGetDeviceQueue(this->vkDeviceData.vkDevice,graphicsQueueFamilyIndex,0, &this->graphicsQueue.vkQueue);
+            this->graphicsQueue.queueFamilyIndex = graphicsQueueFamilyIndex;
+        }
     }
 
-    void init() {
-        vulkanContext = std::make_unique<VulkanContext>();
-        vulkanContext->initVulkanInstance(utility::debug_mode,{},{});
-        vulkanContext->initVulkanPhysicalDevice({}, {EXT_VK_KHR_SWAPCHAIN_EXTENSION_NAME()});
-        vulkanContext->initVulkanLogicalDevice(vulkanContext->vkPhysicalDeviceData);
+    void CVVulkanContext::setup_GLFWSurface(const CVVulkanInstanceData& instanceData, const CVVulkanPhysicalDeviceData& physical_device_data) {
+        utility::vkCheck(glfwCreateWindowSurface(instanceData.vkInstance, glfw_window().glfw_window_descriptor(), nullptr, &this->vkSurfaceData.vkSurface));
+        utility::vkCheck(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physical_device_data.vkPhysicalDevice, this->vkSurfaceData.vkSurface, &this->vkSurfaceData.vkSurfaceCapabilities));
+        calc_surface_format(physical_device_data);
+    }
+
+    void CVVulkanContext::calc_surface_format(const CVVulkanPhysicalDeviceData &physical_device_data) {
+        uint32_t surfaceFormatCount = 0;
+        utility::vkCheck(vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device_data.vkPhysicalDevice, this->vkSurfaceData.vkSurface, &surfaceFormatCount, nullptr));
+        if (surfaceFormatCount == 0) {
+            throw std::runtime_error("Failed to get surface format count");
+        }
+        std::vector<VkSurfaceFormatKHR> surfaceFormats(surfaceFormatCount);
+        utility::vkCheck(vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device_data.vkPhysicalDevice, this->vkSurfaceData.vkSurface, &surfaceFormatCount, surfaceFormats.data()));
+        this->vkSurfaceData.format = VK_FORMAT_B8G8R8_SRGB;
+        this->vkSurfaceData.colorSpace = surfaceFormats[0].colorSpace;
+        for (const auto&[f, c] : surfaceFormats) {
+            if (f == VK_FORMAT_B8G8R8_SRGB && c == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+                this->vkSurfaceData.format = f;
+                this->vkSurfaceData.colorSpace = c;
+                break;
+            }
+        }
+    }
+
+    void init(const window::CVWindow& window) {
+        vulkanContext = std::make_unique<CVVulkanContext>(window);
+        vulkanContext->init_vulkan_instance(utility::debug_mode,{},{});
+        vulkanContext->init_vulkan_physicalDevice({}, {EXT_VK_KHR_SWAPCHAIN_EXTENSION_NAME()});
+        vulkanContext->init_vulkan_logicalDevice(vulkanContext->vk_physical_device_data());
+        vulkanContext->setup_GLFWSurface(vulkanContext->vk_instance_data(), vulkanContext->vk_physical_device_data());
     }
 
     void render() {
     }
 
-    void cleanUp() {
+    void clean_up() {
         vulkanContext.reset();
     }
 }

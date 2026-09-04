@@ -2,19 +2,19 @@
 
 namespace cvulkan::client::control {
     void MouseControl::glfwCallbacks() {
-        glfwSetWindowUserPointer(m_window.m_windowDescriptor, this);
-        glfwSetCursorPosCallback(this->m_window.m_windowDescriptor, [](GLFWwindow* window, const double x, const double y) {
+        glfwSetWindowUserPointer(m_window.glfw_window_descriptor(), this);
+        glfwSetCursorPosCallback(this->m_window.glfw_window_descriptor(), [](GLFWwindow* window, const double x, const double y) {
             auto* mouse = static_cast<MouseControl*>(glfwGetWindowUserPointer(window));
             glm::ivec2& pos = mouse->m_current_mouse_position;
             pos.x = static_cast<int>(x);
             pos.y = static_cast<int>(y);
         });
-        glfwSetCursorEnterCallback(this->m_window.m_windowDescriptor, [](GLFWwindow* window, const int entered) {
+        glfwSetCursorEnterCallback(this->m_window.glfw_window_descriptor(), [](GLFWwindow* window, const int entered) {
             auto* mouse = static_cast<MouseControl*>(glfwGetWindowUserPointer(window));
             bool& inWin = mouse->m_in_window;
             inWin = entered;
         });
-        glfwSetMouseButtonCallback(this->m_window.m_windowDescriptor, [](GLFWwindow* window, const int button, const int action, const int mods) {
+        glfwSetMouseButtonCallback(this->m_window.glfw_window_descriptor(), [](GLFWwindow* window, const int button, const int action, const int mods) {
             auto* mouse = static_cast<MouseControl*>(glfwGetWindowUserPointer(window));
             bool& mouse0 = mouse->m_mouse0_pressed;
             bool& mouse1 = mouse->m_mouse1_pressed;

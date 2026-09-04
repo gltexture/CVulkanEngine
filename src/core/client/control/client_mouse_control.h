@@ -5,7 +5,7 @@
 namespace cvulkan::client::control {
     class MouseControl {
     public:
-        explicit MouseControl(const window::Window& window) : m_window{window} {
+        explicit MouseControl(const window::CVWindow& window) : m_window{window} {
             this->glfwCallbacks();
         };
         ~MouseControl() = default;
@@ -45,7 +45,7 @@ namespace cvulkan::client::control {
         void updateInput();
 
     protected:
-        const window::Window& m_window;
+        const window::CVWindow& m_window;
         glm::ivec2 m_prevFrame_mouse_position{};
         glm::ivec2 m_current_mouse_position{};
         glm::ivec2 m_delta_mouse_position{};

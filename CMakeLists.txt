@@ -32,8 +32,8 @@ add_executable(CVulkanEngine
         src/core/client/control/client_keyboard_control.h
         src/core/client/control/client_controls.cpp
         src/core/client/control/client_controls.h
-        src/core/client/render/client_renderer.cpp
-        src/core/client/render/client_renderer.h
+        src/core/client/render/client_render_core.cpp
+        src/core/client/render/client_render_core.h
         src/core/client/render/client_render_config.h
         src/core/client/render/vulkanPrograms/vulkan_utility.cpp
         src/core/client/render/vulkanPrograms/vulkan_utility.h
