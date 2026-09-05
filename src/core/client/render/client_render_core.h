@@ -64,11 +64,15 @@ namespace cvulkan::client::renderer {
         }
     };
 
+    struct CVVulkanSwapChain {
+        VkSwapchainKHR swapChain;
+    };
+
     class CVVulkanContext {
     public:
         explicit CVVulkanContext(const window::CVWindow& window) : glfwWindow{window} {}
         ~CVVulkanContext() {
-            this->cleanUp();
+            this->destroy();
             this->vkInstanceData.vkInstanceLrExtData.enabledExtensions.clear();
             this->vkInstanceData.vkInstanceLrExtData.enabledLayers.clear();
             this->vkPhysicalDeviceData.vkDeviceLrExtData.enabledExtensions.clear();
@@ -79,6 +83,7 @@ namespace cvulkan::client::renderer {
         void init_vulkan_instance(bool debugMode, std::initializer_list<std::string> requiredLayers, std::initializer_list<std::string>requiredExtensions);
         void init_vulkan_physicalDevice(std::initializer_list<std::string> requiredLayers, std::initializer_list<std::string> requiredExtensions);
         void init_vulkan_logicalDevice(const CVVulkanPhysicalDeviceData &data);
+        void init_vulkan_swapChain(const CVVulkanSurfaceData &data, const CVVulkanLogicalDeviceData &device_data);
 
         [[nodiscard]] CVVulkanSurfaceData vk_surface_data() const {
             return vkSurfaceData;
@@ -109,6 +114,7 @@ namespace cvulkan::client::renderer {
         }
 
     private:
+        CVVulkanSwapChain vkSwapChain = {};
         CVVulkanSurfaceData vkSurfaceData = {};
         VkDebugUtilsMessengerEXT vkDebugMessenger = {};
         CVVulkanInstanceData vkInstanceData = {};
@@ -119,7 +125,7 @@ namespace cvulkan::client::renderer {
 
     protected:
         void calc_surface_format(const CVVulkanPhysicalDeviceData &physical_device_data);
-        void cleanUp();
+        void destroy();
 
         void tryIncludeInstanceLayer(const std::unordered_set<std::string> &available, const std::string &layer) {
             if (available.contains(layer)) {

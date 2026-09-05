@@ -9,7 +9,7 @@
 namespace cvulkan::client::renderer {
     std::unique_ptr<CVVulkanContext> vulkanContext;
 
-    void CVVulkanContext::cleanUp() {
+    void CVVulkanContext::destroy() {
         if (this->vkSurfaceData.vkSurface != VK_NULL_HANDLE) {
             vkDestroySurfaceKHR(this->vkInstanceData.vkInstance, this->vkSurfaceData.vkSurface, nullptr);
         }
@@ -376,7 +376,63 @@ namespace cvulkan::client::renderer {
         }
     }
 
+    void CVVulkanContext::init_vulkan_swapChain(const CVVulkanSurfaceData& data, const CVVulkanLogicalDeviceData& device_data) {
+        const uint32_t requestedImages = 3;
+
+        logging::info("Setting up vulkan swapChain");
+        uint32_t imageCount = -1;
+        VkExtent2D extent = {};
+
+        {
+            uint32_t minImages = data.vkSurfaceCapabilities.minImageCount;
+            uint32_t maxImages = data.vkSurfaceCapabilities.maxImageCount;
+            imageCount = minImages;
+            if (maxImages != 0) {
+                imageCount = std::min(requestedImages, maxImages);
+            }
+            imageCount = std::max(imageCount, minImages);
+            logging::info("Requested {} images", imageCount);
+        }
+
+        {
+            if (data.vkSurfaceCapabilities.currentExtent.width == UINT32_MAX) {
+                const auto windowSize = this->glfw_window().size();
+                extent.width = std::clamp(windowSize.x,data.vkSurfaceCapabilities.minImageExtent.width,data.vkSurfaceCapabilities.maxImageExtent.width);
+                extent.height = std::clamp(windowSize.y,data.vkSurfaceCapabilities.minImageExtent.height,data.vkSurfaceCapabilities.maxImageExtent.height);
+            } else {
+                extent = data.vkSurfaceCapabilities.currentExtent;
+            }
+        }
+
+        VkSwapchainCreateInfoKHR swapChainCreateInfo = {};
+        swapChainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+        swapChainCreateInfo.surface = data.vkSurface;
+        swapChainCreateInfo.minImageCount = imageCount;
+        swapChainCreateInfo.imageFormat = data.format;
+        swapChainCreateInfo.imageColorSpace = data.colorSpace;
+        swapChainCreateInfo.imageExtent = extent;
+        swapChainCreateInfo.imageArrayLayers = 1;
+        swapChainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+        swapChainCreateInfo.preTransform = data.vkSurfaceCapabilities.currentTransform;
+        swapChainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+        swapChainCreateInfo.clipped = VK_TRUE;
+
+        if (true) {
+            swapChainCreateInfo.presentMode = VK_PRESENT_MODE_FIFO_KHR;
+        } else {
+            swapChainCreateInfo.presentMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
+        }
+
+        utility::vkCheck(vkCreateSwapchainKHR(device_data.vkDevice, &swapChainCreateInfo, nullptr, &this->vkSwapChain.swapChain));
+
+        {
+            uint32_t swapChainImagesCount = 0;
+            utility::vkCheck(vkGetSwapchainImagesKHR(device_data.vkDevice, this->vkSwapChain.swapChain, &swapChainImagesCount, nullptr));
+        }
+    }
+
     void CVVulkanContext::setup_GLFWSurface(const CVVulkanInstanceData& instanceData, const CVVulkanPhysicalDeviceData& physical_device_data) {
+        logging::info("Setting up GLFW surface");
         utility::vkCheck(glfwCreateWindowSurface(instanceData.vkInstance, glfw_window().glfw_window_descriptor(), nullptr, &this->vkSurfaceData.vkSurface));
         utility::vkCheck(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physical_device_data.vkPhysicalDevice, this->vkSurfaceData.vkSurface, &this->vkSurfaceData.vkSurfaceCapabilities));
         calc_surface_format(physical_device_data);
@@ -396,6 +452,7 @@ namespace cvulkan::client::renderer {
             if (f == VK_FORMAT_B8G8R8_SRGB && c == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
                 this->vkSurfaceData.format = f;
                 this->vkSurfaceData.colorSpace = c;
+                logging::info("Setting up format {}, color space {}", static_cast<int>(f), static_cast<int>(c));
                 break;
             }
         }

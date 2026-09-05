@@ -20,7 +20,7 @@ namespace cvulkan::client::window {
             return glfwWindowDescriptor;
         }
 
-        [[nodiscard]] glm::uvec2 glfw_window_size() const {
+        [[nodiscard]] glm::uvec2 size() const {
             int width = 0;
             int height = 0;
             glfwGetWindowSize(glfwWindowDescriptor, &width, &height);
