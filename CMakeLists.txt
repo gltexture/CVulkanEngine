@@ -39,6 +39,10 @@ add_executable(CVulkanEngine
         src/core/client/render/vulkanPrograms/vulkan_utility.h
         src/core/client/render/vulkanPrograms/vulkan_ext.cpp
         src/core/client/render/vulkanPrograms/vulkan_ext.h
+        src/core/client/render/vulkan_commands.cpp
+        src/core/client/render/vulkan_commands.h
+        src/core/client/render/vulkan_syncronization.cpp
+        src/core/client/render/vulkan_syncronization.h
 )
 
 target_link_libraries(
