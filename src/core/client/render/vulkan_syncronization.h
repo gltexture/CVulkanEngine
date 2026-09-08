@@ -5,46 +5,52 @@
 #pragma once
 #include <vulkan/vulkan_core.h>
 
-#include "client_render_core.h"
+#include "vulkan_render_core.h"
 
 namespace cvulkan::client::renderer {
     class CVulkanSemaphore {
     public:
-        explicit CVulkanSemaphore(const CVulkanContext *context)
-            : context(context) {
+        explicit CVulkanSemaphore(const CVulkanContext& context)
+            : _context{context} {
         }
         ~CVulkanSemaphore() = default;
 
-        void create();
-        void destroy() const;
+        CVulkanSemaphore(const CVulkanSemaphore&) = delete;
+        CVulkanSemaphore& operator=(const CVulkanSemaphore&) = delete;
 
-        [[nodiscard]] VkSemaphore vk_semaphore() const {
-            return semaphore;
+        void createSemaphore();
+        void destroySemaphore() const;
+
+        [[nodiscard]] VkSemaphore vkSemaphore() const {
+            return _semaphore;
         }
 
     private:
-        const CVulkanContext* context;
-        VkSemaphore semaphore = {};
+        const CVulkanContext& _context;
+        VkSemaphore _semaphore = {};
     };
 
     class CVulkanFence {
     public:
-        explicit CVulkanFence(const CVulkanContext *context)
-            : context(context) {
+        explicit CVulkanFence(const CVulkanContext& context)
+            : _context{context} {
         }
         ~CVulkanFence() = default;
 
-        void create(bool signaled);
-        void destroy() const;
-        void wait();
-        void reset();
+        CVulkanFence(const CVulkanFence&) = delete;
+        CVulkanFence& operator=(const CVulkanFence&) = delete;
 
-        [[nodiscard]] VkFence vk_fence() const {
-            return fence;
+        void createFence(bool signaled);
+        void destroyFence() const;
+        void wait() const;
+        void reset() const;
+
+        [[nodiscard]] VkFence vkFence() const {
+            return _fence;
         }
 
     private:
-        const CVulkanContext* context;
-        VkFence fence = {};
+        const CVulkanContext& _context;
+        VkFence _fence = {};
     };
 }

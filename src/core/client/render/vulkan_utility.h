@@ -1,6 +1,6 @@
 #pragma once
 #include <spdlog/spdlog.h>
-#include "../../../util/logger.h"
+#include "../../util/logger.h"
 #include <vulkan/vk_enum_string_helper.h>
 
 #define DEBUG_MODE

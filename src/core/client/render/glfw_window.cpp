@@ -1,4 +1,4 @@
-#include "client_window.h"
+#include "glfw_window.h"
 
 #include <stdexcept>
 #include "GLFW/glfw3.h"

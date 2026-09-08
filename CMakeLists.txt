@@ -20,29 +20,30 @@ add_executable(CVulkanEngine
         src/main.cpp
         src/core/util/logger.inl
         src/core/client/client_runtime.cpp
-        src/core/client/render/client_window.cpp
+        src/core/client/render/glfw_window.cpp
         src/core/engine_context.cpp
         src/core/engine_context.h
-        src/core/client/render/client_window.h
+        src/core/client/render/glfw_window.h
         src/core/client/client_runtime.h
-        src/core/client/render/client_window.cpp
+        src/core/client/render/glfw_window.cpp
         src/core/client/control/client_mouse_control.cpp
         src/core/client/control/client_mouse_control.h
         src/core/client/control/client_keyboard_control.cpp
         src/core/client/control/client_keyboard_control.h
         src/core/client/control/client_controls.cpp
         src/core/client/control/client_controls.h
-        src/core/client/render/client_render_core.cpp
-        src/core/client/render/client_render_core.h
-        src/core/client/render/client_render_config.h
-        src/core/client/render/vulkanPrograms/vulkan_utility.cpp
-        src/core/client/render/vulkanPrograms/vulkan_utility.h
-        src/core/client/render/vulkanPrograms/vulkan_ext.cpp
-        src/core/client/render/vulkanPrograms/vulkan_ext.h
+        src/core/client/render/vulkan_render_core.cpp
+        src/core/client/render/vulkan_render_core.h
+        src/core/client/render/vulkan_utility.cpp
+        src/core/client/render/vulkan_utility.h
+        src/core/client/render/vulkan_ext.cpp
+        src/core/client/render/vulkan_ext.h
         src/core/client/render/vulkan_commands.cpp
         src/core/client/render/vulkan_commands.h
         src/core/client/render/vulkan_syncronization.cpp
         src/core/client/render/vulkan_syncronization.h
+        src/core/client/render/vulkan_swapchain.cpp
+        src/core/client/render/vulkan_swapchain.h
 )
 
 target_link_libraries(

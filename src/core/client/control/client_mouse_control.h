@@ -1,5 +1,5 @@
 #pragma once
-#include "client/render/client_window.h"
+#include "client/render/glfw_window.h"
 #include "glm/vec2.hpp"
 
 namespace cvulkan::client::control {

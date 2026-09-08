@@ -14,17 +14,17 @@ namespace cvulkan::client::renderer {
         if (this->supportReset) {
             commandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
         }
-        utility::vkCheck(vkCreateCommandPool(this->context->vk_device_data().vkDevice, &commandPoolCreateInfo, nullptr, &this->vkCommandPool), "Failed to create command pool");
+        utility::vkCheck(vkCreateCommandPool(this->_context.deviceData().vkDevice, &commandPoolCreateInfo, nullptr, &this->vkCommandPool), "Failed to create command pool");
     }
 
-    void CVulkanCommandPool::destroy() {
+    void CVulkanCommandPool::destroyCommandPool() const {
         logging::info("Destroying command pool");
-        vkDestroyCommandPool(this->context->vk_device_data().vkDevice, this->vkCommandPool, nullptr);
+        vkDestroyCommandPool(this->_context.deviceData().vkDevice, this->vkCommandPool, nullptr);
     }
 
-    void CVulkanCommandPool::reset() {
+    void CVulkanCommandPool::reset() const {
         logging::info("Resetting command pool");
-        vkResetCommandPool(this->context->vk_device_data().vkDevice, this->vkCommandPool, 0);
+        vkResetCommandPool(this->_context.deviceData().vkDevice, this->vkCommandPool, 0);
     }
 
 
@@ -69,15 +69,15 @@ namespace cvulkan::client::renderer {
             .commandBufferCount = 1,
         };
 
-        utility::vkCheck(vkAllocateCommandBuffers(this->context->vk_device_data().vkDevice, &commandBufferAllocateInfo, &this->vkCommandBuffer), "Failed to create command buffer");
+        utility::vkCheck(vkAllocateCommandBuffers(this->_context.deviceData().vkDevice, &commandBufferAllocateInfo, &this->vkCommandBuffer), "Failed to create command buffer");
     }
 
-    void CVulkanCommandBuffer::destroy() {
+    void CVulkanCommandBuffer::destroyCommandBuffer() const {
         logging::info("Destroying command buffer");
-        vkFreeCommandBuffers(this->context->vk_device_data().vkDevice, this->vkCommandPool->vk_command_pool(), 1, &this->vkCommandBuffer);
+        vkFreeCommandBuffers(this->_context.deviceData().vkDevice, this->vkCommandPool->vk_command_pool(), 1, &this->vkCommandBuffer);
     }
 
-    void CVulkanCommandBuffer::reset() {
+    void CVulkanCommandBuffer::reset() const {
         vkResetCommandBuffer(this->vkCommandBuffer, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
     }
 

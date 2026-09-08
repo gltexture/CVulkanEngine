@@ -49,7 +49,7 @@ extern "C" {
 /*! @defgroup context Context reference
  *  @brief Functions and types related to OpenGL and OpenGL ES contexts.
  *
- *  This is the reference documentation for OpenGL and OpenGL ES context related
+ *  This is the reference documentation for OpenGL and OpenGL ES _context related
  *  functions.  For more task-oriented information, see the @ref context_guide.
  */
 /*! @defgroup vulkan Vulkan support reference
@@ -682,11 +682,11 @@ extern "C" {
 /*! @brief No context is current for this thread.
  *
  *  This occurs if a GLFW function was called that needs and operates on the
- *  current OpenGL or OpenGL ES context but no context is current on the calling
+ *  current OpenGL or OpenGL ES _context but no _context is current on the calling
  *  thread.  One such function is @ref glfwSwapInterval.
  *
- *  @analysis Application programmer error.  Ensure a context is current before
- *  calling functions that require a current context.
+ *  @analysis Application programmer error.  Ensure a _context is current before
+ *  calling functions that require a current _context.
  */
 #define GLFW_NO_CURRENT_CONTEXT     0x00010002
 /*! @brief One of the arguments to the function was an invalid enum value.
@@ -721,7 +721,7 @@ extern "C" {
  *  GLFW could not find support for the requested API on the system.
  *
  *  @analysis The installed graphics driver does not support the requested
- *  API, or does not support it via the chosen context creation API.
+ *  API, or does not support it via the chosen _context creation API.
  *  Below are a few examples.
  *
  *  @par
@@ -734,7 +734,7 @@ extern "C" {
 #define GLFW_API_UNAVAILABLE        0x00010006
 /*! @brief The requested OpenGL or OpenGL ES version is not available.
  *
- *  The requested OpenGL or OpenGL ES version (including any requested context
+ *  The requested OpenGL or OpenGL ES version (including any requested _context
  *  or framebuffer hints) is not available on this machine.
  *
  *  @analysis The machine does not support your requirements.  If your
@@ -762,11 +762,11 @@ extern "C" {
 #define GLFW_PLATFORM_ERROR         0x00010008
 /*! @brief The requested format is not supported or available.
  *
- *  If emitted during window creation, the requested pixel format is not
+ *  If emitted during window creation, the requested pixel vkFormat is not
  *  supported.
  *
  *  If emitted when querying the clipboard, the contents of the clipboard could
- *  not be converted to the requested format.
+ *  not be converted to the requested vkFormat.
  *
  *  @analysis If emitted during window creation, one or more
  *  [hard constraints](@ref window_hints_hard) did not match any of the
@@ -781,7 +781,7 @@ extern "C" {
 #define GLFW_FORMAT_UNAVAILABLE     0x00010009
 /*! @brief The specified window does not have an OpenGL or OpenGL ES context.
  *
- *  A window that does not have an OpenGL or OpenGL ES context was passed to
+ *  A window that does not have an OpenGL or OpenGL ES _context was passed to
  *  a function that requires it to have one.
  *
  *  @analysis Application programmer error.  Fix the offending call.
@@ -794,7 +794,7 @@ extern "C" {
  *  available on the platform.
  *
  *  @analysis Platform or system settings limitation.  Pick another
- *  [standard cursor shape](@ref shapes) or create a
+ *  [standard cursor shape](@ref shapes) or createImageView a
  *  [custom cursor](@ref cursor_custom).
  */
 #define GLFW_CURSOR_UNAVAILABLE     0x0001000B
@@ -1061,7 +1061,7 @@ extern "C" {
 #define GLFW_OPENGL_FORWARD_COMPAT  0x00022006
 /*! @brief Debug mode context hint and attribute.
  *
- *  Debug mode context [hint](@ref GLFW_CONTEXT_DEBUG_hint) and
+ *  Debug mode _context [hint](@ref GLFW_CONTEXT_DEBUG_hint) and
  *  [attribute](@ref GLFW_CONTEXT_DEBUG_attrib).
  */
 #define GLFW_CONTEXT_DEBUG          0x00022007
@@ -1131,7 +1131,7 @@ extern "C" {
 #define GLFW_WIN32_SHOWDEFAULT      0x00025002
 /*! @brief Wayland specific
  *  [window hint](@ref GLFW_WAYLAND_APP_ID_hint).
- *  
+ *
  *  Allows specification of the Wayland app_id.
  */
 #define GLFW_WAYLAND_APP_ID         0x00026001
@@ -2076,7 +2076,7 @@ typedef struct GLFWgammaramp
 /*! @brief Image data.
  *
  *  This describes a single 2D image.  See the documentation for each related
- *  function what the expected pixel format is.
+ *  function what the expected pixel vkFormat is.
  *
  *  @sa @ref cursor_custom
  *  @sa @ref window_icon
@@ -2401,7 +2401,7 @@ GLFWAPI void glfwGetVersion(int* major, int* minor, int* rev);
  *
  *  __Do not use the version string__ to parse the GLFW library version.  The
  *  @ref glfwGetVersion function provides the version of the running library
- *  binary in numerical format.
+ *  binary in numerical vkFormat.
  *
  *  __Do not use the version string__ to parse what platforms are supported.  The @ref
  *  glfwPlatformSupported function lets you query platform support.
@@ -3093,22 +3093,22 @@ GLFWAPI void glfwWindowHintString(int hint, const char* value);
 /*! @brief Creates a window and its associated context.
  *
  *  This function creates a window and its associated OpenGL or OpenGL ES
- *  context.  Most of the options controlling how the window and its context
+ *  _context.  Most of the options controlling how the window and its _context
  *  should be created are specified with [window hints](@ref window_hints).
  *
- *  Successful creation does not change which context is current.  Before you
- *  can use the newly created context, you need to
+ *  Successful creation does not change which _context is current.  Before you
+ *  can use the newly created _context, you need to
  *  [make it current](@ref context_current).  For information about the `share`
  *  parameter, see @ref context_sharing.
  *
- *  The created window, framebuffer and context may differ from what you
+ *  The created window, framebuffer and _context may differ from what you
  *  requested, as not all parameters and hints are
  *  [hard constraints](@ref window_hints_hard).  This includes the size of the
  *  window, especially for full screen windows.  To query the actual attributes
- *  of the created window, framebuffer and context, see @ref
+ *  of the created window, framebuffer and _context, see @ref
  *  glfwGetWindowAttrib, @ref glfwGetWindowSize and @ref glfwGetFramebufferSize.
  *
- *  To create a full screen window, you need to specify the monitor the window
+ *  To createImageView a full screen window, you need to specify the monitor the window
  *  will cover.  If no monitor is specified, the window will be windowed mode.
  *  Unless you have a way for the user to choose a specific monitor, it is
  *  recommended that you pick the primary monitor.  For more information on how
@@ -3123,10 +3123,10 @@ GLFWAPI void glfwWindowHintString(int hint, const char* value);
  *
  *  Once you have created the window, you can switch it between windowed and
  *  full screen mode with @ref glfwSetWindowMonitor.  This will not affect its
- *  OpenGL or OpenGL ES context.
+ *  OpenGL or OpenGL ES _context.
  *
  *  By default, newly created windows use the placement recommended by the
- *  window system.  To create the window at a specific position, set the @ref
+ *  window system.  To createImageView the window at a specific position, set the @ref
  *  GLFW_POSITION_X and @ref GLFW_POSITION_Y window hints before creation.  To
  *  restore the default behavior, set either or both hints back to
  *  `GLFW_ANY_POSITION`.
@@ -3236,10 +3236,10 @@ GLFWAPI GLFWwindow* glfwCreateWindow(int width, int height, const char* title, G
 
 /*! @brief Destroys the specified window and its context.
  *
- *  This function destroys the specified window and its context.  On calling
+ *  This function destroys the specified window and its _context.  On calling
  *  this function, no further callbacks will be called for that window.
  *
- *  If the context of the specified window is current on the main thread, it is
+ *  If the _context of the specified window is current on the main thread, it is
  *  detached before being destroyed.
  *
  *  @param[in] window The window to destroy.
@@ -3602,7 +3602,7 @@ GLFWAPI void glfwSetWindowAspectRatio(GLFWwindow* window, int numer, int denom);
  *
  *  For full screen windows, this function updates the resolution of its desired
  *  video mode and switches to the video mode closest to it, without affecting
- *  the window's context.  As the context is unaffected, the bit depths of the
+ *  the window's _context.  As the _context is unaffected, the bit depths of the
  *  framebuffer remain unchanged.
  *
  *  If you wish to update the refresh rate of the desired video mode in addition
@@ -3667,7 +3667,7 @@ GLFWAPI void glfwGetFramebufferSize(GLFWwindow* window, int* width, int* height)
  *  This function retrieves the size, in screen coordinates, of each edge of the
  *  frame of the specified window.  This size includes the title bar, if the
  *  window has one.  The size of the frame may vary depending on the
- *  [window-related hints](@ref window_hints_wnd) used to create it.
+ *  [window-related hints](@ref window_hints_wnd) used to createImageView it.
  *
  *  Because this function retrieves the size of each window frame edge and not
  *  the offset along a particular coordinate axis, the retrieved values will
@@ -4076,7 +4076,7 @@ GLFWAPI void glfwSetWindowMonitor(GLFWwindow* window, GLFWmonitor* monitor, int 
 /*! @brief Returns an attribute of the specified window.
  *
  *  This function returns the value of an attribute of the specified window or
- *  its OpenGL or OpenGL ES context.
+ *  its OpenGL or OpenGL ES _context.
  *
  *  @param[in] window The window to query.
  *  @param[in] attrib The [window attribute](@ref window_attribs) whose value to
@@ -5651,7 +5651,7 @@ GLFWAPI const char* glfwGetJoystickName(int jid);
  *  but will not generate an error.  This can be used instead of first calling
  *  @ref glfwJoystickPresent.
  *
- *  The GUID uses the format introduced in SDL 2.0.5.  This GUID tries to
+ *  The GUID uses the vkFormat introduced in SDL 2.0.5.  This GUID tries to
  *  uniquely identify the make and model of a joystick but does not identify
  *  a specific unit, e.g. all wired Xbox 360 controllers will have the same
  *  GUID on that platform.  The GUID for a unit may vary between platforms
@@ -5797,10 +5797,10 @@ GLFWAPI GLFWjoystickfun glfwSetJoystickCallback(GLFWjoystickfun callback);
  *  This function parses the specified ASCII encoded string and updates the
  *  internal list with any gamepad mappings it finds.  This string may
  *  contain either a single gamepad mapping or many mappings separated by
- *  newlines.  The parser supports the full format of the `gamecontrollerdb.txt`
+ *  newlines.  The parser supports the full vkFormat of the `gamecontrollerdb.txt`
  *  source file including empty lines and comments.
  *
- *  See @ref gamepad_mapping for a description of the format.
+ *  See @ref gamepad_mapping for a description of the vkFormat.
  *
  *  If there is already a gamepad mapping for a given GUID in the internal list,
  *  it will be replaced by the one passed to this function.  If the library is
@@ -6066,25 +6066,25 @@ GLFWAPI uint64_t glfwGetTimerFrequency(void);
 /*! @brief Makes the context of the specified window current for the calling
  *  thread.
  *
- *  This function makes the OpenGL or OpenGL ES context of the specified window
- *  current on the calling thread.  It can also detach the current context from
+ *  This function makes the OpenGL or OpenGL ES _context of the specified window
+ *  current on the calling thread.  It can also detach the current _context from
  *  the calling thread without making a new one current by passing in `NULL`.
  *
- *  A context must only be made current on a single thread at a time and each
- *  thread can have only a single current context at a time.  Making a context
- *  current detaches any previously current context on the calling thread.
+ *  A _context must only be made current on a single thread at a time and each
+ *  thread can have only a single current _context at a time.  Making a _context
+ *  current detaches any previously current _context on the calling thread.
  *
- *  When moving a context between threads, you must detach it (make it
+ *  When moving a _context between threads, you must detach it (make it
  *  non-current) on the old thread before making it current on the new one.
  *
- *  By default, making a context non-current implicitly forces a pipeline flush.
+ *  By default, making a _context non-current implicitly forces a pipeline flush.
  *  On machines that support `GL_KHR_context_flush_control`, you can control
- *  whether a context performs this flush by setting the
+ *  whether a _context performs this flush by setting the
  *  [GLFW_CONTEXT_RELEASE_BEHAVIOR](@ref GLFW_CONTEXT_RELEASE_BEHAVIOR_hint)
  *  hint.
  *
- *  The specified window must have an OpenGL or OpenGL ES context.  Specifying
- *  a window without a context will generate a @ref GLFW_NO_WINDOW_CONTEXT
+ *  The specified window must have an OpenGL or OpenGL ES _context.  Specifying
+ *  a window without a _context will generate a @ref GLFW_NO_WINDOW_CONTEXT
  *  error.
  *
  *  @param[in] window The window whose context to make current, or `NULL` to
@@ -6110,7 +6110,7 @@ GLFWAPI void glfwMakeContextCurrent(GLFWwindow* window);
 
 /*! @brief Returns the window whose context is current on the calling thread.
  *
- *  This function returns the window whose OpenGL or OpenGL ES context is
+ *  This function returns the window whose OpenGL or OpenGL ES _context is
  *  current on the calling thread.
  *
  *  @return The window whose context is current, or `NULL` if no window's
@@ -6136,8 +6136,8 @@ GLFWAPI GLFWwindow* glfwGetCurrentContext(void);
  *  zero, the GPU driver waits the specified number of screen updates before
  *  swapping the buffers.
  *
- *  The specified window must have an OpenGL or OpenGL ES context.  Specifying
- *  a window without a context will generate a @ref GLFW_NO_WINDOW_CONTEXT
+ *  The specified window must have an OpenGL or OpenGL ES _context.  Specifying
+ *  a window without a _context will generate a @ref GLFW_NO_WINDOW_CONTEXT
  *  error.
  *
  *  This function does not apply to Vulkan.  If you are rendering with Vulkan,
@@ -6166,19 +6166,19 @@ GLFWAPI void glfwSwapBuffers(GLFWwindow* window);
 /*! @brief Sets the swap interval for the current context.
  *
  *  This function sets the swap interval for the current OpenGL or OpenGL ES
- *  context, i.e. the number of screen updates to wait from the time @ref
+ *  _context, i.e. the number of screen updates to wait from the time @ref
  *  glfwSwapBuffers was called before swapping the buffers and returning.  This
  *  is sometimes called _vertical synchronization_, _vertical retrace
  *  synchronization_ or just _vsync_.
  *
- *  A context that supports either of the `WGL_EXT_swap_control_tear` and
+ *  A _context that supports either of the `WGL_EXT_swap_control_tear` and
  *  `GLX_EXT_swap_control_tear` extensions also accepts _negative_ swap
  *  intervals, which allows the driver to swap immediately even if a frame
  *  arrives a little bit late.  You can check for these extensions with @ref
  *  glfwExtensionSupported.
  *
- *  A context must be current on the calling thread.  Calling this function
- *  without a current context will cause a @ref GLFW_NO_CURRENT_CONTEXT error.
+ *  A _context must be current on the calling thread.  Calling this function
+ *  without a current _context will cause a @ref GLFW_NO_CURRENT_CONTEXT error.
  *
  *  This function does not apply to Vulkan.  If you are rendering with Vulkan,
  *  see the present mode of your swapchain instead.
@@ -6213,16 +6213,16 @@ GLFWAPI void glfwSwapInterval(int interval);
  *
  *  This function returns whether the specified
  *  [API extension](@ref context_glext) is supported by the current OpenGL or
- *  OpenGL ES context.  It searches both for client API extension and context
+ *  OpenGL ES _context.  It searches both for client API extension and _context
  *  creation API extensions.
  *
- *  A context must be current on the calling thread.  Calling this function
- *  without a current context will cause a @ref GLFW_NO_CURRENT_CONTEXT error.
+ *  A _context must be current on the calling thread.  Calling this function
+ *  without a current _context will cause a @ref GLFW_NO_CURRENT_CONTEXT error.
  *
  *  As this functions retrieves and searches one or more extension strings each
  *  call, it is recommended that you cache its results if it is going to be used
  *  frequently.  The extension strings will not change during the lifetime of
- *  a context, so there is no danger in doing this.
+ *  a _context, so there is no danger in doing this.
  *
  *  This function does not apply to Vulkan.  If you are using Vulkan, see @ref
  *  glfwGetRequiredInstanceExtensions, `vkEnumerateInstanceExtensionProperties`
@@ -6252,10 +6252,10 @@ GLFWAPI int glfwExtensionSupported(const char* extension);
  *
  *  This function returns the address of the specified OpenGL or OpenGL ES
  *  [core or extension function](@ref context_glext), if it is supported
- *  by the current context.
+ *  by the current _context.
  *
- *  A context must be current on the calling thread.  Calling this function
- *  without a current context will cause a @ref GLFW_NO_CURRENT_CONTEXT error.
+ *  A _context must be current on the calling thread.  Calling this function
+ *  without a current _context will cause a @ref GLFW_NO_CURRENT_CONTEXT error.
  *
  *  This function does not apply to Vulkan.  If you are rendering with Vulkan,
  *  see @ref glfwGetInstanceProcAddress, `vkGetInstanceProcAddr` and
@@ -6275,7 +6275,7 @@ GLFWAPI int glfwExtensionSupported(const char* extension);
  *  associated version or extension not being available.  Always check the
  *  context version or extension string first.
  *
- *  @pointer_lifetime The returned function pointer is valid until the context
+ *  @pointer_lifetime The returned function pointer is valid until the _context
  *  is destroyed or the library is terminated.
  *
  *  @thread_safety This function may be called from any thread.
@@ -6461,8 +6461,8 @@ GLFWAPI int glfwGetPhysicalDevicePresentationSupport(VkInstance instance, VkPhys
  *  and returns `VK_ERROR_NATIVE_WINDOW_IN_USE_KHR`.
  *
  *  The window surface must be destroyed before the specified Vulkan instance.
- *  It is the responsibility of the caller to destroy the window surface.  GLFW
- *  does not destroy it for you.  Call `vkDestroySurfaceKHR` to destroy the
+ *  It is the responsibility of the caller to destroyImageView the window surface.  GLFW
+ *  does not destroyImageView it for you.  Call `vkDestroySurfaceKHR` to destroyImageView the
  *  surface.
  *
  *  @param[in] instance The Vulkan instance to create the surface in.

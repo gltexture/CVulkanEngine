@@ -1,8 +1,8 @@
 #include <iostream>
 
-#include "render/client_window.h"
+#include "render/glfw_window.h"
 #include "control/client_controls.h"
-#include "render/client_render_core.h"
+#include "render/vulkan_render_core.h"
 
 namespace cvulkan::client {
     void initializeClient(const EngineData& engineData) {
@@ -20,7 +20,7 @@ namespace cvulkan::client {
 
     void cleanUp() {
         control::cleanUp();
-        renderer::clean_up();
+        renderer::cleanUp();
         window::cleanUp();
     }
 }

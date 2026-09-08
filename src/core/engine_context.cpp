@@ -1,7 +1,7 @@
 #include "engine_context.h"
 
 #include "client/client_runtime.h"
-#include "client/render/vulkanPrograms/vulkan_utility.h"
+#include "client/render/vulkan_utility.h"
 #include "util/logger.inl"
 
 namespace cvulkan {
