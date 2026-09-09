@@ -5,12 +5,15 @@
 #pragma once
 #include <vulkan/vulkan_core.h>
 
-#include "vulkan_render_core.h"
 
-namespace cvulkan::client::renderer {
+namespace cvulkan::client::renderCore {
+    class CVulkanContext;
+}
+
+namespace cvulkan::client::renderSync {
     class CVulkanSemaphore {
     public:
-        explicit CVulkanSemaphore(const CVulkanContext& context)
+        explicit CVulkanSemaphore(const renderCore::CVulkanContext& context)
             : _context{context} {
         }
         ~CVulkanSemaphore() = default;
@@ -19,20 +22,20 @@ namespace cvulkan::client::renderer {
         CVulkanSemaphore& operator=(const CVulkanSemaphore&) = delete;
 
         void createSemaphore();
-        void destroySemaphore() const;
+        void destroySemaphore();
 
         [[nodiscard]] VkSemaphore vkSemaphore() const {
-            return _semaphore;
+            return _vkSemaphore;
         }
 
     private:
-        const CVulkanContext& _context;
-        VkSemaphore _semaphore = {};
+        const renderCore::CVulkanContext& _context;
+        VkSemaphore _vkSemaphore = {};
     };
 
     class CVulkanFence {
     public:
-        explicit CVulkanFence(const CVulkanContext& context)
+        explicit CVulkanFence(const renderCore::CVulkanContext& context)
             : _context{context} {
         }
         ~CVulkanFence() = default;
@@ -41,16 +44,16 @@ namespace cvulkan::client::renderer {
         CVulkanFence& operator=(const CVulkanFence&) = delete;
 
         void createFence(bool signaled);
-        void destroyFence() const;
+        void destroyFence();
         void wait() const;
         void reset() const;
 
         [[nodiscard]] VkFence vkFence() const {
-            return _fence;
+            return _vkFence;
         }
 
     private:
-        const CVulkanContext& _context;
-        VkFence _fence = {};
+        const renderCore::CVulkanContext& _context;
+        VkFence _vkFence = {};
     };
 }

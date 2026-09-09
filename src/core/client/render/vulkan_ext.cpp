@@ -5,7 +5,7 @@
 #include "vulkan_ext.h"
 #include "util/logger.h"
 
-namespace cvulkan::client::renderer::vulkan {
+namespace cvulkan::client::renderCore::ext {
     static constexpr VkDebugUtilsMessageSeverityFlagsEXT MESS_SEVERITY_BIT =
       //VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT
     VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT

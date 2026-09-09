@@ -5,8 +5,9 @@
 #include "GLFW/glfw3.h"
 #include "vulkan_utility.h"
 #include "vulkan_ext.h"
+#include "vulkan_renderer.h"
 
-namespace cvulkan::client::renderer {
+namespace cvulkan::client::renderCore {
     std::unique_ptr<CVulkanContext> vulkanContext;
 
     void CVulkanContext::destroyRenderCore() {
@@ -189,7 +190,7 @@ namespace cvulkan::client::renderer {
             instanceCreateInfo.ppEnabledExtensionNames = enabledExtNames.data();
             VkDebugUtilsMessengerCreateInfoEXT vk_debug_utils_messenger_create_info_ext = {};
             if (debugMode && this->_instance.vkInstanceLrExtData.hasVkInstanceRequiredExtension(EXT_VK_EXT_DEBUG_UTILS_EXTENSION_NAME())) {
-                vk_debug_utils_messenger_create_info_ext = vulkan::createDebugMessengerCreateInfo();
+                vk_debug_utils_messenger_create_info_ext = ext::createDebugMessengerCreateInfo();
                 instanceCreateInfo.pNext = &vk_debug_utils_messenger_create_info_ext;
             }
             utility::vkCheck(vkCreateInstance(&instanceCreateInfo, nullptr, &this->_instance.vkInstance));
@@ -226,8 +227,8 @@ namespace cvulkan::client::renderer {
                     VkPhysicalDeviceProperties physicalDeviceProperties = {};
                     vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
 
-                    availableLayers = availableDeviceLayers(physicalDevice);
-                    availableExtensions = availableDeviceExtensions(physicalDevice);
+                    availableLayers = this->availableDeviceLayers(physicalDevice);
+                    availableExtensions = this->availableDeviceExtensions(physicalDevice);
 
                     for (const auto& layer : requiredLayers) {
                         if (!availableLayers.contains(layer)) {
@@ -324,7 +325,7 @@ namespace cvulkan::client::renderer {
     void CVulkanContext::initVulkanLogicalDevice(const CVulkanPhysicalDevice& data) {
         VkDeviceQueueCreateInfo queueCreateInfo = {.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO};
 
-        float priority = 1.0f;
+        const float priority = 1.0f;
         VkQueueFamilyProperties queueFamilyProperties = {};
         uint32_t graphicsQueueFamilyIndex = UINT32_MAX;
         for (uint32_t i = 0; i < data.vkQueueFamilyProps.size(); ++i) {
@@ -380,12 +381,19 @@ namespace cvulkan::client::renderer {
         vulkanContext->initVulkanPhysicalDevice({}, {EXT_VK_KHR_SWAPCHAIN_EXTENSION_NAME()});
         vulkanContext->initVulkanLogicalDevice(vulkanContext->physicalDeviceData());
         vulkanContext->surface().createSurface();
+
+        {
+            renderLoop::initRendering(*vulkanContext);
+        }
     }
 
     void render() {
     }
 
     void cleanUp() {
+        {
+            renderLoop::destroyRendering();
+        }
         vulkanContext.reset();
     }
 }

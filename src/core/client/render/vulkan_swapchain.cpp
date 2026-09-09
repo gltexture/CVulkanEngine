@@ -3,9 +3,12 @@
 //
 
 #include "vulkan_swapchain.h"
-#include "vulkan_render_core.h"
 
-namespace cvulkan::client::renderer {
+#include "vulkan_config.h"
+#include "vulkan_render_core.h"
+#include "vulkan_synchronization.h"
+
+namespace cvulkan::client::renderCore {
     void CVulkanImageView::createImageView(const CVulkanImageViewData& view_data, const VkImage& vk_image) {
         const VkImageViewCreateInfo image_view_create_info = {
             .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
@@ -71,7 +74,7 @@ namespace cvulkan::client::renderer {
         swapChainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
         swapChainCreateInfo.clipped = VK_TRUE;
 
-        if (true) {
+        if (renderConfig::VSYNC) {
             swapChainCreateInfo.presentMode = VK_PRESENT_MODE_FIFO_KHR;
         } else {
             swapChainCreateInfo.presentMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
@@ -111,6 +114,23 @@ namespace cvulkan::client::renderer {
     void CVulkanQueue::initQueue(const uint32_t queueFamilyIndex, const uint32_t queueIndex) {
         vkGetDeviceQueue(this->_context.deviceData().vkDevice, queueFamilyIndex, queueIndex, &this->_vkQueue);
         this->_queueFamilyIndex = queueFamilyIndex;
+    }
+
+    void CVulkanQueue::submit(const std::vector<VkCommandBufferSubmitInfo>& commandSubmitInfos, const std::vector<VkSemaphoreSubmitInfo>* waitSemaphores, const std::vector<VkSemaphoreSubmitInfo>* signalSemaphores, const renderSync::CVulkanFence* fence) const {
+        VkSubmitInfo2 vkSubmitInfo2 = {
+            .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,
+            .commandBufferInfoCount = static_cast<uint32_t>(commandSubmitInfos.size()),
+            .pCommandBufferInfos = commandSubmitInfos.data(),
+        };
+        if (waitSemaphores != nullptr) {
+            vkSubmitInfo2.waitSemaphoreInfoCount = static_cast<uint32_t>(waitSemaphores->size());
+            vkSubmitInfo2.pWaitSemaphoreInfos = waitSemaphores->data();
+        }
+        if (signalSemaphores != nullptr) {
+            vkSubmitInfo2.signalSemaphoreInfoCount = static_cast<uint32_t>(signalSemaphores->size());
+            vkSubmitInfo2.pSignalSemaphoreInfos = signalSemaphores->data();
+        }
+        utility::vkCheck(vkQueueSubmit2(this->_vkQueue, 1, &vkSubmitInfo2, fence != nullptr ? fence->vkFence() : VK_NULL_HANDLE), "Failed to submit command to queue");
     }
 
     void CVulkanSurface::calcSurfaceFormat(const CVulkanPhysicalDevice &physical_device_data, const VkSurfaceKHR& vkSurface, VkFormat& vkFormat, VkColorSpaceKHR& vkColorSpace) {

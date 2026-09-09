@@ -10,7 +10,7 @@
 #include "vulkan_utility.h"
 #include "util/logger.inl"
 
-namespace cvulkan::client::renderer {
+namespace cvulkan::client::renderCore {
     struct CVulkanLayersAndExtensionsData {
         std::unordered_set<std::string> enabledLayers = {};
         std::unordered_set<std::string> enabledExtensions = {};

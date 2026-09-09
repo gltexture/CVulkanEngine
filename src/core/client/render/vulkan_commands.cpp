@@ -4,27 +4,29 @@
 
 #include "vulkan_commands.h"
 
-namespace cvulkan::client::renderer {
+#include "vulkan_synchronization.h"
+
+namespace cvulkan::client::renderCore {
     void CVulkanCommandPool::initCommandPool() {
         logging::info("Creating command pool");
         VkCommandPoolCreateInfo commandPoolCreateInfo = {
             .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
-            .queueFamilyIndex = this->queueFamilyIndex,
+            .queueFamilyIndex = this->_queueFamilyIndex,
         };
-        if (this->supportReset) {
+        if (this->_supportReset) {
             commandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
         }
-        utility::vkCheck(vkCreateCommandPool(this->_context.deviceData().vkDevice, &commandPoolCreateInfo, nullptr, &this->vkCommandPool), "Failed to create command pool");
+        utility::vkCheck(vkCreateCommandPool(this->_context.deviceData().vkDevice, &commandPoolCreateInfo, nullptr, &this->_vkCommandPool), "Failed to create command pool");
     }
 
     void CVulkanCommandPool::destroyCommandPool() const {
         logging::info("Destroying command pool");
-        vkDestroyCommandPool(this->_context.deviceData().vkDevice, this->vkCommandPool, nullptr);
+        vkDestroyCommandPool(this->_context.deviceData().vkDevice, this->_vkCommandPool, nullptr);
     }
 
     void CVulkanCommandPool::reset() const {
         logging::info("Resetting command pool");
-        vkResetCommandPool(this->_context.deviceData().vkDevice, this->vkCommandPool, 0);
+        vkResetCommandPool(this->_context.deviceData().vkDevice, this->_vkCommandPool, 0);
     }
 
 
@@ -32,10 +34,10 @@ namespace cvulkan::client::renderer {
         VkCommandBufferBeginInfo beginInfo = {
             .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
         };
-        if (this->oneTimeSubmit) {
+        if (this->_oneTimeSubmit) {
             beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
         }
-        if (!this->primary) {
+        if (!this->_primary) {
             if (inheritance_info == nullptr) {
                 throw std::invalid_argument("inheritance_info is null");
             }
@@ -52,33 +54,45 @@ namespace cvulkan::client::renderer {
             };
             beginInfo.pInheritanceInfo = &inheritanceInfo;
         }
-        utility::vkCheck(vkBeginCommandBuffer(this->vkCommandBuffer, &beginInfo), "Failed to begin command buffer");
+        utility::vkCheck(vkBeginCommandBuffer(this->_vkCommandBuffer, &beginInfo), "Failed to begin command buffer");
     }
 
     void CVulkanCommandBuffer::endRecording() const {
-        utility::vkCheck(vkEndCommandBuffer(this->vkCommandBuffer), "Failed to end command buffer");
+        utility::vkCheck(vkEndCommandBuffer(this->_vkCommandBuffer), "Failed to end command buffer");
+    }
+
+    void CVulkanCommandBuffer::submitAndWait(const CVulkanQueue& queue) const {
+        CVulkanFence fence{this->_context};
+        fence.createFence(false);
+        const VkCommandBufferSubmitInfo submitInfo = {
+            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
+            .commandBuffer = this->_vkCommandBuffer,
+        };
+        queue.submit(std::vector {submitInfo}, nullptr, nullptr, &fence);
+        fence.wait();
+        fence.destroyFence();
     }
 
     void CVulkanCommandBuffer::initCommandBuffer() {
         logging::info("Creating command buffer");
 
-        VkCommandBufferAllocateInfo commandBufferAllocateInfo = {
+        const VkCommandBufferAllocateInfo commandBufferAllocateInfo = {
             .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-            .commandPool = this->vkCommandPool->vk_command_pool(),
-            .level = this->primary ? VK_COMMAND_BUFFER_LEVEL_PRIMARY : VK_COMMAND_BUFFER_LEVEL_SECONDARY,
+            .commandPool = this->_commandPool->vk_command_pool(),
+            .level = this->_primary ? VK_COMMAND_BUFFER_LEVEL_PRIMARY : VK_COMMAND_BUFFER_LEVEL_SECONDARY,
             .commandBufferCount = 1,
         };
 
-        utility::vkCheck(vkAllocateCommandBuffers(this->_context.deviceData().vkDevice, &commandBufferAllocateInfo, &this->vkCommandBuffer), "Failed to create command buffer");
+        utility::vkCheck(vkAllocateCommandBuffers(this->_context.deviceData().vkDevice, &commandBufferAllocateInfo, &this->_vkCommandBuffer), "Failed to create command buffer");
     }
 
     void CVulkanCommandBuffer::destroyCommandBuffer() const {
         logging::info("Destroying command buffer");
-        vkFreeCommandBuffers(this->_context.deviceData().vkDevice, this->vkCommandPool->vk_command_pool(), 1, &this->vkCommandBuffer);
+        vkFreeCommandBuffers(this->_context.deviceData().vkDevice, this->_commandPool->vk_command_pool(), 1, &this->_vkCommandBuffer);
     }
 
     void CVulkanCommandBuffer::reset() const {
-        vkResetCommandBuffer(this->vkCommandBuffer, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
+        vkResetCommandBuffer(this->_vkCommandBuffer, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
     }
 
 

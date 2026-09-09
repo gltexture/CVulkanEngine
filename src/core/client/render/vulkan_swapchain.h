@@ -6,7 +6,11 @@
 #include <vulkan/vulkan.h>
 #include <vector>
 
-namespace cvulkan::client::renderer {
+namespace cvulkan::client::renderSync {
+    class CVulkanFence;
+}
+
+namespace cvulkan::client::renderCore {
     class CVulkanContext;
     struct CVulkanPhysicalDevice;
     struct CVulkanDevice;
@@ -89,6 +93,7 @@ namespace cvulkan::client::renderer {
         CVulkanQueue& operator=(const CVulkanQueue&) = delete;
 
         void initQueue(uint32_t queueFamilyIndex, uint32_t queueIndex);
+        void submit(const std::vector<VkCommandBufferSubmitInfo>& commandSubmitInfos, const std::vector<VkSemaphoreSubmitInfo>* waitSemaphores, const std::vector<VkSemaphoreSubmitInfo>* signalSemaphores, const renderSync::CVulkanFence* fence) const;
 
         [[nodiscard]] VkQueue vkQueue() const {
             return _vkQueue;

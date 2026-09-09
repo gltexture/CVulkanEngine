@@ -8,19 +8,19 @@ namespace cvulkan::client {
     void initializeClient(const EngineData& engineData) {
         window::create_window(engineData);
         control::setup(*window::glfwWindow);
-        renderer::init(*window::glfwWindow);
+        renderCore::init(*window::glfwWindow);
     }
 
     void loop() {
         while (!window::glfwWindow->shouldBeClosed()) {
             control::update_input();
-            renderer::render();
+            renderCore::render();
         }
     }
 
     void cleanUp() {
         control::cleanUp();
-        renderer::cleanUp();
+        renderCore::cleanUp();
         window::cleanUp();
     }
 }

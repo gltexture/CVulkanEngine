@@ -40,10 +40,13 @@ add_executable(CVulkanEngine
         src/core/client/render/vulkan_ext.h
         src/core/client/render/vulkan_commands.cpp
         src/core/client/render/vulkan_commands.h
-        src/core/client/render/vulkan_syncronization.cpp
-        src/core/client/render/vulkan_syncronization.h
+        src/core/client/render/vulkan_synchronization.cpp
+        src/core/client/render/vulkan_synchronization.h
         src/core/client/render/vulkan_swapchain.cpp
         src/core/client/render/vulkan_swapchain.h
+        src/core/client/render/vulkan_renderer.cpp
+        src/core/client/render/vulkan_renderer.h
+        src/core/client/render/vulkan_config.h
 )
 
 target_link_libraries(

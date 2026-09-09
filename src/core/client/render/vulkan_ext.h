@@ -1,6 +1,6 @@
 #pragma once
 #include <vulkan/vulkan_core.h>
 
-namespace cvulkan::client::renderer::vulkan {
+namespace cvulkan::client::renderCore::ext {
     VkDebugUtilsMessengerCreateInfoEXT createDebugMessengerCreateInfo();
 }

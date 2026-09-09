@@ -5,7 +5,7 @@
 #pragma once
 #include "vulkan_render_core.h"
 
-namespace cvulkan::client::renderer {
+namespace cvulkan::client::renderCore {
     struct CVulkanInheritanceInfo {
         const VkFormat depthFormat;
         const std::vector<VkFormat> colorFormats;
@@ -15,7 +15,7 @@ namespace cvulkan::client::renderer {
     class CVulkanCommandPool {
     public:
         CVulkanCommandPool(const CVulkanContext& context, const uint32_t queueFamilyIndex, const bool supportReset)
-        : _context{context}, queueFamilyIndex{queueFamilyIndex}, supportReset{supportReset} {}
+        : _context{context}, _queueFamilyIndex{queueFamilyIndex}, _supportReset{supportReset} {}
         ~CVulkanCommandPool() {
             this->destroyCommandPool();
         }
@@ -28,20 +28,20 @@ namespace cvulkan::client::renderer {
         void reset() const;
 
         [[nodiscard]] VkCommandPool vk_command_pool() const {
-            return vkCommandPool;
+            return _vkCommandPool;
         }
 
     private:
         const CVulkanContext& _context;
-        VkCommandPool vkCommandPool = {};
-        const uint32_t queueFamilyIndex;
-        const bool supportReset;
+        VkCommandPool _vkCommandPool = {};
+        const uint32_t _queueFamilyIndex;
+        const bool _supportReset;
     };
 
     class CVulkanCommandBuffer {
     public:
-        CVulkanCommandBuffer(const CVulkanCommandPool* vk_command_pool, const CVulkanContext& context, const bool primary, const bool one_time_submit)
-            : _context{context}, vkCommandPool{vk_command_pool}, primary{primary}, oneTimeSubmit{one_time_submit} {}
+        CVulkanCommandBuffer(const CVulkanCommandPool& commandPool, const CVulkanContext& context, const bool primary, const bool oneTimeSubmit)
+            : _context{context}, _commandPool{commandPool}, _primary{primary}, _oneTimeSubmit{oneTimeSubmit} {}
         ~CVulkanCommandBuffer() {
             this->destroyCommandBuffer();
         }
@@ -56,20 +56,26 @@ namespace cvulkan::client::renderer {
         void beginRecording(const CVulkanInheritanceInfo* inheritance_info) const;
         void endRecording() const;
 
+        void submitAndWait(const CVulkanQueue& queue) const;
+
         void initCommandBuffer();
         void destroyCommandBuffer() const;
         void reset() const;
 
         [[nodiscard]] VkCommandBuffer vk_command_buffer() const {
-            return vkCommandBuffer;
+            return _vkCommandBuffer;
+        }
+
+        [[nodiscard]] const CVulkanCommandPool& commandPool() const {
+            return _commandPool;
         }
 
     private:
         const CVulkanContext& _context;
-        VkCommandBuffer vkCommandBuffer = {};
-        const CVulkanCommandPool* vkCommandPool = {};
-        const bool primary;
-        const bool oneTimeSubmit;
+        VkCommandBuffer _vkCommandBuffer = {};
+        const CVulkanCommandPool& _commandPool;
+        const bool _primary;
+        const bool _oneTimeSubmit;
     };
 
     void init(const CVulkanContext* c_context);
