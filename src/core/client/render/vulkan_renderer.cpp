@@ -10,6 +10,7 @@ namespace cvulkan::client::renderLoop {
     std::unique_ptr<CVulkanRenderPipeline> renderPipeline;
 
     void CVulkanRenderPipeline::initRenderLoop() {
+
     }
 
     void CVulkanRenderPipeline::renderLoop() {
