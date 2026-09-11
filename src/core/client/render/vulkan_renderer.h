@@ -32,16 +32,14 @@ namespace cvulkan::client::renderLoop {
         void destroyPipelineResources();
 
     protected:
-        static uint32_t getPresentationQueueFamilyIndex();
-        static uint32_t getQueueFamilyIndex();
 
     private:
         const renderCore::CVulkanContext& _context;
-        std::optional<std::array<renderCore::CVulkanCommandPool, renderConfig::MAX_IMAGES_IN_FLIGHT>> _commandPools = {};
-        std::optional<std::array<renderCore::CVulkanCommandBuffer, renderConfig::MAX_IMAGES_IN_FLIGHT>> _commandBuffers = {};
-        std::optional<std::array<renderSync::CVulkanFence, renderConfig::MAX_IMAGES_IN_FLIGHT>> _fences = {};
-        std::optional<std::array<renderSync::CVulkanSemaphore, renderConfig::MAX_IMAGES_IN_FLIGHT>> _presentationCompleteSemaphores = {};
-        std::optional<std::array<renderSync::CVulkanSemaphore, renderConfig::MAX_IMAGES_IN_FLIGHT>> _renderCompleteSemaphores = {};
+        std::vector<renderCore::CVulkanCommandPool> _commandPools = {};
+        std::vector<renderCore::CVulkanCommandBuffer> _commandBuffers = {};
+        std::vector<renderSync::CVulkanFence> _fences = {};
+        std::vector<renderSync::CVulkanSemaphore> _presentationCompleteSemaphores = {};
+        std::vector<renderSync::CVulkanSemaphore> _renderCompleteSemaphores = {};
         uint32_t currentFrame = 0;
         renderCore::CVulkanQueue graphicsQueue;
         renderCore::CVulkanQueue presentQueue;

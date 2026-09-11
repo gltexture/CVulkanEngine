@@ -11,6 +11,44 @@
 #include "util/logger.inl"
 
 namespace cvulkan::client::renderCore {
+    using QueueFamilyBitMask = uint32_t;
+
+    struct CVulkanQueueFamilyBitMasks {
+        static constexpr QueueFamilyBitMask GRAPHICS = 1u << 0;
+        static constexpr QueueFamilyBitMask COMPUTE = 1u << 1;
+        static constexpr QueueFamilyBitMask TRANSFER = 1u << 2;
+        static constexpr QueueFamilyBitMask PRESENT = 1u << 3;
+    };
+
+    struct CVulkanQueueFamilyCreationRequest {
+        QueueFamilyBitMask bitMask;
+        uint32_t queueCount;
+        std::vector<float> priorities;
+    };
+
+    struct CVulkanQueueFamilyRegisteredData {
+        QueueFamilyBitMask bitMask;
+        uint32_t queueCount;
+        uint32_t queueFamilyIndex;
+    };
+
+    class CVulkanQueueFamiliesRegistry {
+    public:
+        CVulkanQueueFamiliesRegistry() = default;
+        ~CVulkanQueueFamiliesRegistry() = default;
+
+        void registerQueueFamily(QueueFamilyBitMask bitMask, uint32_t queueCount, uint32_t queueFamilyIndex);
+
+        [[nodiscard]] const std::vector<CVulkanQueueFamilyRegisteredData>& registeredData() const {
+            return _registeredData;
+        }
+
+    private:
+        std::vector<CVulkanQueueFamilyRegisteredData> _registeredData = {};
+    };
+
+
+
     struct CVulkanLayersAndExtensionsData {
         std::unordered_set<std::string> enabledLayers = {};
         std::unordered_set<std::string> enabledExtensions = {};
@@ -50,7 +88,7 @@ namespace cvulkan::client::renderCore {
 
     class CVulkanContext {
     public:
-        explicit CVulkanContext(const window::CVWindow& window) : _glfwWindow{window}, _surface{*this}, _graphicsQueue{*this} {}
+        explicit CVulkanContext(const window::CVWindow& window) : _glfwWindow{window}, _surface{*this} {}
         ~CVulkanContext() {
             this->destroyRenderCore();
         }
@@ -60,7 +98,7 @@ namespace cvulkan::client::renderCore {
 
         void initVulkanInstance(bool debugMode, std::initializer_list<std::string> requiredLayers, std::initializer_list<std::string>requiredExtensions);
         void initVulkanPhysicalDevice(std::initializer_list<std::string> requiredLayers, std::initializer_list<std::string> requiredExtensions);
-        void initVulkanLogicalDevice(const CVulkanPhysicalDevice &data);
+        void initVulkanLogicalDevice(std::vector<CVulkanQueueFamilyCreationRequest>&& requiredQueueFamilies);
 
         [[nodiscard]] VkDebugUtilsMessengerEXT vkDebugMessenger() const {
             return _vkDebugMessenger;
@@ -86,21 +124,23 @@ namespace cvulkan::client::renderCore {
             return _surface;
         }
 
-        [[nodiscard]] CVulkanQueue& graphicsQueue() {
-            return _graphicsQueue;
+        [[nodiscard]] CVulkanQueueFamiliesRegistry queueFamiliesRegistry() const {
+            return _queueFamiliesRegistry;
         }
 
     private:
+        const window::CVWindow& _glfwWindow;
         VkDebugUtilsMessengerEXT _vkDebugMessenger = {};
         CVulkanInstance _instance = {};
         CVulkanPhysicalDevice _physicalDevice = {};
         CVulkanDevice _device = {};
-        const window::CVWindow& _glfwWindow;
         CVulkanSurface _surface;
-        CVulkanQueue _graphicsQueue;
+        CVulkanQueueFamiliesRegistry _queueFamiliesRegistry = {};
 
     protected:
         void destroyRenderCore();
+
+        [[nodiscard]] uint32_t findVulkanQueueFamily(QueueFamilyBitMask bitmask) const;
 
         void tryIncludeInstanceLayer(const std::unordered_set<std::string> &available, const std::string &layer) {
             if (available.contains(layer)) {
