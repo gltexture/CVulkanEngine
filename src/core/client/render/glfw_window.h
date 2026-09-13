@@ -29,7 +29,7 @@ namespace cvulkan::client::window {
 
     private:
         GLFWwindow *glfwWindowDescriptor;
-        glm::uvec2 glfwWindowSize = {};
+        glm::uvec2 glfwWindowSize {};
     };
 
     extern std::unique_ptr<CVWindow> glfwWindow;

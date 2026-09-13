@@ -23,22 +23,22 @@ namespace cvulkan::client::renderCore {
                 .layerCount = view_data.layerCount
             }
         };
-        utility::vkCheck(vkCreateImageView(this->_context.deviceData().vkDevice, &image_view_create_info, nullptr, &this->_vkImageView), "Failed to createImageView image view");
+        utility::vkCheck(vkCreateImageView(this->_context.device().vkDevice, &image_view_create_info, nullptr, &this->_vkImageView), "Failed to createImageView image view");
+        this->_vkImage = vk_image;
     }
 
     void CVulkanImageView::destroyImageView() {
         if (this->_vkImageView != VK_NULL_HANDLE) {
-            vkDestroyImageView(this->_context.deviceData().vkDevice, this->_vkImageView, nullptr);
+            vkDestroyImageView(this->_context.device().vkDevice, this->_vkImageView, nullptr);
             this->_vkImageView = VK_NULL_HANDLE;
         }
     }
 
     void CVulkanSwapChain::createSwapChain(const VkSurfaceKHR& vkSurface, const VkSurfaceCapabilitiesKHR& vkSurfaceCapabilities, const VkFormat& vkFormat, const VkColorSpaceKHR& vkColorSpace) {
-        const uint32_t requestedImages = 3;
+        constexpr uint32_t requestedImages = renderConfig::SWAP_CHAIN_IMAGES;
 
         logging::info("Setting up vulkan vkSwapChain");
         uint32_t imageCount = -1;
-        VkExtent2D extent = {};
 
         {
             const uint32_t minImages = vkSurfaceCapabilities.minImageCount;
@@ -54,20 +54,20 @@ namespace cvulkan::client::renderCore {
         {
             if (vkSurfaceCapabilities.currentExtent.width == UINT32_MAX) {
                 const auto windowSize = this->_context.glfwWindow().size();
-                extent.width = std::clamp(windowSize.x,vkSurfaceCapabilities.minImageExtent.width,vkSurfaceCapabilities.maxImageExtent.width);
-                extent.height = std::clamp(windowSize.y,vkSurfaceCapabilities.minImageExtent.height,vkSurfaceCapabilities.maxImageExtent.height);
+                this->_swapChainExtent.width = std::clamp(windowSize.x,vkSurfaceCapabilities.minImageExtent.width,vkSurfaceCapabilities.maxImageExtent.width);
+                this->_swapChainExtent.height = std::clamp(windowSize.y,vkSurfaceCapabilities.minImageExtent.height,vkSurfaceCapabilities.maxImageExtent.height);
             } else {
-                extent = vkSurfaceCapabilities.currentExtent;
+                this->_swapChainExtent = vkSurfaceCapabilities.currentExtent;
             }
         }
 
-        VkSwapchainCreateInfoKHR swapChainCreateInfo = {};
+        VkSwapchainCreateInfoKHR swapChainCreateInfo {};
         swapChainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
         swapChainCreateInfo.surface = vkSurface;
         swapChainCreateInfo.minImageCount = imageCount;
         swapChainCreateInfo.imageFormat = vkFormat;
         swapChainCreateInfo.imageColorSpace = vkColorSpace;
-        swapChainCreateInfo.imageExtent = extent;
+        swapChainCreateInfo.imageExtent = this->_swapChainExtent;
         swapChainCreateInfo.imageArrayLayers = 1;
         swapChainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
         swapChainCreateInfo.preTransform = vkSurfaceCapabilities.currentTransform;
@@ -80,13 +80,12 @@ namespace cvulkan::client::renderCore {
             swapChainCreateInfo.presentMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
         }
 
-        utility::vkCheck(vkCreateSwapchainKHR(this->_context.deviceData().vkDevice, &swapChainCreateInfo, nullptr, &this->_vkSwapChain));
+        utility::vkCheck(vkCreateSwapchainKHR(this->_context.device().vkDevice, &swapChainCreateInfo, nullptr, &this->_vkSwapChain));
 
         {
-            uint32_t swapChainImagesCount = 0;
-            utility::vkCheck(vkGetSwapchainImagesKHR(this->_context.deviceData().vkDevice, this->_vkSwapChain, &swapChainImagesCount, nullptr), "Failed to create swapChain Images");
-            std::vector<VkImage> images(swapChainImagesCount);
-            utility::vkCheck(vkGetSwapchainImagesKHR(this->_context.deviceData().vkDevice, this->_vkSwapChain, &swapChainImagesCount, images.data()), "Failed to create swapChain Images");
+            utility::vkCheck(vkGetSwapchainImagesKHR(this->_context.device().vkDevice, this->_vkSwapChain, &this->_numImages, nullptr), "Failed to create swapChain Images");
+            std::vector<VkImage> images(this->numImages());
+            utility::vkCheck(vkGetSwapchainImagesKHR(this->_context.device().vkDevice, this->_vkSwapChain, &this->_numImages, images.data()), "Failed to create swapChain Images");
 
             const CVulkanImageViewData image_view_data = {.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .format = vkFormat};
             this->_imageViews.reserve(images.size());
@@ -106,13 +105,49 @@ namespace cvulkan::client::renderCore {
             }
         }
         if (this->_vkSwapChain != VK_NULL_HANDLE) {
-            vkDestroySwapchainKHR(this->_context.deviceData().vkDevice, this->_vkSwapChain, nullptr);
+            vkDestroySwapchainKHR(this->_context.device().vkDevice, this->_vkSwapChain, nullptr);
             this->_vkSwapChain = VK_NULL_HANDLE;
         }
     }
 
+    uint32_t CVulkanSwapChain::acquireSwapChainNextImage(const renderSync::CVulkanSemaphore& semaphore) const {
+        uint32_t imageIndex = 0;
+        switch (VkResult result = vkAcquireNextImageKHR(this->_context.device().vkDevice, this->_vkSwapChain, UINT64_MAX, semaphore.vkSemaphore(), nullptr, &imageIndex)) {
+            case VK_ERROR_OUT_OF_DATE_KHR:
+                return UINT32_MAX;
+            case VK_SUBOPTIMAL_KHR:
+                break;
+            case VK_SUCCESS:
+                break;
+            default:
+                throw std::runtime_error("Failed to acquire next swap chain image");
+        }
+        return imageIndex;
+    }
+
+    bool CVulkanSwapChain::presentImage(const CVulkanQueue& queue, const renderSync::CVulkanSemaphore& renderCompleteSemaphore, const uint32_t& imageIndex) const {
+        const VkSemaphore vkSemaphore = renderCompleteSemaphore.vkSemaphore();
+        const VkPresentInfoKHR presentInfo = {
+            .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+            .pWaitSemaphores = &vkSemaphore,
+            .swapchainCount = 1,
+            .pSwapchains = &this->_vkSwapChain,
+            .pImageIndices = &imageIndex,
+        };
+        switch (VkResult result = vkQueuePresentKHR(queue.vkQueue(), &presentInfo)) {
+            case VK_ERROR_OUT_OF_DATE_KHR:
+                return true;
+            case VK_SUBOPTIMAL_KHR:
+            case VK_SUCCESS:
+                break;
+            default:
+                throw std::runtime_error("Failed to present KHRe");
+        }
+        return false;
+    }
+
     void CVulkanQueue::initQueue(const uint32_t queueFamilyIndex, const uint32_t queueIndex) {
-        vkGetDeviceQueue(this->_context.deviceData().vkDevice, queueFamilyIndex, queueIndex, &this->_vkQueue);
+        vkGetDeviceQueue(this->_context.device().vkDevice, queueFamilyIndex, queueIndex, &this->_vkQueue);
         this->_queueFamilyIndex = queueFamilyIndex;
     }
 
@@ -155,16 +190,14 @@ namespace cvulkan::client::renderCore {
 
     void CVulkanSurface::createSurface() {
         logging::info("Setting up GLFW surface");
-        utility::vkCheck(glfwCreateWindowSurface(this->_context.instanceData().vkInstance, this->_context.glfwWindow().glfw_window_descriptor(), nullptr, &this->_vkSurface));
-        utility::vkCheck(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(this->_context.physicalDeviceData().vkPhysicalDevice, this->_vkSurface, &this->_vkSurfaceCapabilities));
-        calcSurfaceFormat(this->_context.physicalDeviceData(), this->_vkSurface, this->_vkFormat, this->_vkColorSpace);
-        this->_swapChain.createSwapChain(this->_vkSurface, this->_vkSurfaceCapabilities, this->_vkFormat, this->_vkColorSpace);
+        utility::vkCheck(glfwCreateWindowSurface(this->_context.instance().vkInstance, this->_context.glfwWindow().glfw_window_descriptor(), nullptr, &this->_vkSurface));
+        utility::vkCheck(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(this->_context.physicalDevice().vkPhysicalDevice, this->_vkSurface, &this->_vkSurfaceCapabilities));
+        calcSurfaceFormat(this->_context.physicalDevice(), this->_vkSurface, this->_vkFormat, this->_vkColorSpace);
     }
 
     void CVulkanSurface::destroySurface() {
-        this->_swapChain.destroySwapChain();
         if (this->_vkSurface != VK_NULL_HANDLE) {
-            vkDestroySurfaceKHR(this->_context.instanceData().vkInstance, this->_vkSurface, nullptr);
+            vkDestroySurfaceKHR(this->_context.instance().vkInstance, this->_vkSurface, nullptr);
             this->_vkSurface = VK_NULL_HANDLE;
         }
     }

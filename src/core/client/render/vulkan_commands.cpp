@@ -3,7 +3,6 @@
 //
 
 #include "vulkan_commands.h"
-
 #include "vulkan_synchronization.h"
 
 namespace cvulkan::client::renderCore {
@@ -16,17 +15,17 @@ namespace cvulkan::client::renderCore {
         if (this->_supportReset) {
             commandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
         }
-        utility::vkCheck(vkCreateCommandPool(this->_context.deviceData().vkDevice, &commandPoolCreateInfo, nullptr, &this->_vkCommandPool), "Failed to create command pool");
+        utility::vkCheck(vkCreateCommandPool(this->_context.device().vkDevice, &commandPoolCreateInfo, nullptr, &this->_vkCommandPool), "Failed to create command pool");
     }
 
     void CVulkanCommandPool::destroyCommandPool() const {
         logging::info("Destroying command pool");
-        vkDestroyCommandPool(this->_context.deviceData().vkDevice, this->_vkCommandPool, nullptr);
+        vkDestroyCommandPool(this->_context.device().vkDevice, this->_vkCommandPool, nullptr);
     }
 
     void CVulkanCommandPool::reset() const {
-        logging::info("Resetting command pool");
-        vkResetCommandPool(this->_context.deviceData().vkDevice, this->_vkCommandPool, 0);
+        //logging::info("Resetting command pool");
+        vkResetCommandPool(this->_context.device().vkDevice, this->_vkCommandPool, 0);
     }
 
 
@@ -62,8 +61,8 @@ namespace cvulkan::client::renderCore {
     }
 
     void CVulkanCommandBuffer::submitAndWait(const CVulkanQueue& queue) const {
-        CVulkanFence fence{this->_context};
-        fence.createFence(false);
+        renderSync::CVulkanFence fence{this->_context};
+        fence.initFence(false);
         const VkCommandBufferSubmitInfo submitInfo = {
             .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
             .commandBuffer = this->_vkCommandBuffer,
@@ -78,17 +77,17 @@ namespace cvulkan::client::renderCore {
 
         const VkCommandBufferAllocateInfo commandBufferAllocateInfo = {
             .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-            .commandPool = this->_commandPool->vk_command_pool(),
+            .commandPool = this->_commandPool.vkCommandPool(),
             .level = this->_primary ? VK_COMMAND_BUFFER_LEVEL_PRIMARY : VK_COMMAND_BUFFER_LEVEL_SECONDARY,
             .commandBufferCount = 1,
         };
 
-        utility::vkCheck(vkAllocateCommandBuffers(this->_context.deviceData().vkDevice, &commandBufferAllocateInfo, &this->_vkCommandBuffer), "Failed to create command buffer");
+        utility::vkCheck(vkAllocateCommandBuffers(this->_context.device().vkDevice, &commandBufferAllocateInfo, &this->_vkCommandBuffer), "Failed to create command buffer");
     }
 
     void CVulkanCommandBuffer::destroyCommandBuffer() const {
         logging::info("Destroying command buffer");
-        vkFreeCommandBuffers(this->_context.deviceData().vkDevice, this->_commandPool->vk_command_pool(), 1, &this->_vkCommandBuffer);
+        vkFreeCommandBuffers(this->_context.device().vkDevice, this->_commandPool.vkCommandPool(), 1, &this->_vkCommandBuffer);
     }
 
     void CVulkanCommandBuffer::reset() const {
@@ -97,6 +96,8 @@ namespace cvulkan::client::renderCore {
 
 
     void init(const CVulkanContext* c_context) {
+    }
 
+    void cleanUp() {
     }
 }

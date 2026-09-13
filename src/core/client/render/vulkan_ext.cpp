@@ -31,7 +31,7 @@ namespace cvulkan::client::renderCore::ext {
     }
 
     VkDebugUtilsMessengerCreateInfoEXT createDebugMessengerCreateInfo() {
-        VkDebugUtilsMessengerCreateInfoEXT messengerCreateInfo = {};
+        VkDebugUtilsMessengerCreateInfoEXT messengerCreateInfo {};
         messengerCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
         messengerCreateInfo.messageType = MESS_TYPE_BIT;
         messengerCreateInfo.messageSeverity = MESS_SEVERITY_BIT;

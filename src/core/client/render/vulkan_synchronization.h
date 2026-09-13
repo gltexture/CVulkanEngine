@@ -20,8 +20,12 @@ namespace cvulkan::client::renderSync {
 
         CVulkanSemaphore(const CVulkanSemaphore&) = delete;
         CVulkanSemaphore& operator=(const CVulkanSemaphore&) = delete;
+        CVulkanSemaphore(CVulkanSemaphore&& other) noexcept
+            : _context{other._context}, _vkSemaphore{other._vkSemaphore} {
+            other._vkSemaphore = VK_NULL_HANDLE;
+        }
 
-        void createSemaphore();
+        void initSemaphore();
         void destroySemaphore();
 
         [[nodiscard]] VkSemaphore vkSemaphore() const {
@@ -30,7 +34,7 @@ namespace cvulkan::client::renderSync {
 
     private:
         const renderCore::CVulkanContext& _context;
-        VkSemaphore _vkSemaphore = {};
+        VkSemaphore _vkSemaphore {};
     };
 
     class CVulkanFence {
@@ -42,8 +46,12 @@ namespace cvulkan::client::renderSync {
 
         CVulkanFence(const CVulkanFence&) = delete;
         CVulkanFence& operator=(const CVulkanFence&) = delete;
+        CVulkanFence(CVulkanFence&& other) noexcept
+            : _context{other._context}, _vkFence{other._vkFence} {
+            other._vkFence = VK_NULL_HANDLE;
+        }
 
-        void createFence(bool signaled);
+        void initFence(bool signaled);
         void destroyFence();
         void wait() const;
         void reset() const;
@@ -54,6 +62,6 @@ namespace cvulkan::client::renderSync {
 
     private:
         const renderCore::CVulkanContext& _context;
-        VkFence _vkFence = {};
+        VkFence _vkFence {};
     };
 }

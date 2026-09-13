@@ -44,14 +44,14 @@ namespace cvulkan::client::renderCore {
         }
 
     private:
-        std::vector<CVulkanQueueFamilyRegisteredData> _registeredData = {};
+        std::vector<CVulkanQueueFamilyRegisteredData> _registeredData {};
     };
 
 
 
     struct CVulkanLayersAndExtensionsData {
-        std::unordered_set<std::string> enabledLayers = {};
-        std::unordered_set<std::string> enabledExtensions = {};
+        std::unordered_set<std::string> enabledLayers {};
+        std::unordered_set<std::string> enabledExtensions {};
 
         bool hasVkInstanceRequiredLayer(const std::string& layerName) const {
             return this->enabledLayers.contains(layerName);
@@ -63,8 +63,8 @@ namespace cvulkan::client::renderCore {
     };
 
     struct CVulkanInstance {
-        VkInstance vkInstance = {};
-        CVulkanLayersAndExtensionsData vkInstanceLrExtData = {};
+        VkInstance vkInstance {};
+        CVulkanLayersAndExtensionsData vkInstanceLrExtData {};
     };
 
     struct CVulkanPhysicalDevice {
@@ -75,11 +75,11 @@ namespace cvulkan::client::renderCore {
         VkPhysicalDeviceProperties vkPhysicalDeviceProperties{};
         VkPhysicalDeviceProperties2 vkPhysicalDeviceProperties2{.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2};
         std::vector<VkQueueFamilyProperties> vkQueueFamilyProps;
-        CVulkanLayersAndExtensionsData vkDeviceLrExtData = {};
+        CVulkanLayersAndExtensionsData vkDeviceLrExtData {};
     };
 
     struct CVulkanDevice {
-        VkDevice vkDevice = {};
+        VkDevice vkDevice {};
 
         void deviceWaitIdle() const {
             vkDeviceWaitIdle(this->vkDevice);
@@ -104,15 +104,15 @@ namespace cvulkan::client::renderCore {
             return _vkDebugMessenger;
         }
 
-        [[nodiscard]] const CVulkanInstance& instanceData() const {
+        [[nodiscard]] const CVulkanInstance& instance() const {
             return _instance;
         }
 
-        [[nodiscard]] const CVulkanPhysicalDevice& physicalDeviceData() const {
+        [[nodiscard]] const CVulkanPhysicalDevice& physicalDevice() const {
             return _physicalDevice;
         }
 
-        [[nodiscard]] const CVulkanDevice& deviceData() const {
+        [[nodiscard]] const CVulkanDevice& device() const {
             return _device;
         }
 
@@ -124,18 +124,22 @@ namespace cvulkan::client::renderCore {
             return _surface;
         }
 
-        [[nodiscard]] CVulkanQueueFamiliesRegistry queueFamiliesRegistry() const {
+        [[nodiscard]] const CVulkanSurface& surface() const {
+            return _surface;
+        }
+
+        [[nodiscard]] const CVulkanQueueFamiliesRegistry& queueFamiliesRegistry() const {
             return _queueFamiliesRegistry;
         }
 
     private:
         const window::CVWindow& _glfwWindow;
-        VkDebugUtilsMessengerEXT _vkDebugMessenger = {};
-        CVulkanInstance _instance = {};
-        CVulkanPhysicalDevice _physicalDevice = {};
-        CVulkanDevice _device = {};
+        VkDebugUtilsMessengerEXT _vkDebugMessenger {};
+        CVulkanInstance _instance {};
+        CVulkanPhysicalDevice _physicalDevice {};
+        CVulkanDevice _device {};
         CVulkanSurface _surface;
-        CVulkanQueueFamiliesRegistry _queueFamiliesRegistry = {};
+        CVulkanQueueFamiliesRegistry _queueFamiliesRegistry {};
 
     protected:
         void destroyRenderCore();

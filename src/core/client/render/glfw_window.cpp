@@ -5,7 +5,7 @@
 #include "engine_context.h"
 
 namespace cvulkan::client::window {
-    std::unique_ptr<CVWindow> glfwWindow = {};
+    std::unique_ptr<CVWindow> glfwWindow {};
 
     void CVWindow::closeWindow() const {
         glfwSetWindowShouldClose(this->glfwWindowDescriptor, GLFW_TRUE);
