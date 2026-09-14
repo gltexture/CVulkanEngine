@@ -47,8 +47,12 @@ add_executable(CVulkanEngine
         src/core/client/render/vulkan_render_loop.cpp
         src/core/client/render/vulkan_render_loop.h
         src/core/client/render/vulkan_config.h
-        src/core/client/render/vulkan_render_scene.cpp
-        src/core/client/render/vulkan_render_scene.h
+        src/core/client/render/scene/vulkan_render_scene.cpp
+        src/core/client/render/scene/vulkan_render_scene.h
+        src/core/client/render/vulkan_buffers.cpp
+        src/core/client/render/vulkan_buffers.h
+        src/core/client/render/scene/vulkan_render_structs.cpp
+        src/core/client/render/scene/vulkan_render_structs.h
 )
 
 target_link_libraries(

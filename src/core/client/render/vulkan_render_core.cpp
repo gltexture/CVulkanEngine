@@ -419,7 +419,7 @@ namespace cvulkan::client::renderCore {
         return UINT32_MAX;
     }
 
-    void init(const window::CVWindow& window) {
+    void initRenderCore(const window::CVWindow& window) {
         vulkanContext = std::make_unique<CVulkanContext>(window);
         vulkanContext->initVulkanInstance(utility::debug_mode,{},{});
         vulkanContext->initVulkanPhysicalDevice({}, {EXT_VK_KHR_SWAPCHAIN_EXTENSION_NAME()});
@@ -445,11 +445,12 @@ namespace cvulkan::client::renderCore {
         }
     }
 
-    void render() {
+    void runRender() {
         renderLoop::runRendering();
     }
 
-    void cleanUp() {
+    void cleanRenderCore() {
+        vulkanContext->device().deviceWaitIdle();
         {
             renderLoop::destroyRendering();
         }

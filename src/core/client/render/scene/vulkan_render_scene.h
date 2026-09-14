@@ -5,9 +5,8 @@
 #pragma once
 #include <vulkan/vulkan.h>
 
-#include "vulkan_render_core.h"
-#include "vulkan_render_loop.h"
-
+#include "client/render/vulkan_render_core.h"
+#include "client/render/vulkan_render_loop.h"
 
 namespace cvulkan::client::renderScene {
     class CVulkanSceneRenderer {

@@ -215,7 +215,7 @@ namespace cvulkan::client::renderCore {
 
     extern std::unique_ptr<CVulkanContext> vulkanContext;
 
-    void init(const window::CVWindow& window);
-    void render();
-    void cleanUp();
+    void initRenderCore(const window::CVWindow& window);
+    void runRender();
+    void cleanRenderCore();
 }

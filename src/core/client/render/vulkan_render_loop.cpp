@@ -5,7 +5,7 @@
 #include "vulkan_render_loop.h"
 
 #include "vulkan_commands.h"
-#include "vulkan_render_scene.h"
+#include "scene/vulkan_render_scene.h"
 
 namespace cvulkan::client::renderLoop {
     std::unique_ptr<CVulkanRenderLoop> renderLoop;
@@ -128,8 +128,6 @@ namespace cvulkan::client::renderLoop {
     }
 
     void CVulkanRenderLoop::destroyRenderLoopResources() {
-        this->_context.device().deviceWaitIdle();
-
         for (auto& t : this->_renderCompleteSemaphores) {
             t.destroySemaphore();
         }

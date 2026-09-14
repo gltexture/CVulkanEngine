@@ -93,11 +93,4 @@ namespace cvulkan::client::renderCore {
     void CVulkanCommandBuffer::reset() const {
         vkResetCommandBuffer(this->_vkCommandBuffer, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
     }
-
-
-    void init(const CVulkanContext* c_context) {
-    }
-
-    void cleanUp() {
-    }
 }

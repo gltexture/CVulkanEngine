@@ -9,7 +9,7 @@
 
 namespace cvulkan::client::renderSync {
     void CVulkanSemaphore::initSemaphore() {
-        const VkSemaphoreCreateInfo createInfo = {
+        constexpr VkSemaphoreCreateInfo createInfo = {
             .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
         };
         utility::vkCheck(vkCreateSemaphore(this->_context.device().vkDevice, &createInfo, nullptr, &this->_vkSemaphore),"Failed to create semaphore");

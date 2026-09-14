@@ -4,9 +4,9 @@
 
 #include "vulkan_render_scene.h"
 
-#include "vulkan_commands.h"
-#include "vulkan_render_loop.h"
-#include "vulkan_synchronization.h"
+#include "../vulkan_commands.h"
+#include "../vulkan_render_loop.h"
+#include "../vulkan_synchronization.h"
 
 namespace cvulkan::client::renderScene {
     void CVulkanSceneRenderer::initScene() {

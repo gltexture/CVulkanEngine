@@ -83,7 +83,4 @@ namespace cvulkan::client::renderCore {
         const bool _primary;
         const bool _oneTimeSubmit;
     };
-
-    void init(const CVulkanContext* c_context);
-    void cleanUp();
 }
