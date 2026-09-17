@@ -7,10 +7,11 @@
 #include "vulkan_ext.h"
 #include "vulkan_render_loop.h"
 
-namespace cvulkan::client::renderCore {
+namespace cvulkan::client::render::core {
     std::unique_ptr<CVulkanContext> vulkanContext;
 
     void CVulkanContext::destroyRenderCore() {
+        vulkanContext->pipelineCache().destroyPipelineCache();
         this->_surface.swapChain().destroySwapChain();
         if (this->_vkDebugMessenger != VK_NULL_HANDLE) {
             const auto func = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(this->_instance.vkInstance,"vkDestroyDebugUtilsMessengerEXT"));
@@ -134,7 +135,7 @@ namespace cvulkan::client::renderCore {
         this->_registeredData.emplace_back(bitMask, queueCount, queueFamilyIndex);
     }
 
-    void CVulkanContext::initVulkanInstance(const bool debugMode,
+    void CVulkanContext::createVulkanInstance(const bool debugMode,
                                             const std::initializer_list<std::string> requiredLayers,
                                             const std::initializer_list<std::string> requiredExtensions) {
 
@@ -212,7 +213,7 @@ namespace cvulkan::client::renderCore {
         }
     }
 
-    void CVulkanContext::initVulkanPhysicalDevice(
+    void CVulkanContext::createVulkanPhysicalDevice(
         const std::initializer_list<std::string> requiredLayers,
         const std::initializer_list<std::string> requiredExtensions) {
 
@@ -327,7 +328,7 @@ namespace cvulkan::client::renderCore {
         }
     }
 
-    void CVulkanContext::initVulkanLogicalDevice(std::vector<CVulkanQueueFamilyCreationRequest>&& requiredQueueFamilies) {
+    void CVulkanContext::createVulkanLogicalDevice(std::vector<CVulkanQueueFamilyCreationRequest>&& requiredQueueFamilies) {
         std::unordered_map<uint32_t, CVulkanQueueFamilyCreationRequest> queueFamilies {};
         std::vector<VkDeviceQueueCreateInfo> queueCreateInfos {};
         for (const auto& t : requiredQueueFamilies) {
@@ -419,12 +420,12 @@ namespace cvulkan::client::renderCore {
         return UINT32_MAX;
     }
 
-    void initRenderCore(const window::CVWindow& window) {
+    void createRenderCore(const window::CVulkanWindow& window) {
         vulkanContext = std::make_unique<CVulkanContext>(window);
-        vulkanContext->initVulkanInstance(utility::debug_mode,{},{});
-        vulkanContext->initVulkanPhysicalDevice({}, {EXT_VK_KHR_SWAPCHAIN_EXTENSION_NAME()});
+        vulkanContext->createVulkanInstance(utility::debug_mode,{},{});
+        vulkanContext->createVulkanPhysicalDevice({}, {EXT_VK_KHR_SWAPCHAIN_EXTENSION_NAME()});
         vulkanContext->surface().createSurface();
-        vulkanContext->initVulkanLogicalDevice(
+        vulkanContext->createVulkanLogicalDevice(
             std::vector<CVulkanQueueFamilyCreationRequest> {
                 {
                     CVulkanQueueFamilyBitMasks::GRAPHICS,
@@ -441,18 +442,20 @@ namespace cvulkan::client::renderCore {
         vulkanContext->surface().swapChain().createSwapChain(vulkanContext->surface().vkSurface(), vulkanContext->surface().vkSurfaceCapabilities(), vulkanContext->surface().vkFormat(), vulkanContext->surface().vkColorSpace());
 
         {
-            renderLoop::initRendering(*vulkanContext);
+            loop::createRendering(*vulkanContext);
         }
+
+        vulkanContext->pipelineCache().createPipelineCache();
     }
 
     void runRender() {
-        renderLoop::runRendering();
+        loop::runRendering();
     }
 
     void cleanRenderCore() {
         vulkanContext->device().deviceWaitIdle();
         {
-            renderLoop::destroyRendering();
+            loop::destroyRendering();
         }
         vulkanContext.reset();
     }

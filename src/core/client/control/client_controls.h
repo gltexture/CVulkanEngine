@@ -8,7 +8,7 @@ namespace cvulkan::client::control {
     extern std::unique_ptr<KeyboardControl> g_keyboardControl;
     extern std::unique_ptr<MouseControl> g_mouseControl;
 
-    void setup(const window::CVWindow& window);
+    void setup(const window::CVulkanWindow& window);
     void update_input();
     void cleanUp();
 }

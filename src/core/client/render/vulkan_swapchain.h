@@ -8,11 +8,11 @@
 
 #include "vulkan_synchronization.h"
 
-namespace cvulkan::client::renderSync {
+namespace cvulkan::client::render::sync {
     class CVulkanFence;
 }
 
-namespace cvulkan::client::renderCore {
+namespace cvulkan::client::render::core {
     class CVulkanQueue;
     class CVulkanContext;
     struct CVulkanPhysicalDevice;
@@ -34,8 +34,7 @@ namespace cvulkan::client::renderCore {
             : _context{context} {}
         ~CVulkanImageView() = default;
 
-        CVulkanImageView(const CVulkanImageView&) = delete;
-        CVulkanImageView& operator=(const CVulkanImageView&) = delete;
+        CVULKAN_NO_COPY(CVulkanImageView);
 
         CVulkanImageView(CVulkanImageView&& other) noexcept: _context{other._context}, _vkImage{other._vkImage}, _vkImageView{other._vkImageView} {
             other._vkImage = VK_NULL_HANDLE;
@@ -67,13 +66,12 @@ namespace cvulkan::client::renderCore {
             : _context{context} {}
         ~CVulkanSwapChain() = default;
 
-        CVulkanSwapChain(const CVulkanSwapChain&) = delete;
-        CVulkanSwapChain& operator=(const CVulkanSwapChain&) = delete;
+        CVULKAN_NO_COPY(CVulkanSwapChain);
 
         void createSwapChain(const VkSurfaceKHR& vkSurface, const VkSurfaceCapabilitiesKHR& vkSurfaceCapabilities, const VkFormat& vkFormat, const VkColorSpaceKHR& vkColorSpace);
         void destroySwapChain();
 
-        uint32_t acquireSwapChainNextImage(const renderSync::CVulkanSemaphore& semaphore) const;
+        uint32_t acquireSwapChainNextImage(const sync::CVulkanSemaphore& semaphore) const;
 
         [[nodiscard]] VkSwapchainKHR vkSwapChain() const {
             return _vkSwapChain;
@@ -87,11 +85,11 @@ namespace cvulkan::client::renderCore {
             return _numImages;
         }
 
-        [[nodiscard]] VkExtent2D swapChainExtent() const {
+        [[nodiscard]] VkExtent2D extent() const {
             return _swapChainExtent;
         }
 
-        bool presentImage(const CVulkanQueue& queue, const renderSync::CVulkanSemaphore& renderCompleteSemaphore, const uint32_t& imageIndex) const;
+        bool presentImage(const CVulkanQueue& queue, const sync::CVulkanSemaphore& renderCompleteSemaphore, const uint32_t& imageIndex) const;
         
     private:
         VkExtent2D _swapChainExtent = {};
@@ -106,11 +104,10 @@ namespace cvulkan::client::renderCore {
         explicit CVulkanQueue(const CVulkanContext& context): _context{context} {}
         ~CVulkanQueue() = default;
 
-        CVulkanQueue(const CVulkanQueue&) = delete;
-        CVulkanQueue& operator=(const CVulkanQueue&) = delete;
+        CVULKAN_NO_COPY(CVulkanQueue);
 
-        void initQueue(uint32_t queueFamilyIndex, uint32_t queueIndex);
-        void submit(const std::vector<VkCommandBufferSubmitInfo>& commandSubmitInfos, const std::vector<VkSemaphoreSubmitInfo>* waitSemaphores, const std::vector<VkSemaphoreSubmitInfo>* signalSemaphores, const renderSync::CVulkanFence* fence) const;
+        void createQueue(uint32_t queueFamilyIndex, uint32_t queueIndex);
+        void submit(const std::vector<VkCommandBufferSubmitInfo>& commandSubmitInfos, const std::vector<VkSemaphoreSubmitInfo>* waitSemaphores, const std::vector<VkSemaphoreSubmitInfo>* signalSemaphores, const sync::CVulkanFence* fence) const;
 
         [[nodiscard]] VkQueue vkQueue() const {
             return _vkQueue;
@@ -132,8 +129,7 @@ namespace cvulkan::client::renderCore {
             : _swapChain{context}, _context{context} {}
         ~CVulkanSurface() = default;
 
-        CVulkanSurface(const CVulkanSurface&) = delete;
-        CVulkanSurface& operator=(const CVulkanSurface&) = delete;
+        CVULKAN_NO_COPY(CVulkanSurface);
 
         static void calcSurfaceFormat(const CVulkanPhysicalDevice &physical_device_data, const VkSurfaceKHR& vkSurface, VkFormat& vkFormat, VkColorSpaceKHR& vkColorSpace);
         void createSurface();

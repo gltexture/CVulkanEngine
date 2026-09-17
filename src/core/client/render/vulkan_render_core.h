@@ -6,11 +6,12 @@
 #include <vulkan/vulkan.h>
 
 #include "glfw_window.h"
+#include "vulkan_pipeline.h"
 #include "vulkan_swapchain.h"
 #include "vulkan_utility.h"
 #include "util/logger.inl"
 
-namespace cvulkan::client::renderCore {
+namespace cvulkan::client::render::core {
     using QueueFamilyBitMask = uint32_t;
 
     struct CVulkanQueueFamilyBitMasks {
@@ -88,17 +89,16 @@ namespace cvulkan::client::renderCore {
 
     class CVulkanContext {
     public:
-        explicit CVulkanContext(const window::CVWindow& window) : _glfwWindow{window}, _surface{*this} {}
+        explicit CVulkanContext(const window::CVulkanWindow& window) : _glfwWindow{window}, _surface{*this}, _pipelineCache(*this) {}
         ~CVulkanContext() {
             this->destroyRenderCore();
         }
 
-        CVulkanContext(const CVulkanContext&) = delete;
-        CVulkanContext& operator=(const CVulkanContext&) = delete;
+        CVULKAN_NO_COPY(CVulkanContext)
 
-        void initVulkanInstance(bool debugMode, std::initializer_list<std::string> requiredLayers, std::initializer_list<std::string>requiredExtensions);
-        void initVulkanPhysicalDevice(std::initializer_list<std::string> requiredLayers, std::initializer_list<std::string> requiredExtensions);
-        void initVulkanLogicalDevice(std::vector<CVulkanQueueFamilyCreationRequest>&& requiredQueueFamilies);
+        void createVulkanInstance(bool debugMode, std::initializer_list<std::string> requiredLayers, std::initializer_list<std::string>requiredExtensions);
+        void createVulkanPhysicalDevice(std::initializer_list<std::string> requiredLayers, std::initializer_list<std::string> requiredExtensions);
+        void createVulkanLogicalDevice(std::vector<CVulkanQueueFamilyCreationRequest>&& requiredQueueFamilies);
 
         [[nodiscard]] VkDebugUtilsMessengerEXT vkDebugMessenger() const {
             return _vkDebugMessenger;
@@ -106,6 +106,14 @@ namespace cvulkan::client::renderCore {
 
         [[nodiscard]] const CVulkanInstance& instance() const {
             return _instance;
+        }
+
+        [[nodiscard]] const CVulkanPipelineCache& pipelineCache() const {
+            return _pipelineCache;
+        }
+
+        [[nodiscard]] CVulkanPipelineCache& pipelineCache() {
+            return _pipelineCache;
         }
 
         [[nodiscard]] const CVulkanPhysicalDevice& physicalDevice() const {
@@ -116,7 +124,7 @@ namespace cvulkan::client::renderCore {
             return _device;
         }
 
-        [[nodiscard]] const window::CVWindow& glfwWindow() const {
+        [[nodiscard]] const window::CVulkanWindow& glfwWindow() const {
             return _glfwWindow;
         }
 
@@ -133,8 +141,9 @@ namespace cvulkan::client::renderCore {
         }
 
     private:
-        const window::CVWindow& _glfwWindow;
+        const window::CVulkanWindow& _glfwWindow;
         VkDebugUtilsMessengerEXT _vkDebugMessenger {};
+        CVulkanPipelineCache _pipelineCache;
         CVulkanInstance _instance {};
         CVulkanPhysicalDevice _physicalDevice {};
         CVulkanDevice _device {};
@@ -215,7 +224,7 @@ namespace cvulkan::client::renderCore {
 
     extern std::unique_ptr<CVulkanContext> vulkanContext;
 
-    void initRenderCore(const window::CVWindow& window);
+    void createRenderCore(const window::CVulkanWindow& window);
     void runRender();
     void cleanRenderCore();
 }

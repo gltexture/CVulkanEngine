@@ -5,8 +5,8 @@
 #include "vulkan_commands.h"
 #include "vulkan_synchronization.h"
 
-namespace cvulkan::client::renderCore {
-    void CVulkanCommandPool::initCommandPool() {
+namespace cvulkan::client::render::core {
+    void CVulkanCommandPool::createCommandPool() {
         logging::info("Creating command pool");
         VkCommandPoolCreateInfo commandPoolCreateInfo = {
             .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
@@ -61,8 +61,8 @@ namespace cvulkan::client::renderCore {
     }
 
     void CVulkanCommandBuffer::submitAndWait(const CVulkanQueue& queue) const {
-        renderSync::CVulkanFence fence{this->_context};
-        fence.initFence(false);
+        sync::CVulkanFence fence{this->_context};
+        fence.createFence(false);
         const VkCommandBufferSubmitInfo submitInfo = {
             .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
             .commandBuffer = this->_vkCommandBuffer,
@@ -72,7 +72,7 @@ namespace cvulkan::client::renderCore {
         fence.destroyFence();
     }
 
-    void CVulkanCommandBuffer::initCommandBuffer() {
+    void CVulkanCommandBuffer::createCommandBuffer() {
         logging::info("Creating command buffer");
 
         const VkCommandBufferAllocateInfo commandBufferAllocateInfo = {

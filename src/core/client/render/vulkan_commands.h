@@ -5,7 +5,7 @@
 #pragma once
 #include "vulkan_render_core.h"
 
-namespace cvulkan::client::renderCore {
+namespace cvulkan::client::render::core {
     struct CVulkanInheritanceInfo {
         const VkFormat depthFormat;
         const std::vector<VkFormat> colorFormats;
@@ -19,14 +19,14 @@ namespace cvulkan::client::renderCore {
         ~CVulkanCommandPool() {
         }
 
-        CVulkanCommandPool(const CVulkanCommandPool&) = delete;
-        CVulkanCommandPool& operator=(const CVulkanCommandPool&) = delete;
+        CVULKAN_NO_COPY(CVulkanCommandPool)
+
         CVulkanCommandPool(CVulkanCommandPool&& other) noexcept
             : _context{other._context}, _vkCommandPool{other._vkCommandPool}, _queueFamilyIndex{other._queueFamilyIndex}, _supportReset{other._supportReset} {
             other._vkCommandPool = VK_NULL_HANDLE;
         }
 
-        void initCommandPool();
+        void createCommandPool();
         void destroyCommandPool() const;
         void reset() const;
 
@@ -48,8 +48,8 @@ namespace cvulkan::client::renderCore {
         ~CVulkanCommandBuffer() {
         }
 
-        CVulkanCommandBuffer(const CVulkanCommandBuffer&) = delete;
-        CVulkanCommandBuffer& operator=(const CVulkanCommandBuffer&) = delete;
+        CVULKAN_NO_COPY(CVulkanCommandBuffer)
+
         CVulkanCommandBuffer(CVulkanCommandBuffer&& other) noexcept
             : _context{other._context}, _vkCommandBuffer{other._vkCommandBuffer}, _commandPool{other._commandPool}, _primary(other._primary), _oneTimeSubmit(other._oneTimeSubmit) {
             other._vkCommandBuffer = VK_NULL_HANDLE;
@@ -64,7 +64,7 @@ namespace cvulkan::client::renderCore {
 
         void submitAndWait(const CVulkanQueue& queue) const;
 
-        void initCommandBuffer();
+        void createCommandBuffer();
         void destroyCommandBuffer() const;
         void reset() const;
 

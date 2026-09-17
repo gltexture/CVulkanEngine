@@ -1,4 +1,5 @@
 #pragma once
+#include <filesystem>
 #include <spdlog/spdlog.h>
 #include <vulkan/vk_enum_string_helper.h>
 
@@ -7,6 +8,20 @@
 #define DEBUG_MODE
 
 namespace cvulkan::utility {
+    inline const std::filesystem::path RESOURCES_FOLDER {"resources"};
+    inline const std::filesystem::path SHADERS_FOLDER = RESOURCES_FOLDER / "shaders";
+    inline const std::filesystem::path SHADERS_FOLDER_SPV = RESOURCES_FOLDER / "shaders" / "compiled";
+
+#define CVULKAN_NO_COPY(Type) \
+    Type(const Type&) = delete; \
+    Type& operator=(const Type&) = delete;
+
+#define CVULKAN_NO_COPY_NO_MOVE(Type) \
+    Type(const Type&) = delete; \
+    Type& operator=(const Type&) = delete; \
+    Type(Type&&) noexcept = default; \
+    Type& operator=(Type&&) = delete;
+
     enum OSType {
         MAC,
         WIN,
@@ -34,7 +49,7 @@ namespace cvulkan::utility {
         return osTypeToCheck == osType;
     }
 
-    inline void vkCheck(const VkResult vk_result, const std::string_view errMsg) {
+    inline void vkCheck(const VkResult vk_result, std::string_view errMsg) {
         if (vk_result != VK_SUCCESS) {
             throw std::runtime_error{std::format("{} -> {}", string_VkResult(vk_result), errMsg)};
         }
@@ -51,6 +66,6 @@ namespace cvulkan::utility {
         }
     }
 
-    void imageBarrier(const VkCommandBuffer commandBuffer, const VkImage image, const VkImageLayout oldLayout, const VkImageLayout newLayout, const VkPipelineStageFlags2 srcStageMask, const VkPipelineStageFlags2 dstStageMask,
-        const VkAccessFlags2 srcAccessMask, const VkAccessFlags2 dstAccessMask, const VkImageAspectFlags aspectMask);
+    void imageBarrier(VkCommandBuffer commandBuffer, VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout, VkPipelineStageFlags2 srcStageMask, VkPipelineStageFlags2 dstStageMask,
+        VkAccessFlags2 srcAccessMask, VkAccessFlags2 dstAccessMask, VkImageAspectFlags aspectMask);
 }

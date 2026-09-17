@@ -9,7 +9,7 @@
 #include "client/render/vulkan_render_core.h"
 #include "client/render/vulkan_buffers.h"
 
-namespace cvulkan::client::renderStructs {
+namespace cvulkan::client::render::structs {
     static constexpr uint32_t NUMBER_OF_ATTRIBUTES = 1;
     static constexpr uint32_t POSITION_COMPONENTS = 3;
 
@@ -28,14 +28,13 @@ namespace cvulkan::client::renderStructs {
 
     class CVulkanVertexStruct {
     public:
-        explicit CVulkanVertexStruct(const renderCore::CVulkanContext& context)
+        explicit CVulkanVertexStruct(const core::CVulkanContext& context)
             : _context(context) {}
         ~CVulkanVertexStruct() = default;
 
-        CVulkanVertexStruct(const CVulkanVertexStruct&) = delete;
-        CVulkanVertexStruct& operator=(const CVulkanVertexStruct&) = delete;
+        CVULKAN_NO_COPY(CVulkanVertexStruct);
 
-        void initVertexStruct();
+        void createVertexStruct();
         void destroyVertexStruct();
 
         [[nodiscard]] VkPipelineVertexInputStateCreateInfo vkPipelineVertexInputStateCreateInfo() const {
@@ -43,7 +42,7 @@ namespace cvulkan::client::renderStructs {
         }
 
     private:
-        const renderCore::CVulkanContext& _context;
+        const core::CVulkanContext& _context;
         VkPipelineVertexInputStateCreateInfo _vkPipelineVertexInputStateCreateInfo {};
         std::vector<VkVertexInputAttributeDescription> _vkVertexInputAttributeDescriptions {};
         std::vector<VkVertexInputBindingDescription> _vkVertexInputBindingDescriptions {};
@@ -51,18 +50,14 @@ namespace cvulkan::client::renderStructs {
 
     class CVulkanMesh {
     public:
-        CVulkanMesh(const std::string& id, renderCore::CVulkanBuffer&& verticesBuffer, renderCore::CVulkanBuffer&& indicesBuffer, const uint32_t& numIndices)
+        CVulkanMesh(const std::string& id, core::CVulkanBuffer&& verticesBuffer, core::CVulkanBuffer&& indicesBuffer, const uint32_t& numIndices)
             : _id(id),
               _verticesBuffer(std::move(verticesBuffer)),
               _indicesBuffer(std::move(indicesBuffer)),
               _numIndices(numIndices) {
         }
 
-        CVulkanMesh(const CVulkanMesh&) = delete;
-        CVulkanMesh& operator=(const CVulkanMesh&) = delete;
-
-        CVulkanMesh(CVulkanMesh&&) noexcept = default;
-        CVulkanMesh& operator=(CVulkanMesh&&) = delete;
+        CVULKAN_NO_COPY_NO_MOVE(CVulkanMesh);
 
         void destroyMesh();
 
@@ -70,11 +65,11 @@ namespace cvulkan::client::renderStructs {
             return _id;
         }
 
-        [[nodiscard]] const renderCore::CVulkanBuffer& verticesBuffer() const {
+        [[nodiscard]] const core::CVulkanBuffer& verticesBuffer() const {
             return _verticesBuffer;
         }
 
-        [[nodiscard]] const renderCore::CVulkanBuffer& indicesBuffer() const {
+        [[nodiscard]] const core::CVulkanBuffer& indicesBuffer() const {
             return _indicesBuffer;
         }
 
@@ -84,8 +79,8 @@ namespace cvulkan::client::renderStructs {
 
     private:
         std::string _id;
-        renderCore::CVulkanBuffer _verticesBuffer;
-        renderCore::CVulkanBuffer _indicesBuffer;
+        core::CVulkanBuffer _verticesBuffer;
+        core::CVulkanBuffer _indicesBuffer;
         uint32_t _numIndices;
     };
 
@@ -95,11 +90,7 @@ namespace cvulkan::client::renderStructs {
             : _id(id) {}
         ~CVulkanModel() = default;
 
-        CVulkanModel(const CVulkanModel&) = delete;
-        CVulkanModel& operator=(const CVulkanModel&) = delete;
-
-        CVulkanModel(CVulkanModel&&) noexcept = default;
-        CVulkanModel& operator=(CVulkanModel&&) = delete;
+        CVULKAN_NO_COPY_NO_MOVE(CVulkanModel);
 
         void destroyModel();
 

@@ -8,27 +8,28 @@
 #include "client/render/vulkan_render_core.h"
 #include "client/render/vulkan_render_loop.h"
 
-namespace cvulkan::client::renderScene {
+namespace cvulkan::client::render::scene {
     class CVulkanSceneRenderer {
     public:
-        CVulkanSceneRenderer(const renderCore::CVulkanContext& context, const renderLoop::CVulkanRenderLoop& renderLoop)
-            : _context(context), _renderLoop(renderLoop) {}
+        CVulkanSceneRenderer(const core::CVulkanContext& context, const loop::CVulkanRenderLoop& renderLoop)
+            : _context(context), _renderLoop(renderLoop), _defaultRenderPipeline{context} {}
         ~CVulkanSceneRenderer() = default;
 
-        CVulkanSceneRenderer(const CVulkanSceneRenderer&) = delete;
-        CVulkanSceneRenderer& operator=(const CVulkanSceneRenderer&) = delete;
+        CVULKAN_NO_COPY(CVulkanSceneRenderer);
 
-        void initScene();
-        void renderScene(const renderCore::CVulkanCommandBuffer& commandBuffer, const uint32_t& imageIndex) const;
+        void createScene();
+        void renderScene(const core::CVulkanCommandBuffer& commandBuffer, const uint32_t& imageIndex) const;
         void destroyScene();
 
     protected:
+        void loadResources();
 
     private:
-        const renderCore::CVulkanContext& _context;
-        const renderLoop::CVulkanRenderLoop& _renderLoop;
+        const core::CVulkanContext& _context;
+        const loop::CVulkanRenderLoop& _renderLoop;
         static constexpr VkClearValue VK_CLEAR_VALUE = {0.5f, 0.7f, 0.9f, 1.0f};
         std::vector<VkRenderingAttachmentInfo> _vkColorAttachments {};
         std::vector<VkRenderingInfo> _vkRendering {};
+        core::CVulkanPipeline _defaultRenderPipeline;
     };
 }

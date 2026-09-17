@@ -5,15 +5,20 @@
 #pragma once
 #include "vulkan_render_core.h"
 
-namespace cvulkan::client::renderCore {
+namespace cvulkan::client::render::structs {
+    struct CVulkanRawMeshData;
+}
+
+namespace cvulkan::client::render::core {
+    class CVulkanCommandBuffer;
+
     class CVulkanBuffer {
     public:
         explicit CVulkanBuffer(const CVulkanContext& context)
             : _context(context) {}
         ~CVulkanBuffer() = default;
 
-        CVulkanBuffer(const CVulkanBuffer&) = delete;
-        CVulkanBuffer& operator=(const CVulkanBuffer&) = delete;
+        CVULKAN_NO_COPY(CVulkanBuffer);
 
         CVulkanBuffer(CVulkanBuffer&& other) noexcept
         : _context{other._context}, _vkBuffer{other._vkBuffer}, _vkAllocationSize{other._vkAllocationSize}, _vkRequestedSize{other._vkRequestedSize}, _vkDeviceMemory{other._vkDeviceMemory}, _mappedMemory{other._mappedMemory} {
@@ -23,7 +28,7 @@ namespace cvulkan::client::renderCore {
         }
         CVulkanBuffer& operator=(CVulkanBuffer&&) = delete;
 
-        void initBuffer(const VkBufferUsageFlags& usage, const uint32_t& reqMask, const VkDeviceSize& size);
+        void createBuffer(const VkBufferUsageFlags& usage, const uint32_t& reqMask, const VkDeviceSize& size);
         void destroyBuffer();
 
         void mapMem();
@@ -49,6 +54,10 @@ namespace cvulkan::client::renderCore {
             return _mappedMemory;
         }
 
+        [[nodiscard]] void* mappedMemory() {
+            return _mappedMemory;
+        }
+
     protected:
         uint32_t getMemoryTypeIndexFromProperties(uint32_t typeBits, const uint32_t& reqMask) const;
 
@@ -60,4 +69,17 @@ namespace cvulkan::client::renderCore {
         VkDeviceMemory _vkDeviceMemory {};
         void* _mappedMemory {};
     };
+
+
+
+    struct CVulkanTransferBufferData {
+        CVulkanBuffer src;
+        CVulkanBuffer dst;
+
+        void recordTransferCommand(const CVulkanCommandBuffer& commandBuffer) const;
+    };
+
+    CVulkanTransferBufferData createVerticesBuffer(const CVulkanContext& context, const structs::CVulkanRawMeshData& rawMeshData);
+
+    CVulkanTransferBufferData createIndicesBuffers(const CVulkanContext& context, const structs::CVulkanRawMeshData& rawMeshData);
 }

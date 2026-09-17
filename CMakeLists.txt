@@ -13,7 +13,37 @@ FetchContent_Declare(
     GIT_TAG v1.17.0
 )
 
+set(SHADERC_SKIP_TESTS ON CACHE BOOL "" FORCE)
+set(SHADERC_SKIP_EXAMPLES ON CACHE BOOL "" FORCE)
+
+FetchContent_Declare(
+        SPIRV-Headers
+        GIT_REPOSITORY https://github.com/KhronosGroup/SPIRV-Headers.git
+        GIT_TAG  main
+)
+FetchContent_Declare(
+        SPIRV-Tools
+        GIT_REPOSITORY https://github.com/KhronosGroup/SPIRV-Tools.git
+        GIT_TAG main
+)
+FetchContent_Declare(
+        glslang
+        GIT_REPOSITORY https://github.com/KhronosGroup/glslang.git
+        GIT_TAG main
+)
+FetchContent_Declare(
+    shaderc
+    GIT_REPOSITORY https://github.com/google/shaderc.git
+    GIT_TAG v2026.4
+)
+
 FetchContent_MakeAvailable(spdlog)
+FetchContent_MakeAvailable(
+        SPIRV-Headers
+        SPIRV-Tools
+        glslang
+        shaderc
+)
 
 find_package(Vulkan REQUIRED)
 add_executable(CVulkanEngine
@@ -53,6 +83,12 @@ add_executable(CVulkanEngine
         src/core/client/render/vulkan_buffers.h
         src/core/client/render/scene/vulkan_render_structs.cpp
         src/core/client/render/scene/vulkan_render_structs.h
+        src/core/client/render/scene/vulkan_render_cache.cpp
+        src/core/client/render/scene/vulkan_render_cache.h
+        src/core/client/render/vulkan_shaders.cpp
+        src/core/client/render/vulkan_shaders.h
+        src/core/client/render/vulkan_pipeline.cpp
+        src/core/client/render/vulkan_pipeline.h
 )
 
 target_link_libraries(
@@ -61,8 +97,15 @@ target_link_libraries(
     PRIVATE glfw
     PRIVATE glm::glm
     PRIVATE spdlog::spdlog
+    PRIVATE shaderc_combined
 )
 
-target_include_directories(CVulkanEngine PRIVATE
-        ${CMAKE_SOURCE_DIR}/src/core
+target_include_directories(CVulkanEngine
+    PRIVATE ${CMAKE_SOURCE_DIR}/src/core
+)
+
+add_custom_command(TARGET CVulkanEngine POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/src/resources
+        $<TARGET_FILE_DIR:CVulkanEngine>/resources
 )

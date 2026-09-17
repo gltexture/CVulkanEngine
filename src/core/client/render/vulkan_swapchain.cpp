@@ -8,7 +8,7 @@
 #include "vulkan_render_core.h"
 #include "vulkan_synchronization.h"
 
-namespace cvulkan::client::renderCore {
+namespace cvulkan::client::render::core {
     void CVulkanImageView::createImageView(const CVulkanImageViewData& view_data, const VkImage& vk_image) {
         const VkImageViewCreateInfo image_view_create_info = {
             .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
@@ -108,9 +108,10 @@ namespace cvulkan::client::renderCore {
             vkDestroySwapchainKHR(this->_context.device().vkDevice, this->_vkSwapChain, nullptr);
             this->_vkSwapChain = VK_NULL_HANDLE;
         }
+        logging::info("Destroyed vkSwapChain");
     }
 
-    uint32_t CVulkanSwapChain::acquireSwapChainNextImage(const renderSync::CVulkanSemaphore& semaphore) const {
+    uint32_t CVulkanSwapChain::acquireSwapChainNextImage(const sync::CVulkanSemaphore& semaphore) const {
         uint32_t imageIndex = 0;
         switch (VkResult result = vkAcquireNextImageKHR(this->_context.device().vkDevice, this->_vkSwapChain, UINT64_MAX, semaphore.vkSemaphore(), nullptr, &imageIndex)) {
             case VK_ERROR_OUT_OF_DATE_KHR:
@@ -125,7 +126,7 @@ namespace cvulkan::client::renderCore {
         return imageIndex;
     }
 
-    bool CVulkanSwapChain::presentImage(const CVulkanQueue& queue, const renderSync::CVulkanSemaphore& renderCompleteSemaphore, const uint32_t& imageIndex) const {
+    bool CVulkanSwapChain::presentImage(const CVulkanQueue& queue, const sync::CVulkanSemaphore& renderCompleteSemaphore, const uint32_t& imageIndex) const {
         const VkSemaphore vkSemaphore = renderCompleteSemaphore.vkSemaphore();
         const VkPresentInfoKHR presentInfo = {
             .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
@@ -146,12 +147,12 @@ namespace cvulkan::client::renderCore {
         return false;
     }
 
-    void CVulkanQueue::initQueue(const uint32_t queueFamilyIndex, const uint32_t queueIndex) {
+    void CVulkanQueue::createQueue(const uint32_t queueFamilyIndex, const uint32_t queueIndex) {
         vkGetDeviceQueue(this->_context.device().vkDevice, queueFamilyIndex, queueIndex, &this->_vkQueue);
         this->_queueFamilyIndex = queueFamilyIndex;
     }
 
-    void CVulkanQueue::submit(const std::vector<VkCommandBufferSubmitInfo>& commandSubmitInfos, const std::vector<VkSemaphoreSubmitInfo>* waitSemaphores, const std::vector<VkSemaphoreSubmitInfo>* signalSemaphores, const renderSync::CVulkanFence* fence) const {
+    void CVulkanQueue::submit(const std::vector<VkCommandBufferSubmitInfo>& commandSubmitInfos, const std::vector<VkSemaphoreSubmitInfo>* waitSemaphores, const std::vector<VkSemaphoreSubmitInfo>* signalSemaphores, const sync::CVulkanFence* fence) const {
         VkSubmitInfo2 vkSubmitInfo2 = {
             .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,
             .commandBufferInfoCount = static_cast<uint32_t>(commandSubmitInfos.size()),

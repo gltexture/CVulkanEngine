@@ -4,8 +4,8 @@
 
 #include "vulkan_render_structs.h"
 
-namespace cvulkan::client::renderStructs {
-    void CVulkanVertexStruct::initVertexStruct() {
+namespace cvulkan::client::render::structs {
+    void CVulkanVertexStruct::createVertexStruct() {
         this->_vkVertexInputAttributeDescriptions.resize(NUMBER_OF_ATTRIBUTES);
         this->_vkVertexInputBindingDescriptions.resize(1);
 

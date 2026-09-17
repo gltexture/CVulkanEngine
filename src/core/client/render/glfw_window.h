@@ -8,10 +8,10 @@
 #include "glm/vec2.hpp"
 
 namespace cvulkan::client::window {
-    class CVWindow {
+    class CVulkanWindow {
     public:
-        explicit CVWindow(GLFWwindow* glfw_win) : glfwWindowDescriptor(glfw_win) {};
-        ~CVWindow() = default;
+        explicit CVulkanWindow(GLFWwindow* glfw_win) : glfwWindowDescriptor(glfw_win) {};
+        ~CVulkanWindow() = default;
 
         void closeWindow() const;
         [[nodiscard]] bool shouldBeClosed() const;
@@ -32,7 +32,7 @@ namespace cvulkan::client::window {
         glm::uvec2 glfwWindowSize {};
     };
 
-    extern std::unique_ptr<CVWindow> glfwWindow;
+    extern std::unique_ptr<CVulkanWindow> glfwWindow;
     void create_window(const EngineData& engineData);
     void cleanUp();
 }

@@ -5,27 +5,29 @@
 #pragma once
 #include <vulkan/vulkan_core.h>
 
+#include "vulkan_utility.h"
 
-namespace cvulkan::client::renderCore {
+
+namespace cvulkan::client::render::core {
     class CVulkanContext;
 }
 
-namespace cvulkan::client::renderSync {
+namespace cvulkan::client::render::sync {
     class CVulkanSemaphore {
     public:
-        explicit CVulkanSemaphore(const renderCore::CVulkanContext& context)
+        explicit CVulkanSemaphore(const core::CVulkanContext& context)
             : _context{context} {
         }
         ~CVulkanSemaphore() = default;
 
-        CVulkanSemaphore(const CVulkanSemaphore&) = delete;
-        CVulkanSemaphore& operator=(const CVulkanSemaphore&) = delete;
+        CVULKAN_NO_COPY(CVulkanSemaphore);
+
         CVulkanSemaphore(CVulkanSemaphore&& other) noexcept
             : _context{other._context}, _vkSemaphore{other._vkSemaphore} {
             other._vkSemaphore = VK_NULL_HANDLE;
         }
 
-        void initSemaphore();
+        void createSemaphore();
         void destroySemaphore();
 
         [[nodiscard]] VkSemaphore vkSemaphore() const {
@@ -33,25 +35,25 @@ namespace cvulkan::client::renderSync {
         }
 
     private:
-        const renderCore::CVulkanContext& _context;
+        const core::CVulkanContext& _context;
         VkSemaphore _vkSemaphore {};
     };
 
     class CVulkanFence {
     public:
-        explicit CVulkanFence(const renderCore::CVulkanContext& context)
+        explicit CVulkanFence(const core::CVulkanContext& context)
             : _context{context} {
         }
         ~CVulkanFence() = default;
 
-        CVulkanFence(const CVulkanFence&) = delete;
-        CVulkanFence& operator=(const CVulkanFence&) = delete;
+        CVULKAN_NO_COPY(CVulkanFence);
+
         CVulkanFence(CVulkanFence&& other) noexcept
             : _context{other._context}, _vkFence{other._vkFence} {
             other._vkFence = VK_NULL_HANDLE;
         }
 
-        void initFence(bool signaled);
+        void createFence(bool signaled);
         void destroyFence();
         void wait() const;
         void reset() const;
@@ -61,7 +63,7 @@ namespace cvulkan::client::renderSync {
         }
 
     private:
-        const renderCore::CVulkanContext& _context;
+        const core::CVulkanContext& _context;
         VkFence _vkFence {};
     };
 }

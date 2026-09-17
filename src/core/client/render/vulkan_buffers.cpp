@@ -4,8 +4,11 @@
 
 #include "vulkan_buffers.h"
 
-namespace cvulkan::client::renderCore {
-    void CVulkanBuffer::initBuffer(const VkBufferUsageFlags& usage, const uint32_t& reqMask, const VkDeviceSize& size) {
+#include "vulkan_commands.h"
+#include "scene/vulkan_render_structs.h"
+
+namespace cvulkan::client::render::core {
+    void CVulkanBuffer::createBuffer(const VkBufferUsageFlags& usage, const uint32_t& reqMask, const VkDeviceSize& size) {
         this->_vkRequestedSize = size;
         const VkBufferCreateInfo bufferCreateInfo = {
             .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
@@ -67,5 +70,47 @@ namespace cvulkan::client::renderCore {
             throw std::runtime_error("Failed to find memoryType");
         }
         return result;
+    }
+
+
+    void CVulkanTransferBufferData::recordTransferCommand(const CVulkanCommandBuffer& commandBuffer) const {
+        const VkBufferCopy copyRegion = {
+            .srcOffset = 0,
+            .dstOffset = 0,
+            .size = this->src.vkRequestedSize()
+        };
+        vkCmdCopyBuffer(commandBuffer.vkCommandBuffer(), this->src.vkBuffer(), this->dst.vkBuffer(), 1, &copyRegion);
+    }
+
+    CVulkanTransferBufferData createVerticesBuffer(const CVulkanContext& context, const structs::CVulkanRawMeshData& rawMeshData) {
+        const VkDeviceSize bufferSize = rawMeshData.positions.size() * sizeof(float);
+
+        CVulkanBuffer src {context};
+        CVulkanBuffer dst {context};
+
+        src.createBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, bufferSize);
+        dst.createBuffer(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, bufferSize);
+
+        src.mapMem();
+        std::memcpy(src.mappedMemory(), rawMeshData.positions.data(), bufferSize);
+        src.unMapMem();
+
+        return {(std::move(src)), (std::move(dst))};
+    }
+
+    CVulkanTransferBufferData createIndicesBuffers(const CVulkanContext& context, const structs::CVulkanRawMeshData& rawMeshData) {
+        const VkDeviceSize bufferSize = rawMeshData.indices.size() * sizeof(uint32_t);
+
+        CVulkanBuffer src {context};
+        CVulkanBuffer dst {context};
+
+        src.createBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, bufferSize);
+        dst.createBuffer(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, bufferSize);
+
+        src.mapMem();
+        std::memcpy(src.mappedMemory(), rawMeshData.indices.data(), bufferSize);
+        src.unMapMem();
+
+        return {(std::move(src)), (std::move(dst))};
     }
 }

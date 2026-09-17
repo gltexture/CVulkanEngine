@@ -5,13 +5,13 @@
 #include "engine_context.h"
 
 namespace cvulkan::client::window {
-    std::unique_ptr<CVWindow> glfwWindow {};
+    std::unique_ptr<CVulkanWindow> glfwWindow {};
 
-    void CVWindow::closeWindow() const {
+    void CVulkanWindow::closeWindow() const {
         glfwSetWindowShouldClose(this->glfwWindowDescriptor, GLFW_TRUE);
     }
 
-    bool CVWindow::shouldBeClosed() const {
+    bool CVulkanWindow::shouldBeClosed() const {
         return glfwWindowShouldClose(this->glfwWindowDescriptor) == GLFW_TRUE;
     }
 
@@ -38,7 +38,7 @@ namespace cvulkan::client::window {
             throw std::runtime_error("failed to create window");
         }
 
-        glfwWindow = std::make_unique<CVWindow>(glfw_win);
+        glfwWindow = std::make_unique<CVulkanWindow>(glfw_win);
     }
 
     void cleanUp() {
