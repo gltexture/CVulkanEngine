@@ -7,13 +7,13 @@
 
 namespace cvulkan::client::render::core::ext {
     static constexpr VkDebugUtilsMessageSeverityFlagsEXT MESS_SEVERITY_BIT =
-      //VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT
-    VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT
-    | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT;
+            //VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT
+            VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT
+            | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT;
 
     static constexpr VkDebugUtilsMessageTypeFlagsEXT MESS_TYPE_BIT =
-      VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT
-    | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT;
+            VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT
+            | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT;
 
     static constexpr auto DEBUG_CALL_BACK_PREF = "VkDebugUtilsCallback, {}";
 
@@ -31,7 +31,7 @@ namespace cvulkan::client::render::core::ext {
     }
 
     VkDebugUtilsMessengerCreateInfoEXT createDebugMessengerCreateInfo() {
-        VkDebugUtilsMessengerCreateInfoEXT messengerCreateInfo {};
+        VkDebugUtilsMessengerCreateInfoEXT messengerCreateInfo{};
         messengerCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
         messengerCreateInfo.messageType = MESS_TYPE_BIT;
         messengerCreateInfo.messageSeverity = MESS_SEVERITY_BIT;

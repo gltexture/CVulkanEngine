@@ -23,13 +23,12 @@ namespace cvulkan {
         logging::info("Init application:Complete");
     }
 
-    void EngineContext::global_cleanUp()
-    {
+    void EngineContext::global_cleanUp() {
         logging::info("Global cleanup!");
         client::cleanUp();
     }
 
-    void EngineContext::printData(const EngineData &engineData) {
+    void EngineContext::printData(const EngineData& engineData) {
         logging::info("Engine : {}", engineData.m_appTitle);
     }
 }

@@ -8,9 +8,11 @@ namespace cvulkan::client::control {
         explicit MouseControl(const window::CVulkanWindow& window) : m_window{window} {
             this->glfwCallbacks();
         };
+
         ~MouseControl() = default;
 
         MouseControl(const MouseControl&) = delete;
+
         MouseControl& operator=(const MouseControl&) = delete;
 
         [[nodiscard]] const glm::ivec2& prevMousePosition() const {
@@ -42,6 +44,7 @@ namespace cvulkan::client::control {
         }
 
         void glfwCallbacks();
+
         void updateInput();
 
     protected:

@@ -19,12 +19,15 @@ namespace cvulkan::client::render::cache {
     class CVulkanModelsCache {
     public:
         explicit CVulkanModelsCache(const core::CVulkanContext& context)
-            : _context(context) {}
+            : _context(context) {
+        }
+
         ~CVulkanModelsCache() = default;
 
         CVULKAN_NO_COPY(CVulkanModelsCache);
 
         void loadModels(const std::vector<structs::CVulkanRawModelData>& models, const core::CVulkanCommandPool& commandPool, const core::CVulkanQueue& queue);
+
         void destroyCache();
 
         [[nodiscard]] const structs::CVulkanModel& getModel(const std::string_view id);
@@ -41,5 +44,6 @@ namespace cvulkan::client::render::cache {
     extern std::unique_ptr<CVulkanModelsCache> modelsCache;
 
     void createCaches(const core::CVulkanContext& context);
+
     void destroyCaches();
 }

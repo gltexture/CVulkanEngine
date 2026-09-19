@@ -1,14 +1,12 @@
 #pragma once
-#include <filesystem>
-#include <spdlog/spdlog.h>
-#include <vulkan/vk_enum_string_helper.h>
 
-#include "util/logger.h"
+#include <filesystem>
+#include <vulkan/vulkan_core.h>
 
 #define DEBUG_MODE
 
 namespace cvulkan::utility {
-    inline const std::filesystem::path RESOURCES_FOLDER {"resources"};
+    inline const std::filesystem::path RESOURCES_FOLDER{"resources"};
     inline const std::filesystem::path SHADERS_FOLDER = RESOURCES_FOLDER / "shaders";
     inline const std::filesystem::path SHADERS_FOLDER_SPV = RESOURCES_FOLDER / "shaders" / "compiled";
 
@@ -17,6 +15,12 @@ namespace cvulkan::utility {
     Type& operator=(const Type&) = delete;
 
 #define CVULKAN_NO_COPY_NO_MOVE(Type) \
+    Type(const Type&) = delete; \
+    Type& operator=(const Type&) = delete; \
+    Type(Type&&) = delete; \
+    Type& operator=(Type&&) = delete;
+
+#define CVULKAN_NO_COPY_NO_ASSIGN_MOVE(Type) \
     Type(const Type&) = delete; \
     Type& operator=(const Type&) = delete; \
     Type(Type&&) noexcept = default; \
@@ -49,23 +53,20 @@ namespace cvulkan::utility {
         return osTypeToCheck == osType;
     }
 
-    inline void vkCheck(const VkResult vk_result, std::string_view errMsg) {
-        if (vk_result != VK_SUCCESS) {
-            throw std::runtime_error{std::format("{} -> {}", string_VkResult(vk_result), errMsg)};
-        }
-    }
+    void vkCheck(VkResult vk_result, std::string_view errMsg);
+    void vkCheck(VkResult vk_result);
 
-    inline void vkCheck(const VkResult vk_result) {
-        vkCheck(vk_result, std::string_view("Unknown"));
-    }
+    void utilityInitialize();
 
-    inline void utilityInitialize() {
-        if constexpr (debug_mode) {
-            spdlog::set_level(spdlog::level::debug);
-            logging::debug("DEBUG MODE");
-        }
-    }
-
-    void imageBarrier(VkCommandBuffer commandBuffer, VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout, VkPipelineStageFlags2 srcStageMask, VkPipelineStageFlags2 dstStageMask,
-        VkAccessFlags2 srcAccessMask, VkAccessFlags2 dstAccessMask, VkImageAspectFlags aspectMask);
+    void imageBarrier(
+        VkCommandBuffer commandBuffer,
+        VkImage image,
+        VkImageLayout oldLayout,
+        VkImageLayout newLayout,
+        VkPipelineStageFlags2 srcStageMask,
+        VkPipelineStageFlags2 dstStageMask,
+        VkAccessFlags2 srcAccessMask,
+        VkAccessFlags2 dstAccessMask,
+        VkImageAspectFlags aspectMask
+    );
 }

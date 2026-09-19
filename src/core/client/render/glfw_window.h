@@ -10,13 +10,16 @@
 namespace cvulkan::client::window {
     class CVulkanWindow {
     public:
-        explicit CVulkanWindow(GLFWwindow* glfw_win) : glfwWindowDescriptor(glfw_win) {};
+        explicit CVulkanWindow(GLFWwindow* glfw_win) : glfwWindowDescriptor(glfw_win) {
+        };
+
         ~CVulkanWindow() = default;
 
         void closeWindow() const;
+
         [[nodiscard]] bool shouldBeClosed() const;
 
-        [[nodiscard]] GLFWwindow *glfw_window_descriptor() const {
+        [[nodiscard]] GLFWwindow* glfw_window_descriptor() const {
             return glfwWindowDescriptor;
         }
 
@@ -28,11 +31,13 @@ namespace cvulkan::client::window {
         }
 
     private:
-        GLFWwindow *glfwWindowDescriptor;
-        glm::uvec2 glfwWindowSize {};
+        GLFWwindow* glfwWindowDescriptor;
+        glm::uvec2 glfwWindowSize{};
     };
 
     extern std::unique_ptr<CVulkanWindow> glfwWindow;
+
     void create_window(const EngineData& engineData);
+
     void cleanUp();
 }

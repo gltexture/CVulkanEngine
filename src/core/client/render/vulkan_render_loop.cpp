@@ -5,6 +5,7 @@
 #include "vulkan_render_loop.h"
 
 #include "vulkan_commands.h"
+#include "vulkan_config.h"
 #include "scene/vulkan_render_scene.h"
 
 namespace cvulkan::client::render::loop {
@@ -14,13 +15,13 @@ namespace cvulkan::client::render::loop {
     void CVulkanRenderLoop::createRenderLoop() {
         uint32_t graphicsQueueFamilyIndex = UINT32_MAX;
         uint32_t presentationQueueFamilyIndex = UINT32_MAX;
-        for (const auto& t : this->_context.queueFamiliesRegistry().registeredData()) {
+        for (const auto& t: this->_context.queueFamiliesRegistry().registeredData()) {
             if (t.bitMask & core::CVulkanQueueFamilyBitMasks::GRAPHICS) {
                 graphicsQueueFamilyIndex = t.queueFamilyIndex;
                 break;
             }
         }
-        for (const auto& t : this->_context.queueFamiliesRegistry().registeredData()) {
+        for (const auto& t: this->_context.queueFamiliesRegistry().registeredData()) {
             if (t.bitMask & core::CVulkanQueueFamilyBitMasks::PRESENT) {
                 presentationQueueFamilyIndex = t.queueFamilyIndex;
                 break;
@@ -98,10 +99,10 @@ namespace cvulkan::client::render::loop {
             .semaphore = this->_renderCompleteSemaphores[imageIndex].vkSemaphore(),
             .stageMask = VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT
         };
-        const std::vector v_commandSubmitInfos {commands};
-        const std::vector v_waitSemaphores {waitSemaphores};
-        const std::vector v_signalSemaphores {signalSemaphores};
-        this->_graphicsQueue.submit(v_commandSubmitInfos, &v_waitSemaphores, &v_signalSemaphores, &fence);
+        const std::vector v_commandSubmitInfos{commands};
+        const std::vector v_waitSemaphores{waitSemaphores};
+        const std::vector v_signalSemaphores{signalSemaphores};
+        this->_graphicsQueue.submitQueue(v_commandSubmitInfos, &v_waitSemaphores, &v_signalSemaphores, &fence);
     }
 
     void CVulkanRenderLoop::runRenderLoop() {
@@ -128,19 +129,19 @@ namespace cvulkan::client::render::loop {
     }
 
     void CVulkanRenderLoop::destroyRenderLoopResources() {
-        for (auto& t : this->_renderCompleteSemaphores) {
+        for (auto& t: this->_renderCompleteSemaphores) {
             t.destroySemaphore();
         }
-        for (auto& t : this->_presentationCompleteSemaphores) {
+        for (auto& t: this->_presentationCompleteSemaphores) {
             t.destroySemaphore();
         }
-        for (auto& t : this->_fences) {
+        for (auto& t: this->_fences) {
             t.destroyFence();
         }
-        for (auto& t : this->_commandBuffers) {
+        for (auto& t: this->_commandBuffers) {
             t.destroyCommandBuffer();
         }
-        for (auto& t : this->_commandPools) {
+        for (auto& t: this->_commandPools) {
             t.destroyCommandPool();
         }
     }

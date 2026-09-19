@@ -33,4 +33,5 @@ install_manifest.txt
 
 # IDE
 .idea/
-.vscode/
+include-what-you-use/
+external/

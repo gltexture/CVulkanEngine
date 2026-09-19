@@ -5,9 +5,9 @@
 #include "vulkan_render_scene.h"
 
 #include "vulkan_render_cache.h"
-#include "../vulkan_commands.h"
-#include "../vulkan_render_loop.h"
-#include "../vulkan_synchronization.h"
+#include "client/render/vulkan_commands.h"
+#include "client/render/vulkan_render_loop.h"
+#include "shaderc/shaderc.h"
 
 namespace cvulkan::client::render::scene {
     void CVulkanSceneRenderer::createScene() {
@@ -68,7 +68,7 @@ namespace cvulkan::client::render::scene {
 
             vkCmdBindPipeline(commandBuffer.vkCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, this->_defaultRenderPipeline.vkPipeline());
             const VkExtent2D extent = this->_context.surface().swapChain().extent();
-            const VkViewport viewport {
+            const VkViewport viewport{
                 .x = 0.0F,
                 .y = static_cast<float>(extent.height),
                 .width = static_cast<float>(extent.width),
@@ -78,7 +78,7 @@ namespace cvulkan::client::render::scene {
             };
             vkCmdSetViewport(commandBuffer.vkCommandBuffer(), 0, 1, &viewport);
 
-            const VkRect2D scissor {
+            const VkRect2D scissor{
                 .offset = {
                     .x = 0,
                     .y = 0
@@ -87,13 +87,13 @@ namespace cvulkan::client::render::scene {
             };
             vkCmdSetScissor(commandBuffer.vkCommandBuffer(), 0, 1, &scissor);
 
-            for (const auto& t : cache::modelsCache->models()) {
-                for (const auto& mesh : t.second.meshes()) {
+            for (const auto& t: cache::modelsCache->models()) {
+                for (const auto& mesh: t.second.meshes()) {
                     const VkBuffer vertexBuffer = mesh.verticesBuffer().vkBuffer();
                     const VkDeviceSize offset = 0;
-                    vkCmdBindVertexBuffers(commandBuffer.vkCommandBuffer(),0,1, &vertexBuffer, &offset);
-                    vkCmdBindIndexBuffer(commandBuffer.vkCommandBuffer(),mesh.indicesBuffer().vkBuffer(), 0, VK_INDEX_TYPE_UINT32);
-                    vkCmdDrawIndexed( commandBuffer.vkCommandBuffer(), mesh.numIndices(), 1, 0, 0, 0 );
+                    vkCmdBindVertexBuffers(commandBuffer.vkCommandBuffer(), 0, 1, &vertexBuffer, &offset);
+                    vkCmdBindIndexBuffer(commandBuffer.vkCommandBuffer(), mesh.indicesBuffer().vkBuffer(), 0, VK_INDEX_TYPE_UINT32);
+                    vkCmdDrawIndexed(commandBuffer.vkCommandBuffer(), mesh.numIndices(), 1, 0, 0, 0);
                 }
             }
 
@@ -126,15 +126,15 @@ namespace cvulkan::client::render::scene {
                 0.0f, 0.5f, 0.0f,
                 0.5f, -0.5f, 0.0f
             },
-{0, 1, 2}
+            {0, 1, 2}
         };
         cache::modelsCache->loadModels({
-            {"triangle", {rawMeshData}}
-        }, this->_renderLoop.commandPools()[0], this->_renderLoop.graphicsQueue());
+                                           {"triangle", {rawMeshData}}
+                                       }, this->_renderLoop.commandPools()[0], this->_renderLoop.graphicsQueue());
 
         {
-        shader::compileShaderIfOutOfDate("test.v", shaderc_glsl_vertex_shader);
-        shader::compileShaderIfOutOfDate("test.f", shaderc_glsl_fragment_shader);
+            shader::compileShaderIfOutOfDate("test.v", shaderc_glsl_vertex_shader);
+            shader::compileShaderIfOutOfDate("test.f", shaderc_glsl_fragment_shader);
 
             std::vector<shader::CVulkanShaderModule> shaderModules = {};
 
@@ -146,13 +146,13 @@ namespace cvulkan::client::render::scene {
             shaderModules.emplace_back(this->_context, VK_SHADER_STAGE_FRAGMENT_BIT);
             shaderModules.back().createShaderModule("test.f.spv");
 
-            structs::CVulkanVertexStruct vertexStruct {this->_context};
+            structs::CVulkanVertexStruct vertexStruct{this->_context};
             vertexStruct.createVertexStruct();
 
-            const core::CVulkanPipelineBuildInfo buildInfo {shaderModules, vertexStruct.vkPipelineVertexInputStateCreateInfo(), this->_context.surface().vkFormat()};
+            const core::CVulkanPipelineBuildInfo buildInfo{shaderModules, vertexStruct.vkPipelineVertexInputStateCreateInfo(), this->_context.surface().vkFormat()};
             this->_defaultRenderPipeline.createPipeline(buildInfo);
 
-            for (auto& shaderModule : shaderModules) {
+            for (auto& shaderModule: shaderModules) {
                 shaderModule.destroyShaderModule();
             }
 

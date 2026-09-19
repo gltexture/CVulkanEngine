@@ -15,7 +15,7 @@ namespace cvulkan::client::render::core {
             .image = vk_image,
             .viewType = view_data.viewType,
             .format = view_data.format,
-            .subresourceRange =  {
+            .subresourceRange = {
                 .aspectMask = view_data.aspectMask,
                 .baseMipLevel = 0,
                 .levelCount = view_data.mipLevels,
@@ -54,14 +54,14 @@ namespace cvulkan::client::render::core {
         {
             if (vkSurfaceCapabilities.currentExtent.width == UINT32_MAX) {
                 const auto windowSize = this->_context.glfwWindow().size();
-                this->_swapChainExtent.width = std::clamp(windowSize.x,vkSurfaceCapabilities.minImageExtent.width,vkSurfaceCapabilities.maxImageExtent.width);
-                this->_swapChainExtent.height = std::clamp(windowSize.y,vkSurfaceCapabilities.minImageExtent.height,vkSurfaceCapabilities.maxImageExtent.height);
+                this->_swapChainExtent.width = std::clamp(windowSize.x, vkSurfaceCapabilities.minImageExtent.width, vkSurfaceCapabilities.maxImageExtent.width);
+                this->_swapChainExtent.height = std::clamp(windowSize.y, vkSurfaceCapabilities.minImageExtent.height, vkSurfaceCapabilities.maxImageExtent.height);
             } else {
                 this->_swapChainExtent = vkSurfaceCapabilities.currentExtent;
             }
         }
 
-        VkSwapchainCreateInfoKHR swapChainCreateInfo {};
+        VkSwapchainCreateInfoKHR swapChainCreateInfo{};
         swapChainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
         swapChainCreateInfo.surface = vkSurface;
         swapChainCreateInfo.minImageCount = imageCount;
@@ -89,7 +89,7 @@ namespace cvulkan::client::render::core {
 
             const CVulkanImageViewData image_view_data = {.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .format = vkFormat};
             this->_imageViews.reserve(images.size());
-            for (const auto image : images) {
+            for (const auto image: images) {
                 this->_imageViews.emplace_back(this->_context);
                 this->_imageViews.back().createImageView(image_view_data, image);
             }
@@ -99,7 +99,7 @@ namespace cvulkan::client::render::core {
     }
 
     void CVulkanSwapChain::destroySwapChain() {
-        for (auto& t : this->_imageViews) {
+        for (auto& t: this->_imageViews) {
             if (t.vkImageView() != VK_NULL_HANDLE) {
                 t.destroyImageView();
             }
@@ -130,6 +130,7 @@ namespace cvulkan::client::render::core {
         const VkSemaphore vkSemaphore = renderCompleteSemaphore.vkSemaphore();
         const VkPresentInfoKHR presentInfo = {
             .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+            .waitSemaphoreCount = 1,
             .pWaitSemaphores = &vkSemaphore,
             .swapchainCount = 1,
             .pSwapchains = &this->_vkSwapChain,
@@ -152,7 +153,8 @@ namespace cvulkan::client::render::core {
         this->_queueFamilyIndex = queueFamilyIndex;
     }
 
-    void CVulkanQueue::submit(const std::vector<VkCommandBufferSubmitInfo>& commandSubmitInfos, const std::vector<VkSemaphoreSubmitInfo>* waitSemaphores, const std::vector<VkSemaphoreSubmitInfo>* signalSemaphores, const sync::CVulkanFence* fence) const {
+    void CVulkanQueue::submitQueue(const std::vector<VkCommandBufferSubmitInfo>& commandSubmitInfos, const std::vector<VkSemaphoreSubmitInfo>* waitSemaphores, const std::vector<VkSemaphoreSubmitInfo>* signalSemaphores,
+                              const sync::CVulkanFence* fence) const {
         VkSubmitInfo2 vkSubmitInfo2 = {
             .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,
             .commandBufferInfoCount = static_cast<uint32_t>(commandSubmitInfos.size()),
@@ -169,7 +171,7 @@ namespace cvulkan::client::render::core {
         utility::vkCheck(vkQueueSubmit2(this->_vkQueue, 1, &vkSubmitInfo2, fence != nullptr ? fence->vkFence() : VK_NULL_HANDLE), "Failed to submit command to queue");
     }
 
-    void CVulkanSurface::calcSurfaceFormat(const CVulkanPhysicalDevice &physical_device_data, const VkSurfaceKHR& vkSurface, VkFormat& vkFormat, VkColorSpaceKHR& vkColorSpace) {
+    void CVulkanSurface::calcSurfaceFormat(const CVulkanPhysicalDevice& physical_device_data, const VkSurfaceKHR& vkSurface, VkFormat& vkFormat, VkColorSpaceKHR& vkColorSpace) {
         uint32_t surfaceFormatCount = 0;
         utility::vkCheck(vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device_data.vkPhysicalDevice, vkSurface, &surfaceFormatCount, nullptr));
         if (surfaceFormatCount == 0) {
@@ -179,7 +181,7 @@ namespace cvulkan::client::render::core {
         utility::vkCheck(vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device_data.vkPhysicalDevice, vkSurface, &surfaceFormatCount, surfaceFormats.data()));
         vkFormat = VK_FORMAT_B8G8R8A8_SRGB;
         vkColorSpace = surfaceFormats[0].colorSpace;
-        for (const auto&[f, c] : surfaceFormats) {
+        for (const auto& [f, c]: surfaceFormats) {
             if (f == VK_FORMAT_B8G8R8A8_SRGB && c == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
                 vkFormat = f;
                 vkColorSpace = c;

@@ -3,11 +3,8 @@
 //
 
 #pragma once
-#include <array>
 #include <memory>
-#include <optional>
 
-#include "vulkan_config.h"
 #include "vulkan_commands.h"
 #include "vulkan_synchronization.h"
 
@@ -27,7 +24,9 @@ namespace cvulkan::client::render::loop {
         CVULKAN_NO_COPY(CVulkanRenderLoop)
 
         void createRenderLoop();
+
         void runRenderLoop();
+
         void destroyRenderLoopResources();
 
         [[nodiscard]] const std::vector<core::CVulkanCommandPool>& commandPools() const {
@@ -38,15 +37,15 @@ namespace cvulkan::client::render::loop {
             return _commandBuffers;
         }
 
-        [[nodiscard]] const std::vector<render::sync::CVulkanFence>& fences() const {
+        [[nodiscard]] const std::vector<sync::CVulkanFence>& fences() const {
             return _fences;
         }
 
-        [[nodiscard]] const std::vector<render::sync::CVulkanSemaphore>& presentationCompleteSemaphores() const {
+        [[nodiscard]] const std::vector<sync::CVulkanSemaphore>& presentationCompleteSemaphores() const {
             return _presentationCompleteSemaphores;
         }
 
-        [[nodiscard]] const std::vector<render::sync::CVulkanSemaphore>& renderCompleteSemaphores() const {
+        [[nodiscard]] const std::vector<sync::CVulkanSemaphore>& renderCompleteSemaphores() const {
             return _renderCompleteSemaphores;
         }
 
@@ -64,17 +63,20 @@ namespace cvulkan::client::render::loop {
 
     protected:
         static void recordingStart(const core::CVulkanCommandPool& commandPool, const core::CVulkanCommandBuffer& commandBuffer);
+
         static void recordingStop(const core::CVulkanCommandBuffer& commandBuffer);
+
         void waitForFence() const;
+
         void submit(const core::CVulkanCommandBuffer& commandBuffer, const uint32_t& imageIndex) const;
 
     private:
         const core::CVulkanContext& _context;
-        std::vector<core::CVulkanCommandPool> _commandPools {};
-        std::vector<core::CVulkanCommandBuffer> _commandBuffers {};
-        std::vector<render::sync::CVulkanFence> _fences {};
-        std::vector<render::sync::CVulkanSemaphore> _presentationCompleteSemaphores {};
-        std::vector<render::sync::CVulkanSemaphore> _renderCompleteSemaphores {};
+        std::vector<core::CVulkanCommandPool> _commandPools{};
+        std::vector<core::CVulkanCommandBuffer> _commandBuffers{};
+        std::vector<sync::CVulkanFence> _fences{};
+        std::vector<sync::CVulkanSemaphore> _presentationCompleteSemaphores{};
+        std::vector<sync::CVulkanSemaphore> _renderCompleteSemaphores{};
         uint32_t _currentFrame = 0;
         core::CVulkanQueue _graphicsQueue;
         core::CVulkanQueue _presentQueue;
@@ -83,6 +85,8 @@ namespace cvulkan::client::render::loop {
     extern std::unique_ptr<CVulkanRenderLoop> renderLoop;
 
     void createRendering(const core::CVulkanContext& context);
+
     void runRendering();
+
     void destroyRendering();
 }

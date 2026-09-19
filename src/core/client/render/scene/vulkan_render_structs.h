@@ -29,12 +29,15 @@ namespace cvulkan::client::render::structs {
     class CVulkanVertexStruct {
     public:
         explicit CVulkanVertexStruct(const core::CVulkanContext& context)
-            : _context(context) {}
+            : _context(context) {
+        }
+
         ~CVulkanVertexStruct() = default;
 
         CVULKAN_NO_COPY(CVulkanVertexStruct);
 
         void createVertexStruct();
+
         void destroyVertexStruct();
 
         [[nodiscard]] VkPipelineVertexInputStateCreateInfo vkPipelineVertexInputStateCreateInfo() const {
@@ -43,9 +46,9 @@ namespace cvulkan::client::render::structs {
 
     private:
         const core::CVulkanContext& _context;
-        VkPipelineVertexInputStateCreateInfo _vkPipelineVertexInputStateCreateInfo {};
-        std::vector<VkVertexInputAttributeDescription> _vkVertexInputAttributeDescriptions {};
-        std::vector<VkVertexInputBindingDescription> _vkVertexInputBindingDescriptions {};
+        VkPipelineVertexInputStateCreateInfo _vkPipelineVertexInputStateCreateInfo{};
+        std::vector<VkVertexInputAttributeDescription> _vkVertexInputAttributeDescriptions{};
+        std::vector<VkVertexInputBindingDescription> _vkVertexInputBindingDescriptions{};
     };
 
     class CVulkanMesh {
@@ -57,7 +60,7 @@ namespace cvulkan::client::render::structs {
               _numIndices(numIndices) {
         }
 
-        CVULKAN_NO_COPY_NO_MOVE(CVulkanMesh);
+        CVULKAN_NO_COPY_NO_ASSIGN_MOVE(CVulkanMesh);
 
         void destroyMesh();
 
@@ -87,10 +90,12 @@ namespace cvulkan::client::render::structs {
     class CVulkanModel {
     public:
         explicit CVulkanModel(const std::string& id)
-            : _id(id) {}
+            : _id(id) {
+        }
         ~CVulkanModel() = default;
 
-        CVULKAN_NO_COPY_NO_MOVE(CVulkanModel);
+        CVULKAN_NO_COPY_NO_ASSIGN_MOVE(CVulkanModel);
+
 
         void destroyModel();
 
@@ -108,6 +113,6 @@ namespace cvulkan::client::render::structs {
 
     private:
         std::string _id;
-        std::vector<CVulkanMesh> _meshes {};
+        std::vector<CVulkanMesh> _meshes{};
     };
 }

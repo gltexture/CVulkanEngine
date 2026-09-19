@@ -20,9 +20,9 @@ namespace cvulkan::client::render::core {
     struct CVulkanInstance;
 
     struct CVulkanImageViewData {
-        VkImageAspectFlags aspectMask {};
+        VkImageAspectFlags aspectMask{};
         uint32_t baseArrayLayer = 0;
-        VkFormat format {};
+        VkFormat format{};
         uint32_t layerCount = 1;
         uint32_t mipLevels = 1;
         VkImageViewType viewType = VK_IMAGE_VIEW_TYPE_2D;
@@ -31,12 +31,14 @@ namespace cvulkan::client::render::core {
     class CVulkanImageView {
     public:
         explicit CVulkanImageView(const CVulkanContext& context)
-            : _context{context} {}
+            : _context{context} {
+        }
+
         ~CVulkanImageView() = default;
 
         CVULKAN_NO_COPY(CVulkanImageView);
 
-        CVulkanImageView(CVulkanImageView&& other) noexcept: _context{other._context}, _vkImage{other._vkImage}, _vkImageView{other._vkImageView} {
+        CVulkanImageView(CVulkanImageView&& other) noexcept : _context{other._context}, _vkImage{other._vkImage}, _vkImageView{other._vkImageView} {
             other._vkImage = VK_NULL_HANDLE;
             other._vkImageView = VK_NULL_HANDLE;
         }
@@ -44,6 +46,7 @@ namespace cvulkan::client::render::core {
         CVulkanImageView& operator=(CVulkanImageView&&) = delete;
 
         void createImageView(const CVulkanImageViewData& view_data, const VkImage& vk_image);
+
         void destroyImageView();
 
         [[nodiscard]] VkImage vkImage() const {
@@ -56,19 +59,22 @@ namespace cvulkan::client::render::core {
 
     private:
         const CVulkanContext& _context;
-        VkImage _vkImage {};
-        VkImageView _vkImageView {};
+        VkImage _vkImage{};
+        VkImageView _vkImageView{};
     };
 
     class CVulkanSwapChain {
     public:
         explicit CVulkanSwapChain(const CVulkanContext& context)
-            : _context{context} {}
+            : _context{context} {
+        }
+
         ~CVulkanSwapChain() = default;
 
         CVULKAN_NO_COPY(CVulkanSwapChain);
 
         void createSwapChain(const VkSurfaceKHR& vkSurface, const VkSurfaceCapabilitiesKHR& vkSurfaceCapabilities, const VkFormat& vkFormat, const VkColorSpaceKHR& vkColorSpace);
+
         void destroySwapChain();
 
         uint32_t acquireSwapChainNextImage(const sync::CVulkanSemaphore& semaphore) const;
@@ -90,24 +96,28 @@ namespace cvulkan::client::render::core {
         }
 
         bool presentImage(const CVulkanQueue& queue, const sync::CVulkanSemaphore& renderCompleteSemaphore, const uint32_t& imageIndex) const;
-        
+
     private:
         VkExtent2D _swapChainExtent = {};
         uint32_t _numImages = UINT32_MAX;
         const CVulkanContext& _context;
-        VkSwapchainKHR _vkSwapChain {};
-        std::vector<CVulkanImageView> _imageViews {};
+        VkSwapchainKHR _vkSwapChain{};
+        std::vector<CVulkanImageView> _imageViews{};
     };
 
     class CVulkanQueue {
     public:
-        explicit CVulkanQueue(const CVulkanContext& context): _context{context} {}
+        explicit CVulkanQueue(const CVulkanContext& context) : _context{context} {
+        }
+
         ~CVulkanQueue() = default;
 
         CVULKAN_NO_COPY(CVulkanQueue);
 
         void createQueue(uint32_t queueFamilyIndex, uint32_t queueIndex);
-        void submit(const std::vector<VkCommandBufferSubmitInfo>& commandSubmitInfos, const std::vector<VkSemaphoreSubmitInfo>* waitSemaphores, const std::vector<VkSemaphoreSubmitInfo>* signalSemaphores, const sync::CVulkanFence* fence) const;
+
+        void submitQueue(const std::vector<VkCommandBufferSubmitInfo>& commandSubmitInfos, const std::vector<VkSemaphoreSubmitInfo>* waitSemaphores, const std::vector<VkSemaphoreSubmitInfo>* signalSemaphores,
+                    const sync::CVulkanFence* fence) const;
 
         [[nodiscard]] VkQueue vkQueue() const {
             return _vkQueue;
@@ -119,20 +129,24 @@ namespace cvulkan::client::render::core {
 
     private:
         const CVulkanContext& _context;
-        VkQueue _vkQueue {};
-        uint32_t _queueFamilyIndex {};
+        VkQueue _vkQueue{};
+        uint32_t _queueFamilyIndex{};
     };
 
     class CVulkanSurface {
     public:
         explicit CVulkanSurface(const CVulkanContext& context)
-            : _swapChain{context}, _context{context} {}
+            : _swapChain{context}, _context{context} {
+        }
+
         ~CVulkanSurface() = default;
 
         CVULKAN_NO_COPY(CVulkanSurface);
 
-        static void calcSurfaceFormat(const CVulkanPhysicalDevice &physical_device_data, const VkSurfaceKHR& vkSurface, VkFormat& vkFormat, VkColorSpaceKHR& vkColorSpace);
+        static void calcSurfaceFormat(const CVulkanPhysicalDevice& physical_device_data, const VkSurfaceKHR& vkSurface, VkFormat& vkFormat, VkColorSpaceKHR& vkColorSpace);
+
         void createSurface();
+
         void destroySurface();
 
         [[nodiscard]] CVulkanSwapChain& swapChain() {
@@ -160,10 +174,10 @@ namespace cvulkan::client::render::core {
         }
 
     private:
-        VkSurfaceKHR _vkSurface {};
-        VkSurfaceCapabilitiesKHR _vkSurfaceCapabilities {};
-        VkFormat _vkFormat {};
-        VkColorSpaceKHR _vkColorSpace {};
+        VkSurfaceKHR _vkSurface{};
+        VkSurfaceCapabilitiesKHR _vkSurfaceCapabilities{};
+        VkFormat _vkFormat{};
+        VkColorSpaceKHR _vkColorSpace{};
         CVulkanSwapChain _swapChain;
         const CVulkanContext& _context;
     };

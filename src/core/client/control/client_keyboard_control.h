@@ -12,9 +12,11 @@ namespace cvulkan::client::control {
         explicit KeyboardControl(const window::CVulkanWindow& window) : m_window{window} {
             this->glfwCallbacks();
         };
+
         ~KeyboardControl() = default;
 
         void glfwCallbacks();
+
         void updateInput();
 
         void registerCallback(const int key, KeyCallback func) {

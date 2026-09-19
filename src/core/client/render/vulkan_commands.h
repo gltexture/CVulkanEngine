@@ -15,7 +15,9 @@ namespace cvulkan::client::render::core {
     class CVulkanCommandPool {
     public:
         CVulkanCommandPool(const CVulkanContext& context, const uint32_t queueFamilyIndex, const bool supportReset)
-        : _context{context}, _queueFamilyIndex{queueFamilyIndex}, _supportReset{supportReset} {}
+            : _context{context}, _queueFamilyIndex{queueFamilyIndex}, _supportReset{supportReset} {
+        }
+
         ~CVulkanCommandPool() {
         }
 
@@ -27,7 +29,9 @@ namespace cvulkan::client::render::core {
         }
 
         void createCommandPool();
+
         void destroyCommandPool() const;
+
         void reset() const;
 
         [[nodiscard]] VkCommandPool vkCommandPool() const {
@@ -36,7 +40,7 @@ namespace cvulkan::client::render::core {
 
     private:
         const CVulkanContext& _context;
-        VkCommandPool _vkCommandPool {};
+        VkCommandPool _vkCommandPool{};
         const uint32_t _queueFamilyIndex;
         const bool _supportReset;
     };
@@ -44,7 +48,9 @@ namespace cvulkan::client::render::core {
     class CVulkanCommandBuffer {
     public:
         CVulkanCommandBuffer(const CVulkanContext& context, const CVulkanCommandPool& commandPool, const bool primary, const bool oneTimeSubmit)
-            : _context{context}, _commandPool{commandPool}, _primary{primary}, _oneTimeSubmit{oneTimeSubmit} {}
+            : _context{context}, _commandPool{commandPool}, _primary{primary}, _oneTimeSubmit{oneTimeSubmit} {
+        }
+
         ~CVulkanCommandBuffer() {
         }
 
@@ -60,12 +66,15 @@ namespace cvulkan::client::render::core {
         }
 
         void beginRecording(const CVulkanInheritanceInfo* inheritance_info) const;
+
         void endRecording() const;
 
         void submitAndWait(const CVulkanQueue& queue) const;
 
         void createCommandBuffer();
+
         void destroyCommandBuffer() const;
+
         void reset() const;
 
         [[nodiscard]] VkCommandBuffer vkCommandBuffer() const {
@@ -78,7 +87,7 @@ namespace cvulkan::client::render::core {
 
     private:
         const CVulkanContext& _context;
-        VkCommandBuffer _vkCommandBuffer {};
+        VkCommandBuffer _vkCommandBuffer{};
         const CVulkanCommandPool& _commandPool;
         const bool _primary;
         const bool _oneTimeSubmit;

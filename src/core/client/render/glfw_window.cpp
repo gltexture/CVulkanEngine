@@ -5,7 +5,7 @@
 #include "engine_context.h"
 
 namespace cvulkan::client::window {
-    std::unique_ptr<CVulkanWindow> glfwWindow {};
+    std::unique_ptr<CVulkanWindow> glfwWindow{};
 
     void CVulkanWindow::closeWindow() const {
         glfwSetWindowShouldClose(this->glfwWindowDescriptor, GLFW_TRUE);
@@ -15,8 +15,7 @@ namespace cvulkan::client::window {
         return glfwWindowShouldClose(this->glfwWindowDescriptor) == GLFW_TRUE;
     }
 
-    void create_window(const EngineData& engineData)
-    {
+    void create_window(const EngineData& engineData) {
         if (!glfwInit()) {
             throw std::runtime_error("failed to initialize glfw");
         }

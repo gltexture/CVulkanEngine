@@ -47,7 +47,7 @@ namespace cvulkan::client::render::structs {
     }
 
     void CVulkanModel::destroyModel() {
-        for (auto& t : this->_meshes) {
+        for (auto& t: this->_meshes) {
             t.destroyMesh();
         }
     }

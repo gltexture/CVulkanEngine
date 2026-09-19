@@ -29,7 +29,7 @@ namespace cvulkan::client::render::core {
     }
 
 
-    void CVulkanCommandBuffer::beginRecording(const CVulkanInheritanceInfo *inheritance_info) const {
+    void CVulkanCommandBuffer::beginRecording(const CVulkanInheritanceInfo* inheritance_info) const {
         VkCommandBufferBeginInfo beginInfo = {
             .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
         };
@@ -67,7 +67,7 @@ namespace cvulkan::client::render::core {
             .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
             .commandBuffer = this->_vkCommandBuffer,
         };
-        queue.submit(std::vector {submitInfo}, nullptr, nullptr, &fence);
+        queue.submitQueue(std::vector{submitInfo}, nullptr, nullptr, &fence);
         fence.wait();
         fence.destroyFence();
     }

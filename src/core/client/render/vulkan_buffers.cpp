@@ -51,7 +51,7 @@ namespace cvulkan::client::render::core {
 
     void CVulkanBuffer::unMapMem() {
         if (this->_mappedMemory != nullptr) {
-            vkUnmapMemory(this->_context.device().vkDevice,this->_vkDeviceMemory);
+            vkUnmapMemory(this->_context.device().vkDevice, this->_vkDeviceMemory);
             this->_mappedMemory = nullptr;
         }
     }
@@ -85,8 +85,8 @@ namespace cvulkan::client::render::core {
     CVulkanTransferBufferData createVerticesBuffer(const CVulkanContext& context, const structs::CVulkanRawMeshData& rawMeshData) {
         const VkDeviceSize bufferSize = rawMeshData.positions.size() * sizeof(float);
 
-        CVulkanBuffer src {context};
-        CVulkanBuffer dst {context};
+        CVulkanBuffer src{context};
+        CVulkanBuffer dst{context};
 
         src.createBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, bufferSize);
         dst.createBuffer(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, bufferSize);
@@ -101,8 +101,8 @@ namespace cvulkan::client::render::core {
     CVulkanTransferBufferData createIndicesBuffers(const CVulkanContext& context, const structs::CVulkanRawMeshData& rawMeshData) {
         const VkDeviceSize bufferSize = rawMeshData.indices.size() * sizeof(uint32_t);
 
-        CVulkanBuffer src {context};
-        CVulkanBuffer dst {context};
+        CVulkanBuffer src{context};
+        CVulkanBuffer dst{context};
 
         src.createBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, bufferSize);
         dst.createBuffer(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, bufferSize);

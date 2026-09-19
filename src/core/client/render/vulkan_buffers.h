@@ -15,23 +15,28 @@ namespace cvulkan::client::render::core {
     class CVulkanBuffer {
     public:
         explicit CVulkanBuffer(const CVulkanContext& context)
-            : _context(context) {}
+            : _context(context) {
+        }
+
         ~CVulkanBuffer() = default;
 
         CVULKAN_NO_COPY(CVulkanBuffer);
 
         CVulkanBuffer(CVulkanBuffer&& other) noexcept
-        : _context{other._context}, _vkBuffer{other._vkBuffer}, _vkAllocationSize{other._vkAllocationSize}, _vkRequestedSize{other._vkRequestedSize}, _vkDeviceMemory{other._vkDeviceMemory}, _mappedMemory{other._mappedMemory} {
+            : _context{other._context}, _vkBuffer{other._vkBuffer}, _vkAllocationSize{other._vkAllocationSize}, _vkRequestedSize{other._vkRequestedSize}, _vkDeviceMemory{other._vkDeviceMemory}, _mappedMemory{other._mappedMemory} {
             other._vkBuffer = VK_NULL_HANDLE;
             other._vkDeviceMemory = VK_NULL_HANDLE;
             other._mappedMemory = nullptr;
         }
+
         CVulkanBuffer& operator=(CVulkanBuffer&&) = delete;
 
         void createBuffer(const VkBufferUsageFlags& usage, const uint32_t& reqMask, const VkDeviceSize& size);
+
         void destroyBuffer();
 
         void mapMem();
+
         void unMapMem();
 
         [[nodiscard]] VkBuffer vkBuffer() const {
@@ -63,13 +68,12 @@ namespace cvulkan::client::render::core {
 
     private:
         const CVulkanContext& _context;
-        VkBuffer _vkBuffer {};
-        VkDeviceSize _vkAllocationSize {};
-        VkDeviceSize _vkRequestedSize {};
-        VkDeviceMemory _vkDeviceMemory {};
-        void* _mappedMemory {};
+        VkBuffer _vkBuffer{};
+        VkDeviceSize _vkAllocationSize{};
+        VkDeviceSize _vkRequestedSize{};
+        VkDeviceMemory _vkDeviceMemory{};
+        void* _mappedMemory{};
     };
-
 
 
     struct CVulkanTransferBufferData {

@@ -8,10 +8,11 @@
 #include <fstream>
 
 #include "vulkan_render_core.h"
+#include "shaderc/shaderc.h"
 
 namespace cvulkan::client::render::shader {
     void CVulkanShaderModule::createShaderModule(const std::string_view shaderSpvFileName) {
-        std::ifstream spv {std::string(shaderSpvFileName), std::ios::binary | std::ios::ate};
+        std::ifstream spv{utility::SHADERS_FOLDER_SPV / std::string(shaderSpvFileName), std::ios::binary | std::ios::ate};
         if (!spv) {
             throw std::runtime_error(std::format("Failed to open shader file {}", shaderSpvFileName));
         }
@@ -28,10 +29,10 @@ namespace cvulkan::client::render::shader {
         if (fileSize % sizeof(uint32_t) != 0) {
             throw std::runtime_error(std::format("Invalid SPIR-V file size {}", shaderSpvFileName));
         }
-        const VkShaderModuleCreateInfo spvModuleCreateInfo {
+        const VkShaderModuleCreateInfo spvModuleCreateInfo{
             .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
             .codeSize = static_cast<size_t>(fileSize),
-            .pCode = reinterpret_cast<const uint32_t*>(spvFileContents.data()),
+            .pCode = reinterpret_cast<const uint32_t *>(spvFileContents.data()),
         };
         utility::vkCheck(vkCreateShaderModule(this->_context.device().vkDevice, &spvModuleCreateInfo, nullptr, &this->_vkShaderModule), "Failed to create shader module");
     }
@@ -43,7 +44,7 @@ namespace cvulkan::client::render::shader {
         }
     }
 
-    std::vector<char> compileShader(const std::string& shaderName, const std::string& shaderCode, const shaderc_shader_kind shaderType) {
+    std::vector<char> compileShader(const std::string& shaderName, const std::string& shaderCode, const uint32_t shaderType) {
         const shaderc_compiler_t compiler = shaderc_compiler_initialize();
         const shaderc_compile_options_t options = shaderc_compile_options_initialize();
         if (utility::debug_mode) {
@@ -52,19 +53,19 @@ namespace cvulkan::client::render::shader {
             shaderc_compile_options_set_source_language(options, shaderc_source_language_glsl);
         }
 
-        const shaderc_compilation_result_t compiled = shaderc_compile_into_spv(compiler, shaderCode.data(), shaderCode.size(), shaderType, shaderName.data(), "main", options);
+        const shaderc_compilation_result_t compiled = shaderc_compile_into_spv(compiler, shaderCode.data(), shaderCode.size(), static_cast<shaderc_shader_kind>(shaderType), shaderName.data(), "main", options);
         if (shaderc_result_get_compilation_status(compiled) != shaderc_compilation_status_success) {
             const char* errorMessage = shaderc_result_get_error_message(compiled);
             shaderc_result_release(compiled);
             shaderc_compile_options_release(options);
             shaderc_compiler_release(compiler);
-            throw std::runtime_error(std::format("Shader compilation failed: {}",errorMessage));
+            throw std::runtime_error(std::format("Shader compilation failed: {}", errorMessage));
         }
 
         const size_t byteCount = shaderc_result_get_length(compiled);
         const char* bytes = shaderc_result_get_bytes(compiled);
 
-        std::vector compiledShader(bytes,bytes + byteCount);
+        std::vector compiledShader(bytes, bytes + byteCount);
 
         shaderc_result_release(compiled);
         shaderc_compile_options_release(options);
@@ -73,21 +74,22 @@ namespace cvulkan::client::render::shader {
         return compiledShader;
     }
 
-    void compileShaderIfOutOfDate(const std::string& shaderName, const shaderc_shader_kind shaderType) {
-        const std::filesystem::path glslFile {utility::SHADERS_FOLDER / shaderName};
-        const std::filesystem::path spvFile {utility::SHADERS_FOLDER_SPV / (std::string{shaderName} + ".spv")};
+    void compileShaderIfOutOfDate(const std::string& shaderName, const uint32_t shaderType) {
+        const std::filesystem::path glslFile{utility::SHADERS_FOLDER / shaderName};
+        const std::filesystem::path spvFile{utility::SHADERS_FOLDER_SPV / (std::string{shaderName} + ".spv")};
 
         if (!std::filesystem::exists(spvFile) || (std::filesystem::last_write_time(glslFile) > std::filesystem::last_write_time(spvFile))) {
-            std::ifstream fileShaderCode {glslFile, std::ios::in};
+            std::ifstream fileShaderCode{glslFile, std::ios::in};
             if (!fileShaderCode) {
                 throw std::runtime_error(std::format("Failed to open glsl file {}", glslFile.string()));
             }
-            const std::string shaderCode {
-                std::istreambuf_iterator<char> {fileShaderCode},
-                std::istreambuf_iterator<char> {}
+            const std::string shaderCode{
+                std::istreambuf_iterator<char>{fileShaderCode},
+                std::istreambuf_iterator<char>{}
             };
             const std::vector<char> compiledBytes = compileShader(shaderName, shaderCode, shaderType);
-            std::ofstream file {spvFile, std::ios::trunc | std::ios::out | std::ios::binary};
+            std::filesystem::create_directories(spvFile.parent_path());
+            std::ofstream file{spvFile, std::ios::trunc | std::ios::out | std::ios::binary};
             if (!file) {
                 throw std::runtime_error(std::format("Failed to open SPIR-V file {}", spvFile.string()));
             }
