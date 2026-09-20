@@ -14,14 +14,11 @@ namespace cvulkan::client::render::core {
         explicit CVulkanPipelineCache(const CVulkanContext& context)
             : _context(context) {
         }
-
-        ~CVulkanPipelineCache() = default;
+        ~CVulkanPipelineCache();
 
         CVULKAN_NO_COPY(CVulkanPipelineCache);
 
         void createPipelineCache();
-
-        void destroyPipelineCache();
 
         [[nodiscard]] VkPipelineCache vkPipelineCache() const {
             return _vkPipelineCache;
@@ -64,13 +61,11 @@ namespace cvulkan::client::render::core {
             : _context(context) {
         }
 
-        ~CVulkanPipeline() = default;
+        ~CVulkanPipeline();
 
         CVULKAN_NO_COPY(CVulkanPipeline);
 
         void createPipeline(const CVulkanPipelineBuildInfo& buildInfo);
-
-        void destroyPipeline();
 
         [[nodiscard]] VkPipeline vkPipeline() const {
             return _vkPipeline;

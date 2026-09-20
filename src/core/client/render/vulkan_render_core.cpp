@@ -228,8 +228,8 @@ namespace cvulkan::client::render::core {
                     VkPhysicalDeviceProperties physicalDeviceProperties{};
                     vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
 
-                    availableLayers = this->availableDeviceLayers(physicalDevice);
-                    availableExtensions = this->availableDeviceExtensions(physicalDevice);
+                    availableLayers = availableDeviceLayers(physicalDevice);
+                    availableExtensions = availableDeviceExtensions(physicalDevice);
 
                     for (const auto& layer: requiredLayers) {
                         if (!availableLayers.contains(layer)) {
@@ -327,20 +327,20 @@ namespace cvulkan::client::render::core {
         std::unordered_map<uint32_t, CVulkanQueueFamilyCreationRequest> queueFamilies{};
         std::vector<VkDeviceQueueCreateInfo> queueCreateInfos{};
         for (const auto& t: requiredQueueFamilies) {
-            const uint32_t queueFamilyIndex = this->findVulkanQueueFamily(t.bitMask);
+            const uint32_t queueFamilyIndex = this->findVulkanQueueFamily(t._bitMask);
             if (queueFamilyIndex == UINT32_MAX) {
-                throw std::runtime_error(std::format("Graphics queue family not found: {}", t.bitMask));
+                throw std::runtime_error(std::format("Graphics queue family not found: {}", t._bitMask));
             }
             queueFamilies.emplace(queueFamilyIndex, t);
-            this->_queueFamiliesRegistry.registerQueueFamily(t.bitMask, t.queueCount, queueFamilyIndex);
+            this->_queueFamiliesRegistry.registerQueueFamily(t._bitMask, t._queueCount, queueFamilyIndex);
         }
         queueCreateInfos.reserve(queueFamilies.size());
         for (const auto& [fst, snd]: queueFamilies) {
             const VkDeviceQueueCreateInfo queueCreateInfo = {
                 .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
                 .queueFamilyIndex = fst,
-                .queueCount = snd.queueCount,
-                .pQueuePriorities = snd.priorities.data(),
+                .queueCount = snd._queueCount,
+                .pQueuePriorities = snd._priorities.data(),
             };
             queueCreateInfos.emplace_back(queueCreateInfo);
         }
@@ -361,16 +361,16 @@ namespace cvulkan::client::render::core {
 
         vkDeviceCreateInfo.pNext = &features2;
         vkDeviceCreateInfo.pEnabledFeatures = nullptr;
-        vkDeviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(this->_physicalDevice.vkDeviceLrExtData.enabledExtensions.size());
-        vkDeviceCreateInfo.enabledLayerCount = static_cast<uint32_t>(this->_physicalDevice.vkDeviceLrExtData.enabledLayers.size());
+        vkDeviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(this->_physicalDevice.vkDeviceLayersExtensionsData.enabledExtensions.size());
+        vkDeviceCreateInfo.enabledLayerCount = static_cast<uint32_t>(this->_physicalDevice.vkDeviceLayersExtensionsData.enabledLayers.size());
 
         std::vector<const char *> enabledLayerNames{};
         std::vector<const char *> enabledExtNames{};
 
-        for (const auto& layer: this->_physicalDevice.vkDeviceLrExtData.enabledLayers) {
+        for (const auto& layer: this->_physicalDevice.vkDeviceLayersExtensionsData.enabledLayers) {
             enabledLayerNames.emplace_back(layer.c_str());
         }
-        for (const auto& layer: this->_physicalDevice.vkDeviceLrExtData.enabledExtensions) {
+        for (const auto& layer: this->_physicalDevice.vkDeviceLayersExtensionsData.enabledExtensions) {
             enabledExtNames.emplace_back(layer.c_str());
         }
 
@@ -380,7 +380,7 @@ namespace cvulkan::client::render::core {
         utility::vkCheck(vkCreateDevice(this->_physicalDevice.vkPhysicalDevice, &vkDeviceCreateInfo, nullptr, &this->_device.vkDevice));
         logging::info("Created logical device");
         for (const auto& t: this->_queueFamiliesRegistry.registeredData()) {
-            logging::info("Queue family index: {}, queues: {}, bits: {}", t.queueCount, t.queueFamilyIndex, t.bitMask);
+            logging::info("Queue family index: {}, queues: {}, bits: {}", t._queueCount, t._queueFamilyIndex, t._bitMask);
         }
     }
 
@@ -451,5 +451,23 @@ namespace cvulkan::client::render::core {
             loop::destroyRendering();
         }
         vulkanContext.reset();
+    }
+
+    CVulkanInstance::CVulkanInstance() {
+    }
+
+    CVulkanInstance::~CVulkanInstance() {
+    }
+
+    CVulkanPhysicalDevice::CVulkanPhysicalDevice() {
+    }
+
+    CVulkanPhysicalDevice::~CVulkanPhysicalDevice() {
+    }
+
+    CVulkanDevice::CVulkanDevice() {
+    }
+
+    CVulkanDevice::~CVulkanDevice() {
     }
 }

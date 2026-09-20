@@ -15,14 +15,6 @@ namespace cvulkan::client::render::core {
         logging::info("Created vulkan pipeline cache");
     }
 
-    void CVulkanPipelineCache::destroyPipelineCache() {
-        if (this->_vkPipelineCache != VK_NULL_HANDLE) {
-            vkDestroyPipelineCache(this->_context.device().vkDevice, this->_vkPipelineCache, nullptr);
-            logging::info("Destroyed vulkan pipeline cache");
-            this->_vkPipelineCache = VK_NULL_HANDLE;
-        }
-    }
-
     void CVulkanPipeline::createPipeline(const CVulkanPipelineBuildInfo& buildInfo) {
         std::vector<VkPipelineShaderStageCreateInfo> shaderStages{};
         shaderStages.reserve(buildInfo.shaderModules().size());
@@ -106,8 +98,20 @@ namespace cvulkan::client::render::core {
         utility::vkCheck(vkCreateGraphicsPipelines(this->_context.device().vkDevice, this->_context.pipelineCache().vkPipelineCache(), 1, &createInfo, nullptr, &this->_vkPipeline), "Error creating graphics pipeline");
     }
 
-    void CVulkanPipeline::destroyPipeline() {
-        vkDestroyPipelineLayout(this->_context.device().vkDevice, this->_vkPipelineLayout, nullptr);
-        vkDestroyPipeline(this->_context.device().vkDevice, this->_vkPipeline, nullptr);
+    CVulkanPipelineCache::~CVulkanPipelineCache() {
+        if (this->_vkPipelineCache != VK_NULL_HANDLE) {
+            vkDestroyPipelineCache(this->_context.device().vkDevice, this->_vkPipelineCache, nullptr);
+            logging::info("Destroyed vulkan pipeline cache");
+            this->_vkPipelineCache = VK_NULL_HANDLE;
+        }
+    }
+
+    CVulkanPipeline::~CVulkanPipeline() {
+        if (this->_vkPipelineLayout != VK_NULL_HANDLE) {
+            vkDestroyPipelineLayout(this->_context.device().vkDevice, this->_vkPipelineLayout, nullptr);
+        }
+        if (this->_vkPipeline != VK_NULL_HANDLE) {
+            vkDestroyPipeline(this->_context.device().vkDevice, this->_vkPipeline, nullptr);
+        }
     }
 }

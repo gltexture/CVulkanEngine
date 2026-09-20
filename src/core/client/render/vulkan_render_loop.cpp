@@ -16,14 +16,14 @@ namespace cvulkan::client::render::loop {
         uint32_t graphicsQueueFamilyIndex = UINT32_MAX;
         uint32_t presentationQueueFamilyIndex = UINT32_MAX;
         for (const auto& t: this->_context.queueFamiliesRegistry().registeredData()) {
-            if (t.bitMask & core::CVulkanQueueFamilyBitMasks::GRAPHICS) {
-                graphicsQueueFamilyIndex = t.queueFamilyIndex;
+            if (t._bitMask & core::CVulkanQueueFamilyBitMasks::GRAPHICS) {
+                graphicsQueueFamilyIndex = t._queueFamilyIndex;
                 break;
             }
         }
         for (const auto& t: this->_context.queueFamiliesRegistry().registeredData()) {
-            if (t.bitMask & core::CVulkanQueueFamilyBitMasks::PRESENT) {
-                presentationQueueFamilyIndex = t.queueFamilyIndex;
+            if (t._bitMask & core::CVulkanQueueFamilyBitMasks::PRESENT) {
+                presentationQueueFamilyIndex = t._queueFamilyIndex;
                 break;
             }
         }
