@@ -5,13 +5,13 @@
 #include "vulkan_render_cache.h"
 
 namespace cvulkan::client::render::cache {
-    std::unique_ptr<CVulkanModelsCache> modelsCache;
+    CVulkanModelsCache::~CVulkanModelsCache() {
+    }
 
     void CVulkanModelsCache::loadModels(const std::vector<structs::CVulkanRawModelData>& models, const core::CVulkanCommandPool& commandPool, const core::CVulkanQueue& queue) {
         std::vector<core::CVulkanBuffer> stagingBuffers{};
 
-        core::CVulkanCommandBuffer commandBuffer{this->_context, commandPool, true, true};
-        commandBuffer.createCommandBuffer();
+        const core::CVulkanCommandBuffer commandBuffer{this->_context, commandPool, true, true};
         commandBuffer.beginRecording();
 
         for (const auto& [id, meshes]: models) {
@@ -35,29 +35,9 @@ namespace cvulkan::client::render::cache {
 
         commandBuffer.endRecording();
         commandBuffer.submitAndWait(queue);
-        commandBuffer.destroyCommandBuffer();
-
-        for (auto& t: stagingBuffers) {
-            t.destroyBuffer();
-        }
-    }
-
-    void CVulkanModelsCache::destroyCache() {
-        for (auto& [id, model]: this->_modelsCache) {
-            model.destroyModel();
-        }
     }
 
     const structs::CVulkanModel& CVulkanModelsCache::getModel(const std::string_view id) {
         return this->_modelsCache.at(std::string{id});
-    }
-
-
-    void createCaches(const core::CVulkanContext& context) {
-        modelsCache = std::make_unique<CVulkanModelsCache>(context);
-    }
-
-    void destroyCaches() {
-        modelsCache->destroyCache();
     }
 }

@@ -5,6 +5,8 @@
 #pragma once
 
 #include <vector>
+
+#include "vulkan_render_cache.h"
 #include "client/render/vulkan_pipeline.h"
 #include "client/render/vulkan_utility.h"
 
@@ -20,29 +22,26 @@ namespace cvulkan::client::render::core {
 namespace cvulkan::client::render::scene {
     class CVulkanSceneRenderer {
     public:
-        CVulkanSceneRenderer(const core::CVulkanContext& context, const loop::CVulkanRenderLoop& renderLoop)
-            : _context(context), _renderLoop(renderLoop), _defaultRenderPipeline{context} {
-        }
-
-        ~CVulkanSceneRenderer() = default;
+        CVulkanSceneRenderer(const core::CVulkanContext& context, const loop::CVulkanRenderLoop& renderLoop);
+        ~CVulkanSceneRenderer();
 
         CVULKAN_NO_COPY(CVulkanSceneRenderer);
 
-        void createScene();
-
         void renderScene(const core::CVulkanCommandBuffer& commandBuffer, const uint32_t& imageIndex) const;
 
-        void destroyScene();
+        [[nodiscard]] const cache::CVulkanCacheCollection& caches() const {
+            return _caches;
+        }
 
     protected:
         void loadResources();
 
     private:
         const core::CVulkanContext& _context;
+        cache::CVulkanCacheCollection _caches;
         const loop::CVulkanRenderLoop& _renderLoop;
-        static constexpr VkClearValue VK_CLEAR_VALUE = {0.5f, 0.7f, 0.9f, 1.0f};
+        std::unique_ptr<core::CVulkanPipeline> _defaultRenderPipeline {};
         std::vector<VkRenderingAttachmentInfo> _vkColorAttachments{};
         std::vector<VkRenderingInfo> _vkRendering{};
-        core::CVulkanPipeline _defaultRenderPipeline;
     };
 }

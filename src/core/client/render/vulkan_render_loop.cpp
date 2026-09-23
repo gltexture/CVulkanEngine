@@ -9,19 +9,19 @@
 #include "scene/vulkan_render_scene.h"
 
 namespace cvulkan::client::render::loop {
-    std::unique_ptr<CVulkanRenderLoop> renderLoop;
     std::unique_ptr<scene::CVulkanSceneRenderer> sceneRenderer;
+    std::unique_ptr<CVulkanRenderLoop> renderLoop;
 
-    void CVulkanRenderLoop::createRenderLoop() {
+    CVulkanRenderLoop::CVulkanRenderLoop(const core::CVulkanContext& context) : _context{context} {
         uint32_t graphicsQueueFamilyIndex = UINT32_MAX;
         uint32_t presentationQueueFamilyIndex = UINT32_MAX;
-        for (const auto& t: this->_context.queueFamiliesRegistry().registeredData()) {
+        for (const auto& t: this->_context.device().queueFamiliesRegistry().registeredData()) {
             if (t._bitMask & core::CVulkanQueueFamilyBitMasks::GRAPHICS) {
                 graphicsQueueFamilyIndex = t._queueFamilyIndex;
                 break;
             }
         }
-        for (const auto& t: this->_context.queueFamiliesRegistry().registeredData()) {
+        for (const auto& t: this->_context.device().queueFamiliesRegistry().registeredData()) {
             if (t._bitMask & core::CVulkanQueueFamilyBitMasks::PRESENT) {
                 presentationQueueFamilyIndex = t._queueFamilyIndex;
                 break;
@@ -38,35 +38,27 @@ namespace cvulkan::client::render::loop {
             this->_commandBuffers.reserve(renderConfig::MAX_IMAGES_IN_FLIGHT);
             this->_fences.reserve(renderConfig::MAX_IMAGES_IN_FLIGHT);
             this->_presentationCompleteSemaphores.reserve(renderConfig::MAX_IMAGES_IN_FLIGHT);
-            this->_renderCompleteSemaphores.reserve(this->_context.surface().swapChain().numImages());
+            this->_renderCompleteSemaphores.reserve(this->_context.swapChain().numImages());
 
             for (uint32_t i = 0; i < renderConfig::MAX_IMAGES_IN_FLIGHT; ++i) {
                 this->_commandPools.emplace_back(this->_context, graphicsQueueFamilyIndex, false);
                 this->_commandBuffers.emplace_back(this->_context, this->_commandPools.back(), true, true);
-                this->_fences.emplace_back(this->_context);
+                this->_fences.emplace_back(this->_context, true);
                 this->_presentationCompleteSemaphores.emplace_back(this->_context);
-
-                {
-                    this->_commandPools[i].createCommandPool();
-                    this->_commandBuffers[i].createCommandBuffer();
-                    this->_fences[i].createFence(true);
-                    this->_presentationCompleteSemaphores[i].createSemaphore();
-                }
             }
 
-            for (uint32_t i = 0; i < this->_context.surface().swapChain().numImages(); ++i) {
+            for (uint32_t i = 0; i < this->_context.swapChain().numImages(); ++i) {
                 this->_renderCompleteSemaphores.emplace_back(this->_context);
-
-                {
-                    this->_renderCompleteSemaphores[i].createSemaphore();
-                }
             }
         }
 
         {
-            this->_graphicsQueue.createQueue(graphicsQueueFamilyIndex, 0);
-            this->_presentQueue.createQueue(presentationQueueFamilyIndex, 0);
+            this->_graphicsQueue =std::make_unique<core::CVulkanQueue>(this->_context, graphicsQueueFamilyIndex, 0);
+            this->_presentQueue =std::make_unique<core::CVulkanQueue>(this->_context, presentationQueueFamilyIndex, 0);
         }
+    }
+
+    CVulkanRenderLoop::~CVulkanRenderLoop() {
     }
 
     void CVulkanRenderLoop::recordingStart(const core::CVulkanCommandPool& commandPool, const core::CVulkanCommandBuffer& commandBuffer) {
@@ -102,7 +94,7 @@ namespace cvulkan::client::render::loop {
         const std::vector v_commandSubmitInfos{commands};
         const std::vector v_waitSemaphores{waitSemaphores};
         const std::vector v_signalSemaphores{signalSemaphores};
-        this->_graphicsQueue.submitQueue(v_commandSubmitInfos, &v_waitSemaphores, &v_signalSemaphores, &fence);
+        this->_graphicsQueue->submitQueue(v_commandSubmitInfos, &v_waitSemaphores, &v_signalSemaphores, &fence);
     }
 
     void CVulkanRenderLoop::runRenderLoop() {
@@ -112,7 +104,7 @@ namespace cvulkan::client::render::loop {
         this->waitForFence();
         recordingStart(commandPool, commandBuffer);
 
-        const uint32_t imageIndex = this->_context.surface().swapChain().acquireSwapChainNextImage(this->_presentationCompleteSemaphores[this->_currentFrame]);
+        const uint32_t imageIndex = this->_context.swapChain().acquireSwapChainNextImage(this->_presentationCompleteSemaphores[this->_currentFrame]);
         if (imageIndex == UINT32_MAX) {
             recordingStop(commandBuffer);
             return;
@@ -124,50 +116,27 @@ namespace cvulkan::client::render::loop {
         recordingStop(commandBuffer);
         this->submit(commandBuffer, imageIndex);
 
-        this->_context.surface().swapChain().presentImage(this->_presentQueue, this->_renderCompleteSemaphores[imageIndex], imageIndex);
+        this->_context.swapChain().presentImage(*this->_presentQueue, this->_renderCompleteSemaphores[imageIndex], imageIndex);
         this->_currentFrame = (this->_currentFrame + 1) % renderConfig::MAX_IMAGES_IN_FLIGHT;
-    }
-
-    void CVulkanRenderLoop::destroyRenderLoopResources() {
-        for (auto& t: this->_renderCompleteSemaphores) {
-            t.destroySemaphore();
-        }
-        for (auto& t: this->_presentationCompleteSemaphores) {
-            t.destroySemaphore();
-        }
-        for (auto& t: this->_fences) {
-            t.destroyFence();
-        }
-        for (auto& t: this->_commandBuffers) {
-            t.destroyCommandBuffer();
-        }
-        for (auto& t: this->_commandPools) {
-            t.destroyCommandPool();
-        }
     }
 
     void createRendering(const core::CVulkanContext& context) {
         renderLoop = std::make_unique<CVulkanRenderLoop>(context);
-        renderLoop->createRenderLoop();
-
         sceneRenderer = std::make_unique<scene::CVulkanSceneRenderer>(context, *renderLoop);
-        sceneRenderer->createScene();
+    }
+
+    void destroyRendering() {
+        if (sceneRenderer != nullptr) {
+            sceneRenderer.reset();
+        }
+        if (renderLoop != nullptr) {
+            renderLoop.reset();
+        }
     }
 
     void runRendering() {
         if (renderLoop != nullptr) {
             renderLoop->runRenderLoop();
-        }
-    }
-
-    void destroyRendering() {
-        if (renderLoop != nullptr) {
-            renderLoop->destroyRenderLoopResources();
-            renderLoop.reset();
-        }
-        if (sceneRenderer != nullptr) {
-            sceneRenderer->destroyScene();
-            sceneRenderer.reset();
         }
     }
 }

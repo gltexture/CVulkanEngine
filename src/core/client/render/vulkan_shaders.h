@@ -14,11 +14,8 @@ namespace cvulkan::client::render::core {
 namespace cvulkan::client::render::shader {
     class CVulkanShaderModule {
     public:
-        explicit CVulkanShaderModule(const core::CVulkanContext& context, const VkShaderStageFlagBits stage)
-            : _context(context), _stage(stage) {
-        }
-
-        ~CVulkanShaderModule() = default;
+        CVulkanShaderModule(const core::CVulkanContext& context, std::string_view shaderSpvFileName, VkShaderStageFlagBits stage);
+        ~CVulkanShaderModule();
 
         CVULKAN_NO_COPY(CVulkanShaderModule);
 
@@ -26,15 +23,11 @@ namespace cvulkan::client::render::shader {
 
         CVulkanShaderModule& operator=(CVulkanShaderModule&&) = delete;
 
-        void createShaderModule(std::string_view shaderSpvFileName);
-
-        void destroyShaderModule();
-
         [[nodiscard]] VkShaderModule vkShaderModule() const {
             return _vkShaderModule;
         }
 
-        [[nodiscard]] VkShaderStageFlagBits stage() const {
+        [[nodiscard]] const VkShaderStageFlagBits& stage() const {
             return _stage;
         }
 
@@ -44,6 +37,6 @@ namespace cvulkan::client::render::shader {
         VkShaderModule _vkShaderModule{};
     };
 
-    std::vector<char> compileShader(const std::string& shaderName, std::string& shaderCode, uint32_t shaderType);
+    std::vector<char> compileShader(const std::string& shaderName, const std::string& shaderCode, uint32_t shaderType);
     void compileShaderIfOutOfDate(const std::string& shaderName, uint32_t shaderType);
 }

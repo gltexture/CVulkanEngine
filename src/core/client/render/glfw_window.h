@@ -3,6 +3,7 @@
 #include <memory>
 
 #include "engine_context.h"
+#include "vulkan_utility.h"
 
 #include "GLFW/glfw3.h"
 #include "glm/vec2.hpp"
@@ -10,34 +11,32 @@
 namespace cvulkan::client::window {
     class CVulkanWindow {
     public:
-        explicit CVulkanWindow(GLFWwindow* glfw_win) : glfwWindowDescriptor(glfw_win) {
-        };
+        explicit CVulkanWindow(const EngineData& engineData);
+        ~CVulkanWindow();
 
-        ~CVulkanWindow() = default;
+        CVULKAN_NO_COPY_NO_ASSIGN_MOVE(CVulkanWindow);
 
         void closeWindow() const;
 
         [[nodiscard]] bool shouldBeClosed() const;
 
-        [[nodiscard]] GLFWwindow* glfw_window_descriptor() const {
-            return glfwWindowDescriptor;
+        [[nodiscard]] GLFWwindow* glfwWindowDescriptor() const {
+            return _glfwWindowDescriptor;
         }
-
         [[nodiscard]] glm::uvec2 size() const {
             int width = 0;
             int height = 0;
-            glfwGetWindowSize(glfwWindowDescriptor, &width, &height);
+            glfwGetWindowSize(_glfwWindowDescriptor, &width, &height);
             return {width, height};
         }
 
     private:
-        GLFWwindow* glfwWindowDescriptor;
+        GLFWwindow* _glfwWindowDescriptor;
         glm::uvec2 glfwWindowSize{};
     };
 
     extern std::unique_ptr<CVulkanWindow> glfwWindow;
 
-    void create_window(const EngineData& engineData);
-
-    void cleanUp();
+    void createWindow(const EngineData& engineData);
+    void destroyWindow();
 }

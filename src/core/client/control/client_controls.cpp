@@ -27,7 +27,7 @@ namespace cvulkan::client::control {
         }
     }
 
-    void cleanUp() {
+    void destroyControl() {
         g_keyboardControl.reset();
         g_mouseControl.reset();
     }

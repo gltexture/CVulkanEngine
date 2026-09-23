@@ -28,19 +28,13 @@ namespace cvulkan::client::render::structs {
 
     class CVulkanVertexStruct {
     public:
-        explicit CVulkanVertexStruct(const core::CVulkanContext& context)
-            : _context(context) {
-        }
+        explicit CVulkanVertexStruct(const core::CVulkanContext& context);
 
-        ~CVulkanVertexStruct() = default;
+        ~CVulkanVertexStruct();
 
         CVULKAN_NO_COPY(CVulkanVertexStruct);
 
-        void createVertexStruct();
-
-        void destroyVertexStruct();
-
-        [[nodiscard]] VkPipelineVertexInputStateCreateInfo vkPipelineVertexInputStateCreateInfo() const {
+        [[nodiscard]] const VkPipelineVertexInputStateCreateInfo& vkPipelineVertexInputStateCreateInfo() const {
             return _vkPipelineVertexInputStateCreateInfo;
         }
 
@@ -53,16 +47,10 @@ namespace cvulkan::client::render::structs {
 
     class CVulkanMesh {
     public:
-        CVulkanMesh(const std::string& id, core::CVulkanBuffer&& verticesBuffer, core::CVulkanBuffer&& indicesBuffer, const uint32_t& numIndices)
-            : _id(id),
-              _verticesBuffer(std::move(verticesBuffer)),
-              _indicesBuffer(std::move(indicesBuffer)),
-              _numIndices(numIndices) {
-        }
+        CVulkanMesh(const std::string& id, core::CVulkanBuffer&& verticesBuffer, core::CVulkanBuffer&& indicesBuffer, const uint32_t& numIndices);
+        ~CVulkanMesh();
 
         CVULKAN_NO_COPY_NO_ASSIGN_MOVE(CVulkanMesh);
-
-        void destroyMesh();
 
         [[nodiscard]] const std::string& id() const {
             return _id;
@@ -89,15 +77,10 @@ namespace cvulkan::client::render::structs {
 
     class CVulkanModel {
     public:
-        explicit CVulkanModel(const std::string& id)
-            : _id(id) {
-        }
-        ~CVulkanModel() = default;
+        explicit CVulkanModel(const std::string& id);
+        ~CVulkanModel();
 
         CVULKAN_NO_COPY_NO_ASSIGN_MOVE(CVulkanModel);
-
-
-        void destroyModel();
 
         [[nodiscard]] const std::string& id() const {
             return _id;

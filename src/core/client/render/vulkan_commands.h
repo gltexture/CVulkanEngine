@@ -14,12 +14,8 @@ namespace cvulkan::client::render::core {
 
     class CVulkanCommandPool {
     public:
-        CVulkanCommandPool(const CVulkanContext& context, const uint32_t queueFamilyIndex, const bool supportReset)
-            : _context{context}, _queueFamilyIndex{queueFamilyIndex}, _supportReset{supportReset} {
-        }
-
-        ~CVulkanCommandPool() {
-        }
+        CVulkanCommandPool(const CVulkanContext& context, const uint32_t queueFamilyIndex, const bool supportReset);
+        ~CVulkanCommandPool();
 
         CVULKAN_NO_COPY(CVulkanCommandPool)
 
@@ -27,10 +23,6 @@ namespace cvulkan::client::render::core {
             : _context{other._context}, _vkCommandPool{other._vkCommandPool}, _queueFamilyIndex{other._queueFamilyIndex}, _supportReset{other._supportReset} {
             other._vkCommandPool = VK_NULL_HANDLE;
         }
-
-        void createCommandPool();
-
-        void destroyCommandPool() const;
 
         void reset() const;
 
@@ -47,12 +39,8 @@ namespace cvulkan::client::render::core {
 
     class CVulkanCommandBuffer {
     public:
-        CVulkanCommandBuffer(const CVulkanContext& context, const CVulkanCommandPool& commandPool, const bool primary, const bool oneTimeSubmit)
-            : _context{context}, _commandPool{commandPool}, _primary{primary}, _oneTimeSubmit{oneTimeSubmit} {
-        }
-
-        ~CVulkanCommandBuffer() {
-        }
+        CVulkanCommandBuffer(const CVulkanContext& context, const CVulkanCommandPool& commandPool, const bool primary, const bool oneTimeSubmit);
+        ~CVulkanCommandBuffer();
 
         CVULKAN_NO_COPY(CVulkanCommandBuffer)
 
@@ -71,10 +59,6 @@ namespace cvulkan::client::render::core {
 
         void submitAndWait(const CVulkanQueue& queue) const;
 
-        void createCommandBuffer();
-
-        void destroyCommandBuffer() const;
-
         void reset() const;
 
         [[nodiscard]] VkCommandBuffer vkCommandBuffer() const {
@@ -91,5 +75,29 @@ namespace cvulkan::client::render::core {
         const CVulkanCommandPool& _commandPool;
         const bool _primary;
         const bool _oneTimeSubmit;
+    };
+
+    class CVulkanQueue {
+    public:
+        explicit CVulkanQueue(const CVulkanContext& context, uint32_t queueFamilyIndex, uint32_t queueIndex);
+        ~CVulkanQueue() = default;
+
+        CVULKAN_NO_COPY(CVulkanQueue);
+
+        void submitQueue(const std::vector<VkCommandBufferSubmitInfo>& commandSubmitInfos, const std::vector<VkSemaphoreSubmitInfo>* waitSemaphores, const std::vector<VkSemaphoreSubmitInfo>* signalSemaphores,
+                    const sync::CVulkanFence* fence) const;
+
+        [[nodiscard]] VkQueue vkQueue() const {
+            return _vkQueue;
+        }
+
+        [[nodiscard]] uint32_t queueFamilyIndex() const {
+            return _queueFamilyIndex;
+        }
+
+    private:
+        const CVulkanContext& _context;
+        VkQueue _vkQueue{};
+        uint32_t _queueFamilyIndex{};
     };
 }

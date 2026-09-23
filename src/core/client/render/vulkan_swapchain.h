@@ -6,9 +6,10 @@
 #include <vulkan/vulkan.h>
 #include <vector>
 
-#include "vulkan_synchronization.h"
+#include "vulkan_utility.h"
 
 namespace cvulkan::client::render::sync {
+    class CVulkanSemaphore;
     class CVulkanFence;
 }
 
@@ -30,11 +31,8 @@ namespace cvulkan::client::render::core {
 
     class CVulkanImageView {
     public:
-        explicit CVulkanImageView(const CVulkanContext& context)
-            : _context{context} {
-        }
-
-        ~CVulkanImageView() = default;
+        explicit CVulkanImageView(const CVulkanContext& context, const CVulkanImageViewData& view_data, const VkImage& vk_image);
+        ~CVulkanImageView();
 
         CVULKAN_NO_COPY(CVulkanImageView);
 
@@ -44,10 +42,6 @@ namespace cvulkan::client::render::core {
         }
 
         CVulkanImageView& operator=(CVulkanImageView&&) = delete;
-
-        void createImageView(const CVulkanImageViewData& view_data, const VkImage& vk_image);
-
-        void destroyImageView();
 
         [[nodiscard]] VkImage vkImage() const {
             return _vkImage;
@@ -65,17 +59,10 @@ namespace cvulkan::client::render::core {
 
     class CVulkanSwapChain {
     public:
-        explicit CVulkanSwapChain(const CVulkanContext& context)
-            : _context{context} {
-        }
-
-        ~CVulkanSwapChain() = default;
+        explicit CVulkanSwapChain(const CVulkanContext& context, const VkSurfaceKHR& vkSurface, const VkSurfaceCapabilitiesKHR& vkSurfaceCapabilities, const VkFormat& vkFormat, const VkColorSpaceKHR& vkColorSpace);
+        ~CVulkanSwapChain();
 
         CVULKAN_NO_COPY(CVulkanSwapChain);
-
-        void createSwapChain(const VkSurfaceKHR& vkSurface, const VkSurfaceCapabilitiesKHR& vkSurfaceCapabilities, const VkFormat& vkFormat, const VkColorSpaceKHR& vkColorSpace);
-
-        void destroySwapChain();
 
         uint32_t acquireSwapChainNextImage(const sync::CVulkanSemaphore& semaphore) const;
 
@@ -91,94 +78,51 @@ namespace cvulkan::client::render::core {
             return _numImages;
         }
 
-        [[nodiscard]] VkExtent2D extent() const {
+        [[nodiscard]] const VkExtent2D& extent() const {
             return _swapChainExtent;
         }
 
         bool presentImage(const CVulkanQueue& queue, const sync::CVulkanSemaphore& renderCompleteSemaphore, const uint32_t& imageIndex) const;
 
     private:
+        const CVulkanContext& _context;
         VkExtent2D _swapChainExtent = {};
         uint32_t _numImages = UINT32_MAX;
-        const CVulkanContext& _context;
         VkSwapchainKHR _vkSwapChain{};
         std::vector<CVulkanImageView> _imageViews{};
     };
 
-    class CVulkanQueue {
-    public:
-        explicit CVulkanQueue(const CVulkanContext& context) : _context{context} {
-        }
-
-        ~CVulkanQueue() = default;
-
-        CVULKAN_NO_COPY(CVulkanQueue);
-
-        void createQueue(uint32_t queueFamilyIndex, uint32_t queueIndex);
-
-        void submitQueue(const std::vector<VkCommandBufferSubmitInfo>& commandSubmitInfos, const std::vector<VkSemaphoreSubmitInfo>* waitSemaphores, const std::vector<VkSemaphoreSubmitInfo>* signalSemaphores,
-                    const sync::CVulkanFence* fence) const;
-
-        [[nodiscard]] VkQueue vkQueue() const {
-            return _vkQueue;
-        }
-
-        [[nodiscard]] uint32_t queueFamilyIndex() const {
-            return _queueFamilyIndex;
-        }
-
-    private:
-        const CVulkanContext& _context;
-        VkQueue _vkQueue{};
-        uint32_t _queueFamilyIndex{};
-    };
-
     class CVulkanSurface {
     public:
-        explicit CVulkanSurface(const CVulkanContext& context)
-            : _swapChain{context}, _context{context} {
-        }
-
-        ~CVulkanSurface() = default;
+        explicit CVulkanSurface(const CVulkanContext& context);
+        ~CVulkanSurface();
 
         CVULKAN_NO_COPY(CVulkanSurface);
-
-        static void calcSurfaceFormat(const CVulkanPhysicalDevice& physical_device_data, const VkSurfaceKHR& vkSurface, VkFormat& vkFormat, VkColorSpaceKHR& vkColorSpace);
-
-        void createSurface();
-
-        void destroySurface();
-
-        [[nodiscard]] CVulkanSwapChain& swapChain() {
-            return _swapChain;
-        }
-
-        [[nodiscard]] const CVulkanSwapChain& swapChain() const {
-            return _swapChain;
-        }
 
         [[nodiscard]] VkSurfaceKHR vkSurface() const {
             return _vkSurface;
         }
 
-        [[nodiscard]] VkSurfaceCapabilitiesKHR vkSurfaceCapabilities() const {
+        [[nodiscard]] const VkSurfaceCapabilitiesKHR& vkSurfaceCapabilities() const {
             return _vkSurfaceCapabilities;
         }
 
-        [[nodiscard]] VkFormat vkFormat() const {
+        [[nodiscard]] const VkFormat& vkFormat() const {
             return _vkFormat;
         }
 
-        [[nodiscard]] VkColorSpaceKHR vkColorSpace() const {
+        [[nodiscard]] const VkColorSpaceKHR& vkColorSpace() const {
             return _vkColorSpace;
         }
 
+    protected:
+        static void calcSurfaceFormat(const CVulkanPhysicalDevice& physical_device_data, const VkSurfaceKHR& vkSurface, VkFormat& vkFormat, VkColorSpaceKHR& vkColorSpace);
+
     private:
+        const CVulkanContext& _context;
         VkSurfaceKHR _vkSurface{};
         VkSurfaceCapabilitiesKHR _vkSurfaceCapabilities{};
         VkFormat _vkFormat{};
         VkColorSpaceKHR _vkColorSpace{};
-        CVulkanSwapChain _swapChain;
-        const CVulkanContext& _context;
     };
 }

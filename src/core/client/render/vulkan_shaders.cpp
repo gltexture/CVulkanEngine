@@ -11,7 +11,7 @@
 #include "shaderc/shaderc.h"
 
 namespace cvulkan::client::render::shader {
-    void CVulkanShaderModule::createShaderModule(const std::string_view shaderSpvFileName) {
+    CVulkanShaderModule::CVulkanShaderModule(const core::CVulkanContext& context, std::string_view shaderSpvFileName, const VkShaderStageFlagBits stage) : _context(context), _stage(stage) {
         std::ifstream spv{utility::SHADERS_FOLDER_SPV / std::string(shaderSpvFileName), std::ios::binary | std::ios::ate};
         if (!spv) {
             throw std::runtime_error(std::format("Failed to open shader file {}", shaderSpvFileName));
@@ -34,17 +34,17 @@ namespace cvulkan::client::render::shader {
             .codeSize = static_cast<size_t>(fileSize),
             .pCode = reinterpret_cast<const uint32_t *>(spvFileContents.data()),
         };
-        utility::vkCheck(vkCreateShaderModule(this->_context.device().vkDevice, &spvModuleCreateInfo, nullptr, &this->_vkShaderModule), "Failed to create shader module");
+        utility::vkCheck(vkCreateShaderModule(this->_context.device().vkDevice(), &spvModuleCreateInfo, nullptr, &this->_vkShaderModule), "Failed to create shader module");
     }
 
-    void CVulkanShaderModule::destroyShaderModule() {
+    CVulkanShaderModule::~CVulkanShaderModule() {
         if (this->_vkShaderModule != VK_NULL_HANDLE) {
-            vkDestroyShaderModule(this->_context.device().vkDevice, this->_vkShaderModule, nullptr);
+            vkDestroyShaderModule(this->_context.device().vkDevice(), this->_vkShaderModule, nullptr);
             this->_vkShaderModule = VK_NULL_HANDLE;
         }
     }
 
-    std::vector<char> compileShader(const std::string& shaderName, const std::string& shaderCode, const uint32_t shaderType) {
+    std::vector<char> compileShader(const std::string& shaderName, const std::string& shaderCode, uint32_t shaderType) {
         const shaderc_compiler_t compiler = shaderc_compiler_initialize();
         const shaderc_compile_options_t options = shaderc_compile_options_initialize();
         if (utility::debug_mode) {

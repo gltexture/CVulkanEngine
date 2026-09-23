@@ -6,8 +6,8 @@
 #include "vulkan_synchronization.h"
 
 namespace cvulkan::client::render::core {
-    void CVulkanCommandPool::createCommandPool() {
-        logging::info("Creating command pool");
+    CVulkanCommandPool::CVulkanCommandPool(const CVulkanContext& context, const uint32_t queueFamilyIndex, const bool supportReset)
+    : _context{context}, _queueFamilyIndex{queueFamilyIndex}, _supportReset{supportReset} {
         VkCommandPoolCreateInfo commandPoolCreateInfo = {
             .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
             .queueFamilyIndex = this->_queueFamilyIndex,
@@ -15,17 +15,42 @@ namespace cvulkan::client::render::core {
         if (this->_supportReset) {
             commandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
         }
-        utility::vkCheck(vkCreateCommandPool(this->_context.device().vkDevice, &commandPoolCreateInfo, nullptr, &this->_vkCommandPool), "Failed to create command pool");
+        utility::vkCheck(vkCreateCommandPool(this->_context.device().vkDevice(), &commandPoolCreateInfo, nullptr, &this->_vkCommandPool), "Failed to create command pool");
+        logging::info("Created vkCommandPool");
     }
 
-    void CVulkanCommandPool::destroyCommandPool() const {
-        logging::info("Destroying command pool");
-        vkDestroyCommandPool(this->_context.device().vkDevice, this->_vkCommandPool, nullptr);
+    CVulkanCommandPool::~CVulkanCommandPool() {
+        if (this->_vkCommandPool != VK_NULL_HANDLE) {
+            vkDestroyCommandPool(this->_context.device().vkDevice(), this->_vkCommandPool, nullptr);
+            this->_vkCommandPool = VK_NULL_HANDLE;
+            logging::info("Destroyed vkCommandPool");
+        }
     }
 
     void CVulkanCommandPool::reset() const {
         //logging::info("Resetting command pool");
-        vkResetCommandPool(this->_context.device().vkDevice, this->_vkCommandPool, 0);
+        vkResetCommandPool(this->_context.device().vkDevice(), this->_vkCommandPool, 0);
+    }
+
+    CVulkanCommandBuffer::CVulkanCommandBuffer(const CVulkanContext& context, const CVulkanCommandPool& commandPool, const bool primary, const bool oneTimeSubmit)
+    : _context{context}, _commandPool{commandPool}, _primary{primary}, _oneTimeSubmit{oneTimeSubmit} {
+        const VkCommandBufferAllocateInfo commandBufferAllocateInfo = {
+            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+            .commandPool = this->_commandPool.vkCommandPool(),
+            .level = this->_primary ? VK_COMMAND_BUFFER_LEVEL_PRIMARY : VK_COMMAND_BUFFER_LEVEL_SECONDARY,
+            .commandBufferCount = 1,
+        };
+        utility::vkCheck(vkAllocateCommandBuffers(this->_context.device().vkDevice(), &commandBufferAllocateInfo, &this->_vkCommandBuffer), "Failed to create command buffer");
+        logging::info("Created vkCommandBuffer");
+    }
+
+    CVulkanCommandBuffer::~CVulkanCommandBuffer() {
+        vkFreeCommandBuffers(this->_context.device().vkDevice(), this->_commandPool.vkCommandPool(), 1, &this->_vkCommandBuffer);
+        logging::info("Destroyed vkCommandBuffer");
+    }
+
+    void CVulkanCommandBuffer::reset() const {
+        vkResetCommandBuffer(this->_vkCommandBuffer, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
     }
 
 
@@ -61,36 +86,35 @@ namespace cvulkan::client::render::core {
     }
 
     void CVulkanCommandBuffer::submitAndWait(const CVulkanQueue& queue) const {
-        sync::CVulkanFence fence{this->_context};
-        fence.createFence(false);
+        const sync::CVulkanFence fence{this->_context, false};
         const VkCommandBufferSubmitInfo submitInfo = {
             .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
             .commandBuffer = this->_vkCommandBuffer,
         };
         queue.submitQueue(std::vector{submitInfo}, nullptr, nullptr, &fence);
         fence.wait();
-        fence.destroyFence();
     }
 
-    void CVulkanCommandBuffer::createCommandBuffer() {
-        logging::info("Creating command buffer");
+    CVulkanQueue::CVulkanQueue(const CVulkanContext& context, uint32_t const queueFamilyIndex, const uint32_t queueIndex) : _context(context) {
+        vkGetDeviceQueue(this->_context.device().vkDevice(), queueFamilyIndex, queueIndex, &this->_vkQueue);
+        this->_queueFamilyIndex = queueFamilyIndex;
+    }
 
-        const VkCommandBufferAllocateInfo commandBufferAllocateInfo = {
-            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-            .commandPool = this->_commandPool.vkCommandPool(),
-            .level = this->_primary ? VK_COMMAND_BUFFER_LEVEL_PRIMARY : VK_COMMAND_BUFFER_LEVEL_SECONDARY,
-            .commandBufferCount = 1,
+    void CVulkanQueue::submitQueue(const std::vector<VkCommandBufferSubmitInfo>& commandSubmitInfos, const std::vector<VkSemaphoreSubmitInfo>* waitSemaphores, const std::vector<VkSemaphoreSubmitInfo>* signalSemaphores,
+    const sync::CVulkanFence* fence) const {
+        VkSubmitInfo2 vkSubmitInfo2 = {
+            .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,
+            .commandBufferInfoCount = static_cast<uint32_t>(commandSubmitInfos.size()),
+            .pCommandBufferInfos = commandSubmitInfos.data(),
         };
-
-        utility::vkCheck(vkAllocateCommandBuffers(this->_context.device().vkDevice, &commandBufferAllocateInfo, &this->_vkCommandBuffer), "Failed to create command buffer");
-    }
-
-    void CVulkanCommandBuffer::destroyCommandBuffer() const {
-        logging::info("Destroying command buffer");
-        vkFreeCommandBuffers(this->_context.device().vkDevice, this->_commandPool.vkCommandPool(), 1, &this->_vkCommandBuffer);
-    }
-
-    void CVulkanCommandBuffer::reset() const {
-        vkResetCommandBuffer(this->_vkCommandBuffer, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
+        if (waitSemaphores != nullptr) {
+            vkSubmitInfo2.waitSemaphoreInfoCount = static_cast<uint32_t>(waitSemaphores->size());
+            vkSubmitInfo2.pWaitSemaphoreInfos = waitSemaphores->data();
+        }
+        if (signalSemaphores != nullptr) {
+            vkSubmitInfo2.signalSemaphoreInfoCount = static_cast<uint32_t>(signalSemaphores->size());
+            vkSubmitInfo2.pSignalSemaphoreInfos = signalSemaphores->data();
+        }
+        utility::vkCheck(vkQueueSubmit2(this->_vkQueue, 1, &vkSubmitInfo2, fence != nullptr ? fence->vkFence() : VK_NULL_HANDLE), "Failed to submit command to queue");
     }
 }

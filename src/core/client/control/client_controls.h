@@ -12,5 +12,5 @@ namespace cvulkan::client::control {
 
     void update_input();
 
-    void cleanUp();
+    void destroyControl();
 }

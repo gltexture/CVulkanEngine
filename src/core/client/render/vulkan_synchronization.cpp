@@ -8,41 +8,41 @@
 #include "vulkan_utility.h"
 
 namespace cvulkan::client::render::sync {
-    void CVulkanSemaphore::createSemaphore() {
+    CVulkanSemaphore::CVulkanSemaphore(const core::CVulkanContext& context) : _context(context) {
         constexpr VkSemaphoreCreateInfo createInfo = {
             .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
         };
-        utility::vkCheck(vkCreateSemaphore(this->_context.device().vkDevice, &createInfo, nullptr, &this->_vkSemaphore), "Failed to create semaphore");
+        utility::vkCheck(vkCreateSemaphore(this->_context.device().vkDevice(), &createInfo, nullptr, &this->_vkSemaphore), "Failed to create semaphore");
     }
 
-    void CVulkanSemaphore::destroySemaphore() {
+    CVulkanSemaphore::~CVulkanSemaphore() {
         if (this->_vkSemaphore != VK_NULL_HANDLE) {
-            vkDestroySemaphore(this->_context.device().vkDevice, this->_vkSemaphore, nullptr);
+            vkDestroySemaphore(this->_context.device().vkDevice(), this->_vkSemaphore, nullptr);
             this->_vkSemaphore = VK_NULL_HANDLE;
         }
     }
 
-    void CVulkanFence::createFence(const bool signaled) {
+    CVulkanFence::CVulkanFence(const core::CVulkanContext& context, const bool signaled) : _context(context) {
         const uint32_t sign = signaled ? VK_FENCE_CREATE_SIGNALED_BIT : 0;
         const VkFenceCreateInfo vk_fence_create_info = {
             .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
             .flags = sign,
         };
-        utility::vkCheck(vkCreateFence(this->_context.device().vkDevice, &vk_fence_create_info, nullptr, &this->_vkFence), "Failed to create fence");
+        utility::vkCheck(vkCreateFence(this->_context.device().vkDevice(), &vk_fence_create_info, nullptr, &this->_vkFence), "Failed to create fence");
     }
 
-    void CVulkanFence::destroyFence() {
+    CVulkanFence::~CVulkanFence() {
         if (this->_vkFence != VK_NULL_HANDLE) {
-            vkDestroyFence(this->_context.device().vkDevice, this->_vkFence, nullptr);
+            vkDestroyFence(this->_context.device().vkDevice(), this->_vkFence, nullptr);
             this->_vkFence = VK_NULL_HANDLE;
         }
     }
 
     void CVulkanFence::wait() const {
-        vkWaitForFences(this->_context.device().vkDevice, 1, &this->_vkFence, true, UINT64_MAX);
+        vkWaitForFences(this->_context.device().vkDevice(), 1, &this->_vkFence, true, UINT64_MAX);
     }
 
     void CVulkanFence::reset() const {
-        vkResetFences(this->_context.device().vkDevice, 1, &this->_vkFence);
+        vkResetFences(this->_context.device().vkDevice(), 1, &this->_vkFence);
     }
 }

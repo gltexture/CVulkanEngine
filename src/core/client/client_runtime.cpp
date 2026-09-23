@@ -6,7 +6,7 @@
 
 namespace cvulkan::client {
     void initializeClient(const EngineData& engineData) {
-        window::create_window(engineData);
+        window::createWindow(engineData);
         control::setup(*window::glfwWindow);
         render::core::createRenderCore(*window::glfwWindow);
     }
@@ -19,8 +19,8 @@ namespace cvulkan::client {
     }
 
     void cleanUp() {
-        control::cleanUp();
+        control::destroyControl();
         render::core::cleanRenderCore();
-        window::cleanUp();
+        window::destroyWindow();
     }
 }

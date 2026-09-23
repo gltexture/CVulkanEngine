@@ -7,15 +7,29 @@
 #include "vulkan_utility.h"
 
 namespace cvulkan::client::render::core {
-    void CVulkanPipelineCache::createPipelineCache() {
+    CVulkanPipelineCache::CVulkanPipelineCache(const CVulkanContext& context) : _context(context) {
         constexpr VkPipelineCacheCreateInfo pipelineCacheCreateInfo = {
             .sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO,
         };
-        utility::vkCheck(vkCreatePipelineCache(this->_context.device().vkDevice, &pipelineCacheCreateInfo, nullptr, &this->_vkPipelineCache), "Error creating vkPipeline cache");
-        logging::info("Created vulkan pipeline cache");
+        utility::vkCheck(vkCreatePipelineCache(this->_context.device().vkDevice(), &pipelineCacheCreateInfo, nullptr, &this->_vkPipelineCache), "Error creating vkPipeline cache");
+        logging::info("Created vkPipelineCache");
     }
 
-    void CVulkanPipeline::createPipeline(const CVulkanPipelineBuildInfo& buildInfo) {
+    CVulkanPipelineCache::~CVulkanPipelineCache() {
+        if (this->_vkPipelineCache != VK_NULL_HANDLE) {
+            vkDestroyPipelineCache(this->_context.device().vkDevice(), this->_vkPipelineCache, nullptr);
+            logging::info("Destroyed vkPipelineCache");
+            this->_vkPipelineCache = VK_NULL_HANDLE;
+        }
+    }
+
+    CVulkanPipelineBuildInfo::CVulkanPipelineBuildInfo(const std::vector<shader::CVulkanShaderModule>& shaderModules, const VkPipelineVertexInputStateCreateInfo& vertexInputInfo, const VkFormat colorFormat)
+    : _colorFormat(colorFormat),
+    _shaderModules(shaderModules),
+    _vertexInputInfo(vertexInputInfo) {
+    }
+
+    CVulkanPipeline::CVulkanPipeline(const CVulkanContext& context, const CVulkanPipelineBuildInfo& buildInfo) : _context(context) {
         std::vector<VkPipelineShaderStageCreateInfo> shaderStages{};
         shaderStages.reserve(buildInfo.shaderModules().size());
         for (const auto& t: buildInfo.shaderModules()) {
@@ -79,7 +93,7 @@ namespace cvulkan::client::render::core {
         const VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo{
             .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO
         };
-        utility::vkCheck(vkCreatePipelineLayout(this->_context.device().vkDevice, &pipelineLayoutCreateInfo, nullptr, &this->_vkPipelineLayout), "Failed to create pipeline layout");
+        utility::vkCheck(vkCreatePipelineLayout(this->_context.device().vkDevice(), &pipelineLayoutCreateInfo, nullptr, &this->_vkPipelineLayout), "Failed to create pipeline layout");
         const VkGraphicsPipelineCreateInfo createInfo{
             .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
             .pNext = &renderingCreateInfo,
@@ -95,23 +109,15 @@ namespace cvulkan::client::render::core {
             .layout = this->_vkPipelineLayout,
             .renderPass = VK_NULL_HANDLE
         };
-        utility::vkCheck(vkCreateGraphicsPipelines(this->_context.device().vkDevice, this->_context.pipelineCache().vkPipelineCache(), 1, &createInfo, nullptr, &this->_vkPipeline), "Error creating graphics pipeline");
-    }
-
-    CVulkanPipelineCache::~CVulkanPipelineCache() {
-        if (this->_vkPipelineCache != VK_NULL_HANDLE) {
-            vkDestroyPipelineCache(this->_context.device().vkDevice, this->_vkPipelineCache, nullptr);
-            logging::info("Destroyed vulkan pipeline cache");
-            this->_vkPipelineCache = VK_NULL_HANDLE;
-        }
+        utility::vkCheck(vkCreateGraphicsPipelines(this->_context.device().vkDevice(), this->_context.pipelineCache().vkPipelineCache(), 1, &createInfo, nullptr, &this->_vkPipeline), "Error creating graphics pipeline");
     }
 
     CVulkanPipeline::~CVulkanPipeline() {
         if (this->_vkPipelineLayout != VK_NULL_HANDLE) {
-            vkDestroyPipelineLayout(this->_context.device().vkDevice, this->_vkPipelineLayout, nullptr);
+            vkDestroyPipelineLayout(this->_context.device().vkDevice(), this->_vkPipelineLayout, nullptr);
         }
         if (this->_vkPipeline != VK_NULL_HANDLE) {
-            vkDestroyPipeline(this->_context.device().vkDevice, this->_vkPipeline, nullptr);
+            vkDestroyPipeline(this->_context.device().vkDevice(), this->_vkPipeline, nullptr);
         }
     }
 }

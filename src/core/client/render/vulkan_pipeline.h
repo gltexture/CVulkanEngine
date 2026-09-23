@@ -11,14 +11,10 @@ namespace cvulkan::client::render::core {
 
     class CVulkanPipelineCache {
     public:
-        explicit CVulkanPipelineCache(const CVulkanContext& context)
-            : _context(context) {
-        }
+        explicit CVulkanPipelineCache(const CVulkanContext& context);
         ~CVulkanPipelineCache();
 
         CVULKAN_NO_COPY(CVulkanPipelineCache);
-
-        void createPipelineCache();
 
         [[nodiscard]] VkPipelineCache vkPipelineCache() const {
             return _vkPipelineCache;
@@ -31,9 +27,8 @@ namespace cvulkan::client::render::core {
 
     class CVulkanPipelineBuildInfo {
     public:
-        CVulkanPipelineBuildInfo(const std::vector<shader::CVulkanShaderModule>& shaderModules, const VkPipelineVertexInputStateCreateInfo& vertexInputInfo, const VkFormat colorFormat)
-            : _colorFormat(colorFormat), _shaderModules(shaderModules), _vertexInputInfo(vertexInputInfo) {
-        }
+        CVulkanPipelineBuildInfo(const std::vector<shader::CVulkanShaderModule>& shaderModules, const VkPipelineVertexInputStateCreateInfo& vertexInputInfo, const VkFormat colorFormat);
+        ~CVulkanPipelineBuildInfo() = default;
 
         CVULKAN_NO_COPY(CVulkanPipelineBuildInfo);
 
@@ -57,15 +52,10 @@ namespace cvulkan::client::render::core {
 
     class CVulkanPipeline {
     public:
-        explicit CVulkanPipeline(const CVulkanContext& context)
-            : _context(context) {
-        }
-
+        CVulkanPipeline(const CVulkanContext& context, const CVulkanPipelineBuildInfo& buildInfo);
         ~CVulkanPipeline();
 
         CVULKAN_NO_COPY(CVulkanPipeline);
-
-        void createPipeline(const CVulkanPipelineBuildInfo& buildInfo);
 
         [[nodiscard]] VkPipeline vkPipeline() const {
             return _vkPipeline;

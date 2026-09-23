@@ -14,11 +14,8 @@ namespace cvulkan::client::render::core {
 
     class CVulkanBuffer {
     public:
-        explicit CVulkanBuffer(const CVulkanContext& context)
-            : _context(context) {
-        }
-
-        ~CVulkanBuffer() = default;
+        explicit CVulkanBuffer(const CVulkanContext& context, const VkBufferUsageFlags& usage, const uint32_t& reqMask, const VkDeviceSize& size);
+        ~CVulkanBuffer();
 
         CVULKAN_NO_COPY(CVulkanBuffer);
 
@@ -31,10 +28,6 @@ namespace cvulkan::client::render::core {
 
         CVulkanBuffer& operator=(CVulkanBuffer&&) = delete;
 
-        void createBuffer(const VkBufferUsageFlags& usage, const uint32_t& reqMask, const VkDeviceSize& size);
-
-        void destroyBuffer();
-
         void mapMem();
 
         void unMapMem();
@@ -43,11 +36,11 @@ namespace cvulkan::client::render::core {
             return _vkBuffer;
         }
 
-        [[nodiscard]] VkDeviceSize vkAllocationSize() const {
+        [[nodiscard]] const VkDeviceSize& vkAllocationSize() const {
             return _vkAllocationSize;
         }
 
-        [[nodiscard]] VkDeviceSize vkRequestedSize() const {
+        [[nodiscard]] const VkDeviceSize& vkRequestedSize() const {
             return _vkRequestedSize;
         }
 

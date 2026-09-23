@@ -13,11 +13,8 @@ namespace cvulkan::client::render::core {
 namespace cvulkan::client::render::sync {
     class CVulkanSemaphore {
     public:
-        explicit CVulkanSemaphore(const core::CVulkanContext& context)
-            : _context{context} {
-        }
-
-        ~CVulkanSemaphore() = default;
+        explicit CVulkanSemaphore(const core::CVulkanContext& context);
+        ~CVulkanSemaphore();
 
         CVULKAN_NO_COPY(CVulkanSemaphore);
 
@@ -25,10 +22,6 @@ namespace cvulkan::client::render::sync {
             : _context{other._context}, _vkSemaphore{other._vkSemaphore} {
             other._vkSemaphore = VK_NULL_HANDLE;
         }
-
-        void createSemaphore();
-
-        void destroySemaphore();
 
         [[nodiscard]] VkSemaphore vkSemaphore() const {
             return _vkSemaphore;
@@ -41,11 +34,8 @@ namespace cvulkan::client::render::sync {
 
     class CVulkanFence {
     public:
-        explicit CVulkanFence(const core::CVulkanContext& context)
-            : _context{context} {
-        }
-
-        ~CVulkanFence() = default;
+        explicit CVulkanFence(const core::CVulkanContext& context, bool signaled);
+        ~CVulkanFence();
 
         CVULKAN_NO_COPY(CVulkanFence);
 
@@ -53,10 +43,6 @@ namespace cvulkan::client::render::sync {
             : _context{other._context}, _vkFence{other._vkFence} {
             other._vkFence = VK_NULL_HANDLE;
         }
-
-        void createFence(bool signaled);
-
-        void destroyFence();
 
         void wait() const;
 

@@ -32,6 +32,24 @@ namespace cvulkan::client::render::core {
         uint32_t _queueFamilyIndex;
     };
 
+    struct CVulkanContextBuildData {
+        bool _debugMode{false};
+    };
+
+    struct CVulkanInstanceBuildData {
+        std::initializer_list<std::string> _requiredLayers;
+        std::initializer_list<std::string> _requiredExtensions;
+    };
+
+    struct CVulkanPhysicalDeviceBuildData {
+        std::initializer_list<std::string> _requiredLayers;
+        std::initializer_list<std::string> _requiredExtensions;
+    };
+
+    struct CVulkanLogicalDeviceBuildData {
+        std::vector<CVulkanQueueFamilyCreationRequest> _queueFamilyCreationRequests;
+    };
+
     class CVulkanQueueFamiliesRegistry {
     public:
         CVulkanQueueFamiliesRegistry() = default;
@@ -46,7 +64,6 @@ namespace cvulkan::client::render::core {
     private:
         std::vector<CVulkanQueueFamilyRegisteredData> _registeredData{};
     };
-
 
     struct CVulkanLayersAndExtensionsData {
         std::unordered_set<std::string> _enabledLayers{};
@@ -63,58 +80,77 @@ namespace cvulkan::client::render::core {
 
     class CVulkanInstance {
     public:
-        CVulkanInstance();
+        CVulkanInstance(
+            const CVulkanContextBuildData& contextBuildData,
+            const CVulkanInstanceBuildData& instanceBuildData);
         ~CVulkanInstance();
 
         [[nodiscard]] VkInstance vkInstance() const {
             return _vkInstance;
         }
 
-        [[nodiscard]] CVulkanLayersAndExtensionsData vkInstanceLayersExtensionsData() const {
+        [[nodiscard]] VkDebugUtilsMessengerEXT vkDebugMessenger() const {
+            return _vkDebugMessenger;
+        }
+
+        [[nodiscard]] const CVulkanLayersAndExtensionsData& vkInstanceLayersExtensionsData() const {
             return _vkInstanceLrExtData;
         }
 
+    protected:
+        void tryIncludeInstanceLayer(const std::unordered_set<std::string>& available, const std::string& layer);
+        void tryIncludeInstanceExtension(const std::unordered_set<std::string>& available, const std::string& ext);
+
     private:
         VkInstance _vkInstance{};
+        VkDebugUtilsMessengerEXT _vkDebugMessenger{};
         CVulkanLayersAndExtensionsData _vkInstanceLrExtData{};
     };
 
     class CVulkanPhysicalDevice {
     public:
-        CVulkanPhysicalDevice();
         ~CVulkanPhysicalDevice();
+
+        CVulkanPhysicalDevice(
+            const CVulkanContextBuildData& contextBuildData,
+            const CVulkanInstance& instance,
+            const CVulkanPhysicalDeviceBuildData& physicalDeviceBuildData);
 
         [[nodiscard]] VkPhysicalDevice vkPhysicalDevice() const {
             return _vkPhysicalDevice;
         }
 
-        [[nodiscard]] std::vector<VkExtensionProperties> vkDeviceExtensions() const {
+        [[nodiscard]] const std::vector<VkExtensionProperties>& vkDeviceExtensions() const {
             return _vkDeviceExtensions;
         }
 
-        [[nodiscard]] VkPhysicalDeviceMemoryProperties vkMemoryProperties() const {
+        [[nodiscard]] const VkPhysicalDeviceMemoryProperties& vkMemoryProperties() const {
             return _vkMemoryProperties;
         }
 
-        [[nodiscard]] VkPhysicalDeviceFeatures vkPhysicalDeviceFeatures() const {
+        [[nodiscard]] const VkPhysicalDeviceFeatures& vkPhysicalDeviceFeatures() const {
             return _vkPhysicalDeviceFeatures;
         }
 
-        [[nodiscard]] VkPhysicalDeviceProperties vkPhysicalDeviceProperties() const {
+        [[nodiscard]] const VkPhysicalDeviceProperties& vkPhysicalDeviceProperties() const {
             return _vkPhysicalDeviceProperties;
         }
 
-        [[nodiscard]] VkPhysicalDeviceProperties2 vkPhysicalDeviceProperties2() const {
+        [[nodiscard]] const VkPhysicalDeviceProperties2& vkPhysicalDeviceProperties2() const {
             return _vkPhysicalDeviceProperties2;
         }
 
-        [[nodiscard]] std::vector<VkQueueFamilyProperties> vkQueueFamilyProps() const {
+        [[nodiscard]] const std::vector<VkQueueFamilyProperties>& vkQueueFamilyProps() const {
             return _vkQueueFamilyProps;
         }
 
-        [[nodiscard]] CVulkanLayersAndExtensionsData vkDeviceLayersExtensionsData() const {
+        [[nodiscard]] const CVulkanLayersAndExtensionsData& vkDeviceLayersExtensionsData() const {
             return _vkDeviceLrExtData;
         }
+
+    protected:
+        void tryIncludeDeviceLayer(const std::unordered_set<std::string>& available, const std::string& layer);
+        void tryIncludeDeviceExtension(const std::unordered_set<std::string>& available, const std::string& ext);
 
     private:
         VkPhysicalDevice _vkPhysicalDevice{};
@@ -131,132 +167,78 @@ namespace cvulkan::client::render::core {
 
     class CVulkanDevice {
     public:
-        CVulkanDevice();
+        CVulkanDevice(
+            const CVulkanContextBuildData& contextBuildData,
+            const CVulkanPhysicalDevice& physicalDevice,
+            VkSurfaceKHR surface,
+            const CVulkanLogicalDeviceBuildData& logicalDeviceBuildData);
         ~CVulkanDevice();
 
         [[nodiscard]] VkDevice vkDevice() const {
             return _vkDevice;
         }
 
-    private:
-        VkDevice _vkDevice{};
+        [[nodiscard]] const CVulkanQueueFamiliesRegistry& queueFamiliesRegistry() const {
+            return _queueFamiliesRegistry;
+        }
 
         void deviceWaitIdle() const {
             vkDeviceWaitIdle(this->_vkDevice);
         }
+
+    private:
+        VkDevice _vkDevice{};
+        CVulkanQueueFamiliesRegistry _queueFamiliesRegistry{};
     };
 
     class CVulkanContext {
     public:
-        explicit CVulkanContext(const window::CVulkanWindow& window) : _glfwWindow{window}, _surface{*this}, _pipelineCache(*this) {
-        }
-
+        CVulkanContext(
+            const window::CVulkanWindow& window,
+            const CVulkanContextBuildData& contextBuildData,
+            const CVulkanInstanceBuildData& instanceBuildData,
+            const CVulkanPhysicalDeviceBuildData& physicalDeviceBuildData,
+            const CVulkanLogicalDeviceBuildData& logicalDeviceBuildData);
         ~CVulkanContext() = default;
 
         CVULKAN_NO_COPY(CVulkanContext)
 
-        void createVulkanInstance(bool debugMode, std::initializer_list<std::string> requiredLayers, std::initializer_list<std::string> requiredExtensions);
-        void createVulkanPhysicalDevice(std::initializer_list<std::string> requiredLayers, std::initializer_list<std::string> requiredExtensions);
-        void createVulkanLogicalDevice(std::vector<CVulkanQueueFamilyCreationRequest>&& requiredQueueFamilies);
-
-        [[nodiscard]] VkDebugUtilsMessengerEXT vkDebugMessenger() const {
-            return _vkDebugMessenger;
+        [[nodiscard]] const window::CVulkanWindow& glfwWindow() const {
+            return _glfwWindow;
         }
 
         [[nodiscard]] const CVulkanInstance& instance() const {
             return _instance;
         }
 
-        [[nodiscard]] const CVulkanPipelineCache& pipelineCache() const {
-            return _pipelineCache;
-        }
-
-        [[nodiscard]] CVulkanPipelineCache& pipelineCache() {
-            return _pipelineCache;
-        }
-
         [[nodiscard]] const CVulkanPhysicalDevice& physicalDevice() const {
             return _physicalDevice;
-        }
-
-        [[nodiscard]] const CVulkanDevice& device() const {
-            return _device;
-        }
-
-        [[nodiscard]] const window::CVulkanWindow& glfwWindow() const {
-            return _glfwWindow;
-        }
-
-        [[nodiscard]] CVulkanSurface& surface() {
-            return _surface;
         }
 
         [[nodiscard]] const CVulkanSurface& surface() const {
             return _surface;
         }
 
-        [[nodiscard]] const CVulkanQueueFamiliesRegistry& queueFamiliesRegistry() const {
-            return _queueFamiliesRegistry;
+        [[nodiscard]] const CVulkanSwapChain& swapChain() const {
+            return _swapChain;
+        }
+
+        [[nodiscard]] const CVulkanDevice& device() const {
+            return _device;
+        }
+
+        [[nodiscard]] const CVulkanPipelineCache& pipelineCache() const {
+            return _pipelineCache;
         }
 
     private:
         const window::CVulkanWindow& _glfwWindow;
-        CVulkanInstance _instance{};
-        VkDebugUtilsMessengerEXT _vkDebugMessenger{};
-        CVulkanPhysicalDevice _physicalDevice{};
+        CVulkanInstance _instance;
+        CVulkanPhysicalDevice _physicalDevice;
         CVulkanSurface _surface;
-        CVulkanDevice _device{};
-        CVulkanQueueFamiliesRegistry _queueFamiliesRegistry{};
+        CVulkanDevice _device;
+        CVulkanSwapChain _swapChain;
         CVulkanPipelineCache _pipelineCache;
-
-    protected:
-        [[nodiscard]] uint32_t findVulkanQueueFamily(QueueFamilyBitMask bitmask) const;
-
-        void tryIncludeInstanceLayer(const std::unordered_set<std::string>& available, const std::string& layer) {
-            if (available.contains(layer)) {
-                this->_instance.vkInstanceLayersExtensionsData()._enabledLayers.insert(layer);
-                logging::info("Enabled instance Layer {}", layer);
-            } else {
-                logging::error("Instance Layer {} is not available!", layer);
-            }
-        }
-
-        void tryIncludeInstanceExtension(const std::unordered_set<std::string>& available, const std::string& layer) {
-            if (available.contains(layer)) {
-                this->_instance.vkInstanceLayersExtensionsData()._enabledExtensions.insert(layer);
-                logging::info("Enabled instance extension {}", layer);
-            } else {
-                logging::error("Instance extension {} is not available!", layer);
-            }
-        }
-
-        void tryIncludeDeviceLayer(const std::unordered_set<std::string>& available, const std::string& layer) {
-            if (available.contains(layer)) {
-                this->_physicalDevice.vkDeviceLayersExtensionsData()._enabledLayers.insert(layer);
-                logging::info("Enabled device Layer {}", layer);
-            } else {
-                logging::error("Device Layer {} is not available!", layer);
-            }
-        }
-
-        void tryIncludeDeviceExtension(const std::unordered_set<std::string>& available, const std::string& layer) {
-            if (available.contains(layer)) {
-                this->_physicalDevice.vkDeviceLayersExtensionsData()._enabledExtensions.insert(layer);
-                logging::info("Enabled device extension {}", layer);
-            } else {
-                logging::error("Device extension {} is not available!", layer);
-            }
-        }
-
-        static std::unordered_set<std::string> availableInstanceLayers(const VkInstance& instance);
-
-        static std::unordered_set<std::string> availableDeviceExtensions(const VkPhysicalDevice& device);
-
-        static std::unordered_set<std::string> availableDeviceLayers(const VkPhysicalDevice& device);
-
-        static std::unordered_set<std::string> availableInstanceExtensions(const VkInstance& instance);
-
-        static std::unordered_set<std::string> getGLFWExtensions();
     };
 
     inline std::string EXT_VK_KHR_portability_enumeration() {
@@ -285,9 +267,14 @@ namespace cvulkan::client::render::core {
 
     extern std::unique_ptr<CVulkanContext> vulkanContext;
 
+    std::unordered_set<std::string> availableInstanceExtensions();
+    std::unordered_set<std::string> availableInstanceLayers();
+    std::unordered_set<std::string> availableDeviceExtensions(const VkPhysicalDevice& device);
+    std::unordered_set<std::string> availableDeviceLayers(const VkPhysicalDevice& device);
+    std::unordered_set<std::string> getGLFWExtensions();
+    uint32_t findVulkanQueueFamily(QueueFamilyBitMask bitmask, const CVulkanPhysicalDevice& device, VkSurfaceKHR surface);
+
     void createRenderCore(const window::CVulkanWindow& window);
-
     void runRender();
-
     void cleanRenderCore();
 }

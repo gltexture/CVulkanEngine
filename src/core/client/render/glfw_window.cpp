@@ -5,17 +5,9 @@
 #include "engine_context.h"
 
 namespace cvulkan::client::window {
-    std::unique_ptr<CVulkanWindow> glfwWindow{};
+    std::unique_ptr<CVulkanWindow> glfwWindow;
 
-    void CVulkanWindow::closeWindow() const {
-        glfwSetWindowShouldClose(this->glfwWindowDescriptor, GLFW_TRUE);
-    }
-
-    bool CVulkanWindow::shouldBeClosed() const {
-        return glfwWindowShouldClose(this->glfwWindowDescriptor) == GLFW_TRUE;
-    }
-
-    void create_window(const EngineData& engineData) {
+    CVulkanWindow::CVulkanWindow(const EngineData& engineData) {
         if (!glfwInit()) {
             throw std::runtime_error("failed to initialize glfw");
         }
@@ -32,19 +24,35 @@ namespace cvulkan::client::window {
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         glfwWindowHint(GLFW_MAXIMIZED, GLFW_FALSE);
 
-        GLFWwindow* glfw_win = glfwCreateWindow(engineData.m_default_windowSize.x, engineData.m_default_windowSize.y, engineData.m_appTitle.c_str(), nullptr, nullptr);
-        if (glfw_win == nullptr) {
+        this->_glfwWindowDescriptor = glfwCreateWindow(engineData.m_default_windowSize.x, engineData.m_default_windowSize.y, engineData.m_appTitle.c_str(), nullptr, nullptr);
+        if (this->_glfwWindowDescriptor == nullptr) {
             throw std::runtime_error("failed to create window");
         }
-
-        glfwWindow = std::make_unique<CVulkanWindow>(glfw_win);
     }
 
-    void cleanUp() {
-        if (glfwWindow != nullptr && glfwWindow->glfw_window_descriptor() != nullptr) {
-            glfwDestroyWindow(glfwWindow->glfw_window_descriptor());
-            glfwWindow.reset();
+    CVulkanWindow::~CVulkanWindow() {
+        if (this->_glfwWindowDescriptor != nullptr) {
+            glfwDestroyWindow(this->_glfwWindowDescriptor);
+            this->_glfwWindowDescriptor = nullptr;
         }
         glfwTerminate();
+    }
+
+    void CVulkanWindow::closeWindow() const {
+        glfwSetWindowShouldClose(this->_glfwWindowDescriptor, GLFW_TRUE);
+    }
+
+    bool CVulkanWindow::shouldBeClosed() const {
+        return glfwWindowShouldClose(this->_glfwWindowDescriptor) == GLFW_TRUE;
+    }
+
+    void createWindow(const EngineData& engineData) {
+        glfwWindow = std::make_unique<CVulkanWindow>(engineData);
+    }
+
+    void destroyWindow() {
+        if (glfwWindow != nullptr) {
+            glfwWindow.reset();
+        }
     }
 }

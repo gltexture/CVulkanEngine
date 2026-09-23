@@ -15,19 +15,12 @@ namespace cvulkan::client::render::core {
 namespace cvulkan::client::render::loop {
     class CVulkanRenderLoop {
     public:
-        explicit CVulkanRenderLoop(const core::CVulkanContext& context)
-            : _context{context}, _graphicsQueue(context), _presentQueue(context) {
-        }
-
-        ~CVulkanRenderLoop() = default;
+        explicit CVulkanRenderLoop(const core::CVulkanContext& context);
+        ~CVulkanRenderLoop();
 
         CVULKAN_NO_COPY(CVulkanRenderLoop)
 
-        void createRenderLoop();
-
         void runRenderLoop();
-
-        void destroyRenderLoopResources();
 
         [[nodiscard]] const std::vector<core::CVulkanCommandPool>& commandPools() const {
             return _commandPools;
@@ -54,11 +47,11 @@ namespace cvulkan::client::render::loop {
         }
 
         [[nodiscard]] const core::CVulkanQueue& graphicsQueue() const {
-            return _graphicsQueue;
+            return *_graphicsQueue;
         }
 
         [[nodiscard]] const core::CVulkanQueue& presentQueue() const {
-            return _presentQueue;
+            return *_presentQueue;
         }
 
     protected:
@@ -78,8 +71,8 @@ namespace cvulkan::client::render::loop {
         std::vector<sync::CVulkanSemaphore> _presentationCompleteSemaphores{};
         std::vector<sync::CVulkanSemaphore> _renderCompleteSemaphores{};
         uint32_t _currentFrame = 0;
-        core::CVulkanQueue _graphicsQueue;
-        core::CVulkanQueue _presentQueue;
+        std::unique_ptr<core::CVulkanQueue> _graphicsQueue;
+        std::unique_ptr<core::CVulkanQueue> _presentQueue;
     };
 
     extern std::unique_ptr<CVulkanRenderLoop> renderLoop;
