@@ -6,9 +6,10 @@
 #define DEBUG_MODE
 
 namespace cvulkan::utility {
-    inline const std::filesystem::path RESOURCES_FOLDER{"resources"};
-    inline const std::filesystem::path SHADERS_FOLDER = RESOURCES_FOLDER / "shaders";
-    inline const std::filesystem::path SHADERS_FOLDER_SPV = RESOURCES_FOLDER / "shaders" / "compiled";
+    inline const std::filesystem::path ROOT{".."};
+    inline const std::filesystem::path RESOURCES_FOLDER{ROOT / "resources"};
+    inline const std::filesystem::path SHADERS_FOLDER {RESOURCES_FOLDER / "shaders"};
+    inline const std::filesystem::path SHADERS_FOLDER_SPV {RESOURCES_FOLDER / "shaders" / "compiled"};
 
 #define CVULKAN_NO_COPY(Type) \
     Type(const Type&) = delete; \
@@ -23,7 +24,6 @@ namespace cvulkan::utility {
 #define CVULKAN_NO_COPY_NO_ASSIGN_MOVE(Type) \
     Type(const Type&) = delete; \
     Type& operator=(const Type&) = delete; \
-    Type(Type&&) noexcept = default; \
     Type& operator=(Type&&) = delete;
 
     enum OSType {
@@ -53,10 +53,12 @@ namespace cvulkan::utility {
         return osTypeToCheck == osType;
     }
 
-    void vkCheck(VkResult vk_result, std::string_view errMsg);
-    void vkCheck(VkResult vk_result);
+    void vkCheck(VkResult vkResult, std::string_view errMsg);
+    void vkCheck(VkResult vkResult);
 
     void utilityInitialize();
+
+    uint32_t getMemoryTypeIndexFromProperties(const VkPhysicalDeviceMemoryProperties& memoryProperties, uint32_t typeBits, const uint32_t& reqMask);
 
     void imageBarrier(
         VkCommandBuffer commandBuffer,

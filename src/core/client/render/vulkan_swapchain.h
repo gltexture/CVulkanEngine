@@ -6,6 +6,7 @@
 #include <vulkan/vulkan.h>
 #include <vector>
 
+#include "vulkan_images.h"
 #include "vulkan_utility.h"
 
 namespace cvulkan::client::render::sync {
@@ -20,49 +21,12 @@ namespace cvulkan::client::render::core {
     struct CVulkanDevice;
     struct CVulkanInstance;
 
-    struct CVulkanImageViewData {
-        VkImageAspectFlags aspectMask{};
-        uint32_t baseArrayLayer = 0;
-        VkFormat format{};
-        uint32_t layerCount = 1;
-        uint32_t mipLevels = 1;
-        VkImageViewType viewType = VK_IMAGE_VIEW_TYPE_2D;
-    };
-
-    class CVulkanImageView {
-    public:
-        explicit CVulkanImageView(const CVulkanContext& context, const CVulkanImageViewData& view_data, const VkImage& vk_image);
-        ~CVulkanImageView();
-
-        CVULKAN_NO_COPY(CVulkanImageView);
-
-        CVulkanImageView(CVulkanImageView&& other) noexcept : _context{other._context}, _vkImage{other._vkImage}, _vkImageView{other._vkImageView} {
-            other._vkImage = VK_NULL_HANDLE;
-            other._vkImageView = VK_NULL_HANDLE;
-        }
-
-        CVulkanImageView& operator=(CVulkanImageView&&) = delete;
-
-        [[nodiscard]] VkImage vkImage() const {
-            return _vkImage;
-        }
-
-        [[nodiscard]] VkImageView vkImageView() const {
-            return _vkImageView;
-        }
-
-    private:
-        const CVulkanContext& _context;
-        VkImage _vkImage{};
-        VkImageView _vkImageView{};
-    };
-
     class CVulkanSwapChain {
     public:
-        explicit CVulkanSwapChain(const CVulkanContext& context, const VkSurfaceKHR& vkSurface, const VkSurfaceCapabilitiesKHR& vkSurfaceCapabilities, const VkFormat& vkFormat, const VkColorSpaceKHR& vkColorSpace);
+        CVulkanSwapChain(const CVulkanContext& context, const VkSurfaceKHR& vkSurface, const VkSurfaceCapabilitiesKHR& vkSurfaceCapabilities, const VkFormat& vkFormat, const VkColorSpaceKHR& vkColorSpace);
         ~CVulkanSwapChain();
 
-        CVULKAN_NO_COPY(CVulkanSwapChain);
+        CVULKAN_NO_COPY_NO_MOVE(CVulkanSwapChain);
 
         uint32_t acquireSwapChainNextImage(const sync::CVulkanSemaphore& semaphore) const;
 
@@ -70,7 +34,7 @@ namespace cvulkan::client::render::core {
             return _vkSwapChain;
         }
 
-        [[nodiscard]] const std::vector<CVulkanImageView>& imageViews() const {
+        [[nodiscard]] const std::vector<CVulkanImage2DView>& imageViews() const {
             return _imageViews;
         }
 
@@ -86,10 +50,10 @@ namespace cvulkan::client::render::core {
 
     private:
         const CVulkanContext& _context;
-        VkExtent2D _swapChainExtent = {};
+        VkExtent2D _swapChainExtent  {};
         uint32_t _numImages = UINT32_MAX;
         VkSwapchainKHR _vkSwapChain{};
-        std::vector<CVulkanImageView> _imageViews{};
+        std::vector<CVulkanImage2DView> _imageViews{};
     };
 
     class CVulkanSurface {
@@ -97,7 +61,7 @@ namespace cvulkan::client::render::core {
         explicit CVulkanSurface(const CVulkanContext& context);
         ~CVulkanSurface();
 
-        CVULKAN_NO_COPY(CVulkanSurface);
+        CVULKAN_NO_COPY_NO_MOVE(CVulkanSurface);
 
         [[nodiscard]] VkSurfaceKHR vkSurface() const {
             return _vkSurface;

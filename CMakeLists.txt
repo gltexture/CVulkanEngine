@@ -80,9 +80,19 @@ add_executable(CVulkanEngine
         src/core/client/render/vulkan_shaders.cpp
         src/core/client/render/vulkan_pipeline.cpp
         src/core/engine_context.cpp
+        src/core/client/render/vulkan_images.cpp
+        src/core/client/render/vulkan_images.h
+        src/core/client/render/vulkan_transform.cpp
+        src/core/client/render/vulkan_transform.h
+        src/core/client/render/scene/vulkan_scene_objects.cpp
+        src/core/client/render/scene/vulkan_scene_objects.h
 )
 
 add_link_options("-fuse-ld=lld")
+
+target_compile_definitions(CVulkanEngine PRIVATE
+        GLM_FORCE_DEPTH_ZERO_TO_ONE
+)
 
 target_precompile_headers(CVulkanEngine PRIVATE
         <vulkan/vulkan_core.h>
@@ -107,10 +117,4 @@ target_link_libraries(
 
 target_include_directories(CVulkanEngine
     PRIVATE ${CMAKE_SOURCE_DIR}/src/core
-)
-
-add_custom_command(TARGET CVulkanEngine POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}/src/resources
-        $<TARGET_FILE_DIR:CVulkanEngine>/resources
 )

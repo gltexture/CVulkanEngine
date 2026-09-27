@@ -3,21 +3,23 @@
 #include "util/logger.inl"
 #include <vulkan/vk_enum_string_helper.h>
 
+#include "vulkan_render_core.h"
+
 namespace cvulkan::utility {
-    void vkCheck(const VkResult vk_result, std::string_view errMsg) {
-        if (vk_result != VK_SUCCESS) {
+    void vkCheck(const VkResult vkResult, std::string_view errMsg) {
+        if (vkResult != VK_SUCCESS) {
             throw std::runtime_error{
                 std::format(
                     "{} -> {}",
-                    string_VkResult(vk_result),
+                    string_VkResult(vkResult),
                     errMsg
                 )
             };
         }
     }
 
-    void vkCheck(const VkResult vk_result) {
-        vkCheck(vk_result, "Unknown");
+    void vkCheck(const VkResult vkResult) {
+        vkCheck(vkResult, "Unknown");
     }
 
     void utilityInitialize() {
@@ -27,9 +29,25 @@ namespace cvulkan::utility {
         }
     }
 
+    uint32_t getMemoryTypeIndexFromProperties(const VkPhysicalDeviceMemoryProperties& memoryProperties, uint32_t typeBits, const uint32_t& reqMask) {
+        const VkMemoryType* vkMemoryTypes = memoryProperties.memoryTypes;
+        uint32_t result = UINT32_MAX;
+        for (uint32_t i = 0; i < VK_MAX_MEMORY_TYPES; i++) {
+            if ((typeBits & 1) && (vkMemoryTypes[i].propertyFlags & reqMask) == reqMask) {
+                result = i;
+                break;
+            }
+            typeBits >>= 1;
+        }
+        if (result == UINT32_MAX) {
+            throw std::runtime_error("Failed to find memoryType");
+        }
+        return result;
+    }
+
     void imageBarrier(const VkCommandBuffer commandBuffer, const VkImage image, const VkImageLayout oldLayout, const VkImageLayout newLayout, const VkPipelineStageFlags2 srcStageMask, const VkPipelineStageFlags2 dstStageMask,
                       const VkAccessFlags2 srcAccessMask, const VkAccessFlags2 dstAccessMask, const VkImageAspectFlags aspectMask) {
-        const VkImageMemoryBarrier2 barrier = {
+        const VkImageMemoryBarrier2 barrier  {
             .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
             .srcStageMask = srcStageMask,
             .srcAccessMask = srcAccessMask,
@@ -40,7 +58,7 @@ namespace cvulkan::utility {
             .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
             .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
             .image = image,
-            .subresourceRange = {
+            .subresourceRange  {
                 .aspectMask = aspectMask,
                 .baseMipLevel = 0,
                 .levelCount = VK_REMAINING_MIP_LEVELS,
@@ -49,7 +67,7 @@ namespace cvulkan::utility {
             },
         };
 
-        const VkDependencyInfo dependencyInfo = {
+        const VkDependencyInfo dependencyInfo  {
             .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
             .imageMemoryBarrierCount = 1,
             .pImageMemoryBarriers = &barrier,

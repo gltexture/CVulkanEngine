@@ -9,6 +9,12 @@
 namespace cvulkan::client::render::core {
     class CVulkanContext;
 
+    struct CVulkanPushConstantRange {
+        uint32_t stage;
+        uint32_t offset;
+        uint32_t size;
+    };
+
     class CVulkanPipelineCache {
     public:
         explicit CVulkanPipelineCache(const CVulkanContext& context);
@@ -27,13 +33,23 @@ namespace cvulkan::client::render::core {
 
     class CVulkanPipelineBuildInfo {
     public:
-        CVulkanPipelineBuildInfo(const std::vector<shader::CVulkanShaderModule>& shaderModules, const VkPipelineVertexInputStateCreateInfo& vertexInputInfo, const VkFormat colorFormat);
+        CVulkanPipelineBuildInfo(const std::vector<shader::CVulkanShaderModule>& shaderModules, const std::vector<CVulkanPushConstantRange>& pushConstantRanges, const VkPipelineVertexInputStateCreateInfo& vertexInputInfo, const VkFormat& colorFormat, const VkFormat& depthFormat);
+        CVulkanPipelineBuildInfo(const std::vector<shader::CVulkanShaderModule>& shaderModules, const std::vector<CVulkanPushConstantRange>& pushConstantRanges, const VkPipelineVertexInputStateCreateInfo& vertexInputInfo, const VkFormat& colorFormat)
+            : CVulkanPipelineBuildInfo(shaderModules, pushConstantRanges, vertexInputInfo, colorFormat, VK_FORMAT_UNDEFINED) {};
         ~CVulkanPipelineBuildInfo() = default;
 
         CVULKAN_NO_COPY(CVulkanPipelineBuildInfo);
 
         [[nodiscard]] VkFormat colorFormat() const {
             return _colorFormat;
+        }
+
+        [[nodiscard]] VkFormat depthFormat() const {
+            return _depthFormat;
+        }
+
+        [[nodiscard]] const std::vector<CVulkanPushConstantRange>& pushConstantRanges() const {
+            return _pushConstantRanges;
         }
 
         [[nodiscard]] const std::vector<shader::CVulkanShaderModule>& shaderModules() const {
@@ -46,6 +62,8 @@ namespace cvulkan::client::render::core {
 
     private:
         VkFormat _colorFormat{};
+        VkFormat _depthFormat{};
+        const std::vector<CVulkanPushConstantRange>& _pushConstantRanges;
         const std::vector<shader::CVulkanShaderModule>& _shaderModules;
         VkPipelineVertexInputStateCreateInfo _vertexInputInfo{};
     };

@@ -10,7 +10,7 @@
 namespace cvulkan::client::render::core {
     CVulkanBuffer::CVulkanBuffer(const CVulkanContext& context, const VkBufferUsageFlags& usage, const uint32_t& reqMask, const VkDeviceSize& size) : _context(context) {
         this->_vkRequestedSize = size;
-        const VkBufferCreateInfo bufferCreateInfo = {
+        const VkBufferCreateInfo bufferCreateInfo  {
             .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
             .size = size,
             .usage = usage,
@@ -18,13 +18,13 @@ namespace cvulkan::client::render::core {
         };
         utility::vkCheck(vkCreateBuffer(this->_context.device().vkDevice(), &bufferCreateInfo, nullptr, &this->_vkBuffer), "Failed to create buffer");
 
-        VkMemoryRequirements memoryRequirements = {};
+        VkMemoryRequirements memoryRequirements  {};
         vkGetBufferMemoryRequirements(this->_context.device().vkDevice(), this->_vkBuffer, &memoryRequirements);
 
-        const VkMemoryAllocateInfo memoryAllocateInfo = {
+        const VkMemoryAllocateInfo memoryAllocateInfo  {
             .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
             .allocationSize = memoryRequirements.size,
-            .memoryTypeIndex = this->getMemoryTypeIndexFromProperties(memoryRequirements.memoryTypeBits, reqMask),
+            .memoryTypeIndex = utility::getMemoryTypeIndexFromProperties(context.physicalDevice().vkMemoryProperties(), memoryRequirements.memoryTypeBits, reqMask),
         };
         this->_vkAllocationSize = memoryAllocateInfo.allocationSize;
 
@@ -55,25 +55,8 @@ namespace cvulkan::client::render::core {
         }
     }
 
-    uint32_t CVulkanBuffer::getMemoryTypeIndexFromProperties(uint32_t typeBits, const uint32_t& reqMask) const {
-        const VkMemoryType* vkMemoryTypes = this->_context.physicalDevice().vkMemoryProperties().memoryTypes;
-        uint32_t result = UINT32_MAX;
-        for (uint32_t i = 0; i < VK_MAX_MEMORY_TYPES; i++) {
-            if ((typeBits & 1) && (vkMemoryTypes[i].propertyFlags & reqMask) == reqMask) {
-                result = i;
-                break;
-            }
-            typeBits >>= 1;
-        }
-        if (result == UINT32_MAX) {
-            throw std::runtime_error("Failed to find memoryType");
-        }
-        return result;
-    }
-
-
     void CVulkanTransferBufferData::recordTransferCommand(const CVulkanCommandBuffer& commandBuffer) const {
-        const VkBufferCopy copyRegion = {
+        const VkBufferCopy copyRegion  {
             .srcOffset = 0,
             .dstOffset = 0,
             .size = this->src.vkRequestedSize()
@@ -82,13 +65,29 @@ namespace cvulkan::client::render::core {
     }
 
     CVulkanTransferBufferData createVerticesBuffer(const CVulkanContext& context, const structs::CVulkanRawMeshData& rawMeshData) {
-        const VkDeviceSize bufferSize = rawMeshData.positions.size() * sizeof(float);
+        const VkDeviceSize bufferSize = (rawMeshData.uv.size() + rawMeshData.positions.size()) * sizeof(float);
 
         CVulkanBuffer src{context, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, bufferSize};
         CVulkanBuffer dst{context, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, bufferSize};
 
+        std::vector<float> vertices;
+        vertices.reserve(rawMeshData.positions.size() + rawMeshData.uv.size());
+        const size_t vertexCount = rawMeshData.positions.size() / 3;
+
+        for (size_t i = 0; i < vertexCount; ++i) {
+            const size_t pos = i * 3;
+            const size_t uv = i * 2;
+
+            vertices.push_back(rawMeshData.positions[pos]);
+            vertices.push_back(rawMeshData.positions[pos + 1]);
+            vertices.push_back(rawMeshData.positions[pos + 2]);
+
+            vertices.push_back(rawMeshData.uv[uv]);
+            vertices.push_back(rawMeshData.uv[uv + 1]);
+        }
+
         src.mapMem();
-        std::memcpy(src.mappedMemory(), rawMeshData.positions.data(), bufferSize);
+        std::memcpy(src.mappedMemory(), vertices.data(), bufferSize);
         src.unMapMem();
 
         return {(std::move(src)), (std::move(dst))};

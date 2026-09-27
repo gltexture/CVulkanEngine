@@ -17,7 +17,7 @@ namespace cvulkan::client::render::core {
         explicit CVulkanBuffer(const CVulkanContext& context, const VkBufferUsageFlags& usage, const uint32_t& reqMask, const VkDeviceSize& size);
         ~CVulkanBuffer();
 
-        CVULKAN_NO_COPY(CVulkanBuffer);
+        CVULKAN_NO_COPY_NO_ASSIGN_MOVE(CVulkanBuffer);
 
         CVulkanBuffer(CVulkanBuffer&& other) noexcept
             : _context{other._context}, _vkBuffer{other._vkBuffer}, _vkAllocationSize{other._vkAllocationSize}, _vkRequestedSize{other._vkRequestedSize}, _vkDeviceMemory{other._vkDeviceMemory}, _mappedMemory{other._mappedMemory} {
@@ -25,8 +25,6 @@ namespace cvulkan::client::render::core {
             other._vkDeviceMemory = VK_NULL_HANDLE;
             other._mappedMemory = nullptr;
         }
-
-        CVulkanBuffer& operator=(CVulkanBuffer&&) = delete;
 
         void mapMem();
 
@@ -55,9 +53,6 @@ namespace cvulkan::client::render::core {
         [[nodiscard]] void* mappedMemory() {
             return _mappedMemory;
         }
-
-    protected:
-        uint32_t getMemoryTypeIndexFromProperties(uint32_t typeBits, const uint32_t& reqMask) const;
 
     private:
         const CVulkanContext& _context;

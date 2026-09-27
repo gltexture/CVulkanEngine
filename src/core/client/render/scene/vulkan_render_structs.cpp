@@ -21,9 +21,20 @@ namespace cvulkan::client::render::structs {
         }
 
         {
+            idx = 1;
+            mOffset += POSITION_COMPONENTS * sizeof(float);
+            auto& [location, binding, format, offset] = this->_vkVertexInputAttributeDescriptions[idx];
+            binding = 0;
+            location = idx;
+            format = VK_FORMAT_R32G32_SFLOAT;
+            offset = mOffset;
+        }
+
+        {
+            const uint32_t m_stride = mOffset + UV_COMPONENTS * sizeof(float);
             auto& [binding, stride, inputRate] = this->_vkVertexInputBindingDescriptions[0];
             binding = 0;
-            stride = POSITION_COMPONENTS * sizeof(float);
+            stride = m_stride;
             inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
         }
 

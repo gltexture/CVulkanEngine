@@ -203,6 +203,8 @@ namespace cvulkan::client::render::core {
 
         CVULKAN_NO_COPY(CVulkanContext)
 
+        void resize();
+
         [[nodiscard]] const window::CVulkanWindow& glfwWindow() const {
             return _glfwWindow;
         }
@@ -216,11 +218,11 @@ namespace cvulkan::client::render::core {
         }
 
         [[nodiscard]] const CVulkanSurface& surface() const {
-            return _surface;
+            return *_surface;
         }
 
         [[nodiscard]] const CVulkanSwapChain& swapChain() const {
-            return _swapChain;
+            return *_swapChain;
         }
 
         [[nodiscard]] const CVulkanDevice& device() const {
@@ -235,9 +237,9 @@ namespace cvulkan::client::render::core {
         const window::CVulkanWindow& _glfwWindow;
         CVulkanInstance _instance;
         CVulkanPhysicalDevice _physicalDevice;
-        CVulkanSurface _surface;
+        std::unique_ptr<CVulkanSurface> _surface {};
         CVulkanDevice _device;
-        CVulkanSwapChain _swapChain;
+        std::unique_ptr<CVulkanSwapChain> _swapChain;
         CVulkanPipelineCache _pipelineCache;
     };
 

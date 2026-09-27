@@ -15,7 +15,7 @@ namespace cvulkan::client::render::core {
 namespace cvulkan::client::render::loop {
     class CVulkanRenderLoop {
     public:
-        explicit CVulkanRenderLoop(const core::CVulkanContext& context);
+        explicit CVulkanRenderLoop(core::CVulkanContext& context);
         ~CVulkanRenderLoop();
 
         CVULKAN_NO_COPY(CVulkanRenderLoop)
@@ -54,6 +54,12 @@ namespace cvulkan::client::render::loop {
             return *_presentQueue;
         }
 
+        [[nodiscard]] bool shouldBeResized() const {
+            return _shouldBeResized;
+        }
+
+        void resize();
+
     protected:
         static void recordingStart(const core::CVulkanCommandPool& commandPool, const core::CVulkanCommandBuffer& commandBuffer);
 
@@ -62,22 +68,22 @@ namespace cvulkan::client::render::loop {
         void waitForFence() const;
 
         void submit(const core::CVulkanCommandBuffer& commandBuffer, const uint32_t& imageIndex) const;
-
     private:
-        const core::CVulkanContext& _context;
+        core::CVulkanContext& _context;
         std::vector<core::CVulkanCommandPool> _commandPools{};
         std::vector<core::CVulkanCommandBuffer> _commandBuffers{};
         std::vector<sync::CVulkanFence> _fences{};
         std::vector<sync::CVulkanSemaphore> _presentationCompleteSemaphores{};
         std::vector<sync::CVulkanSemaphore> _renderCompleteSemaphores{};
-        uint32_t _currentFrame = 0;
+        uint32_t _currentFrame {0};
         std::unique_ptr<core::CVulkanQueue> _graphicsQueue;
         std::unique_ptr<core::CVulkanQueue> _presentQueue;
+        bool _shouldBeResized {false};
     };
 
     extern std::unique_ptr<CVulkanRenderLoop> renderLoop;
 
-    void createRendering(const core::CVulkanContext& context);
+    void createRendering(core::CVulkanContext& context);
 
     void runRendering();
 

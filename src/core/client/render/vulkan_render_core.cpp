@@ -48,8 +48,8 @@ namespace cvulkan::client::render::core {
                 enabledExtNames.emplace_back(layer.c_str());
             }
 
-            VkApplicationInfo appInfo = {};
-            VkInstanceCreateInfo instanceCreateInfo = {};
+            VkApplicationInfo appInfo  {};
+            VkInstanceCreateInfo instanceCreateInfo  {};
             appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
             appInfo.pApplicationName = "CVulkan";
             appInfo.apiVersion = VK_API_VERSION_1_3;
@@ -272,7 +272,7 @@ namespace cvulkan::client::render::core {
         }
         queueCreateInfos.reserve(queueFamilies.size());
         for (const auto& [fst, snd]: queueFamilies) {
-            const VkDeviceQueueCreateInfo queueCreateInfo = {
+            const VkDeviceQueueCreateInfo queueCreateInfo  {
                 .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
                 .queueFamilyIndex = fst,
                 .queueCount = snd._queueCount,
@@ -281,16 +281,16 @@ namespace cvulkan::client::render::core {
             queueCreateInfos.emplace_back(queueCreateInfo);
         }
 
-        VkDeviceCreateInfo vkDeviceCreateInfo = {.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO};
+        VkDeviceCreateInfo vkDeviceCreateInfo  {.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO};
         vkDeviceCreateInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
         vkDeviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();
 
-        VkPhysicalDeviceVulkan13Features features13 = {
+        VkPhysicalDeviceVulkan13Features features13  {
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES,
             .synchronization2 = true,
             .dynamicRendering = true
         };
-        VkPhysicalDeviceFeatures2 features2 = {
+        VkPhysicalDeviceFeatures2 features2  {
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
             .pNext = &features13
         };
@@ -343,10 +343,21 @@ namespace cvulkan::client::render::core {
     : _glfwWindow{window},
     _instance(contextBuildData, instanceBuildData),
     _physicalDevice(contextBuildData, this->_instance, physicalDeviceBuildData),
-    _surface{*this},
-    _device(contextBuildData, this->_physicalDevice, this->_surface.vkSurface(), logicalDeviceBuildData),
-    _swapChain{*this, this->_surface.vkSurface(), this->_surface.vkSurfaceCapabilities(), this->_surface.vkFormat(), this->_surface.vkColorSpace()},
+    _surface{std::make_unique<CVulkanSurface>(*this)},
+    _device(contextBuildData, this->_physicalDevice, this->_surface->vkSurface(), logicalDeviceBuildData),
+    _swapChain{std::make_unique<CVulkanSwapChain>(*this, this->_surface->vkSurface(), this->_surface->vkSurfaceCapabilities(), this->_surface->vkFormat(), this->_surface->vkColorSpace())},
     _pipelineCache(*this) {
+    }
+
+    void CVulkanContext::resize() {
+        {
+            this->_swapChain.reset();
+            this->_surface.reset();
+        }
+        {
+            this->_surface = std::make_unique<CVulkanSurface>(*this);
+            this->_swapChain = std::make_unique<CVulkanSwapChain>(*this, this->_surface->vkSurface(), this->_surface->vkSurfaceCapabilities(), this->_surface->vkFormat(), this->_surface->vkColorSpace());
+        }
     }
 
     std::unordered_set<std::string> availableInstanceExtensions() {

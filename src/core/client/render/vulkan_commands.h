@@ -17,7 +17,7 @@ namespace cvulkan::client::render::core {
         CVulkanCommandPool(const CVulkanContext& context, const uint32_t queueFamilyIndex, const bool supportReset);
         ~CVulkanCommandPool();
 
-        CVULKAN_NO_COPY(CVulkanCommandPool)
+        CVULKAN_NO_COPY_NO_ASSIGN_MOVE(CVulkanCommandPool)
 
         CVulkanCommandPool(CVulkanCommandPool&& other) noexcept
             : _context{other._context}, _vkCommandPool{other._vkCommandPool}, _queueFamilyIndex{other._queueFamilyIndex}, _supportReset{other._supportReset} {
@@ -42,7 +42,7 @@ namespace cvulkan::client::render::core {
         CVulkanCommandBuffer(const CVulkanContext& context, const CVulkanCommandPool& commandPool, const bool primary, const bool oneTimeSubmit);
         ~CVulkanCommandBuffer();
 
-        CVULKAN_NO_COPY(CVulkanCommandBuffer)
+        CVULKAN_NO_COPY_NO_ASSIGN_MOVE(CVulkanCommandBuffer)
 
         CVulkanCommandBuffer(CVulkanCommandBuffer&& other) noexcept
             : _context{other._context}, _vkCommandBuffer{other._vkCommandBuffer}, _commandPool{other._commandPool}, _primary(other._primary), _oneTimeSubmit(other._oneTimeSubmit) {

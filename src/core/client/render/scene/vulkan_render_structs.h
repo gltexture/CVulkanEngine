@@ -3,20 +3,22 @@
 //
 
 #pragma once
+
 #include <string>
-#include <string_view>
 #include <vector>
 #include "client/render/vulkan_render_core.h"
 #include "client/render/vulkan_buffers.h"
 
 namespace cvulkan::client::render::structs {
-    static constexpr uint32_t NUMBER_OF_ATTRIBUTES = 1;
+    static constexpr uint32_t NUMBER_OF_ATTRIBUTES = 2;
     static constexpr uint32_t POSITION_COMPONENTS = 3;
+    static constexpr uint32_t UV_COMPONENTS = 2;
 
 
     struct CVulkanRawMeshData {
         std::string id;
         std::vector<float> positions;
+        std::vector<float> uv;
         std::vector<uint32_t> indices;
     };
 
@@ -51,6 +53,7 @@ namespace cvulkan::client::render::structs {
         ~CVulkanMesh();
 
         CVULKAN_NO_COPY_NO_ASSIGN_MOVE(CVulkanMesh);
+        CVulkanMesh(CVulkanMesh&& other) noexcept = default;
 
         [[nodiscard]] const std::string& id() const {
             return _id;
@@ -81,6 +84,7 @@ namespace cvulkan::client::render::structs {
         ~CVulkanModel();
 
         CVULKAN_NO_COPY_NO_ASSIGN_MOVE(CVulkanModel);
+        CVulkanModel(CVulkanModel&& other) noexcept = default;
 
         [[nodiscard]] const std::string& id() const {
             return _id;

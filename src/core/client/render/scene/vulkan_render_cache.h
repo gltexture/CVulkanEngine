@@ -27,7 +27,7 @@ namespace cvulkan::client::render::cache {
 
         void loadModels(const std::vector<structs::CVulkanRawModelData>& models, const core::CVulkanCommandPool& commandPool, const core::CVulkanQueue& queue);
 
-        [[nodiscard]] const structs::CVulkanModel& getModel(std::string_view id);
+        [[nodiscard]] const structs::CVulkanModel& getModel(std::string_view id) const ;
 
         [[nodiscard]] const std::unordered_map<std::string, structs::CVulkanModel>& models() const {
             return _modelsCache;

@@ -8,7 +8,7 @@
 
 namespace cvulkan::client::render::core {
     CVulkanPipelineCache::CVulkanPipelineCache(const CVulkanContext& context) : _context(context) {
-        constexpr VkPipelineCacheCreateInfo pipelineCacheCreateInfo = {
+        constexpr VkPipelineCacheCreateInfo pipelineCacheCreateInfo  {
             .sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO,
         };
         utility::vkCheck(vkCreatePipelineCache(this->_context.device().vkDevice(), &pipelineCacheCreateInfo, nullptr, &this->_vkPipelineCache), "Error creating vkPipeline cache");
@@ -23,17 +23,15 @@ namespace cvulkan::client::render::core {
         }
     }
 
-    CVulkanPipelineBuildInfo::CVulkanPipelineBuildInfo(const std::vector<shader::CVulkanShaderModule>& shaderModules, const VkPipelineVertexInputStateCreateInfo& vertexInputInfo, const VkFormat colorFormat)
-    : _colorFormat(colorFormat),
-    _shaderModules(shaderModules),
-    _vertexInputInfo(vertexInputInfo) {
+    CVulkanPipelineBuildInfo::CVulkanPipelineBuildInfo(const std::vector<shader::CVulkanShaderModule>& shaderModules, const std::vector<CVulkanPushConstantRange>& pushConstantRanges, const VkPipelineVertexInputStateCreateInfo& vertexInputInfo, const VkFormat& colorFormat, const VkFormat& depthFormat)
+        : _colorFormat(colorFormat), _depthFormat(depthFormat), _pushConstantRanges(pushConstantRanges), _shaderModules(shaderModules), _vertexInputInfo(vertexInputInfo) {
     }
 
     CVulkanPipeline::CVulkanPipeline(const CVulkanContext& context, const CVulkanPipelineBuildInfo& buildInfo) : _context(context) {
         std::vector<VkPipelineShaderStageCreateInfo> shaderStages{};
         shaderStages.reserve(buildInfo.shaderModules().size());
         for (const auto& t: buildInfo.shaderModules()) {
-            const VkPipelineShaderStageCreateInfo shaderStageCreateInfo = {
+            const VkPipelineShaderStageCreateInfo shaderStageCreateInfo  {
                 .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
                 .stage = t.stage(),
                 .module = t.vkShaderModule(),
@@ -41,11 +39,11 @@ namespace cvulkan::client::render::core {
             };
             shaderStages.emplace_back(shaderStageCreateInfo);
         }
-        const VkPipelineInputAssemblyStateCreateInfo inputAssemblyState = {
+        const VkPipelineInputAssemblyStateCreateInfo inputAssemblyState  {
             .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
             .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST
         };
-        const VkPipelineViewportStateCreateInfo viewportState = {
+        const VkPipelineViewportStateCreateInfo viewportState  {
             .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
             .viewportCount = 1,
             .scissorCount = 1
@@ -84,17 +82,47 @@ namespace cvulkan::client::render::core {
             .pAttachments = &blendAttachmentState
         };
         const VkFormat colorFormat = buildInfo.colorFormat();
-
-        const VkPipelineRenderingCreateInfo renderingCreateInfo{
+        const VkFormat depthFormat = buildInfo.depthFormat();
+        std::optional<VkPipelineDepthStencilStateCreateInfo> depthStencilStateCreateInfoOptional{};
+        if (buildInfo.depthFormat() != VK_FORMAT_UNDEFINED) {
+            constexpr VkPipelineDepthStencilStateCreateInfo depthStencilStateCreateInfo  {
+                .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
+                .depthTestEnable = VK_TRUE,
+                .depthWriteEnable = VK_TRUE,
+                .depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL,
+                .depthBoundsTestEnable = VK_FALSE,
+                .stencilTestEnable = VK_FALSE,
+            };
+            depthStencilStateCreateInfoOptional.emplace(depthStencilStateCreateInfo);
+        }
+        VkPipelineRenderingCreateInfo renderingCreateInfo{
             .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO,
             .colorAttachmentCount = 1,
-            .pColorAttachmentFormats = &colorFormat
+            .pColorAttachmentFormats = &colorFormat,
+            .depthAttachmentFormat = depthFormat
         };
-        const VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo{
+
+        std::vector<VkPushConstantRange> pushConstantRanges {};
+        pushConstantRanges.reserve(buildInfo.pushConstantRanges().size());
+        for (const auto& [stage, offset, size] : buildInfo.pushConstantRanges()) {
+            const VkPushConstantRange pushConstantRange {
+                .stageFlags = stage,
+                .offset = offset,
+                .size = size
+            };
+            pushConstantRanges.push_back(pushConstantRange);
+        }
+        VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo {
             .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO
         };
+        if (!pushConstantRanges.empty()) {
+            pipelineLayoutCreateInfo.pPushConstantRanges = pushConstantRanges.data();
+            pipelineLayoutCreateInfo.pushConstantRangeCount = static_cast<uint32_t>(pushConstantRanges.size());
+        }
+
+
         utility::vkCheck(vkCreatePipelineLayout(this->_context.device().vkDevice(), &pipelineLayoutCreateInfo, nullptr, &this->_vkPipelineLayout), "Failed to create pipeline layout");
-        const VkGraphicsPipelineCreateInfo createInfo{
+        VkGraphicsPipelineCreateInfo createInfo{
             .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
             .pNext = &renderingCreateInfo,
             .stageCount = static_cast<uint32_t>(shaderStages.size()),
@@ -109,6 +137,9 @@ namespace cvulkan::client::render::core {
             .layout = this->_vkPipelineLayout,
             .renderPass = VK_NULL_HANDLE
         };
+        if (depthStencilStateCreateInfoOptional.has_value()) {
+            createInfo.pDepthStencilState = &depthStencilStateCreateInfoOptional.value();
+        }
         utility::vkCheck(vkCreateGraphicsPipelines(this->_context.device().vkDevice(), this->_context.pipelineCache().vkPipelineCache(), 1, &createInfo, nullptr, &this->_vkPipeline), "Error creating graphics pipeline");
     }
 

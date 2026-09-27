@@ -8,7 +8,7 @@
 namespace cvulkan::client::render::core {
     CVulkanCommandPool::CVulkanCommandPool(const CVulkanContext& context, const uint32_t queueFamilyIndex, const bool supportReset)
     : _context{context}, _queueFamilyIndex{queueFamilyIndex}, _supportReset{supportReset} {
-        VkCommandPoolCreateInfo commandPoolCreateInfo = {
+        VkCommandPoolCreateInfo commandPoolCreateInfo  {
             .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
             .queueFamilyIndex = this->_queueFamilyIndex,
         };
@@ -34,7 +34,7 @@ namespace cvulkan::client::render::core {
 
     CVulkanCommandBuffer::CVulkanCommandBuffer(const CVulkanContext& context, const CVulkanCommandPool& commandPool, const bool primary, const bool oneTimeSubmit)
     : _context{context}, _commandPool{commandPool}, _primary{primary}, _oneTimeSubmit{oneTimeSubmit} {
-        const VkCommandBufferAllocateInfo commandBufferAllocateInfo = {
+        const VkCommandBufferAllocateInfo commandBufferAllocateInfo  {
             .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
             .commandPool = this->_commandPool.vkCommandPool(),
             .level = this->_primary ? VK_COMMAND_BUFFER_LEVEL_PRIMARY : VK_COMMAND_BUFFER_LEVEL_SECONDARY,
@@ -55,7 +55,7 @@ namespace cvulkan::client::render::core {
 
 
     void CVulkanCommandBuffer::beginRecording(const CVulkanInheritanceInfo* inheritance_info) const {
-        VkCommandBufferBeginInfo beginInfo = {
+        VkCommandBufferBeginInfo beginInfo  {
             .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
         };
         if (this->_oneTimeSubmit) {
@@ -66,13 +66,13 @@ namespace cvulkan::client::render::core {
                 throw std::invalid_argument("inheritance_info is null");
             }
 
-            VkCommandBufferInheritanceRenderingInfo inheritanceRenderingInfo = {
+            VkCommandBufferInheritanceRenderingInfo inheritanceRenderingInfo  {
                 .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_RENDERING_INFO,
                 .pColorAttachmentFormats = inheritance_info->colorFormats.data(),
                 .depthAttachmentFormat = inheritance_info->depthFormat,
                 .rasterizationSamples = inheritance_info->rasterizationSamples,
             };
-            const VkCommandBufferInheritanceInfo inheritanceInfo = {
+            const VkCommandBufferInheritanceInfo inheritanceInfo  {
                 .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO,
                 .pNext = &inheritanceRenderingInfo,
             };
@@ -87,7 +87,7 @@ namespace cvulkan::client::render::core {
 
     void CVulkanCommandBuffer::submitAndWait(const CVulkanQueue& queue) const {
         const sync::CVulkanFence fence{this->_context, false};
-        const VkCommandBufferSubmitInfo submitInfo = {
+        const VkCommandBufferSubmitInfo submitInfo  {
             .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
             .commandBuffer = this->_vkCommandBuffer,
         };
@@ -102,7 +102,7 @@ namespace cvulkan::client::render::core {
 
     void CVulkanQueue::submitQueue(const std::vector<VkCommandBufferSubmitInfo>& commandSubmitInfos, const std::vector<VkSemaphoreSubmitInfo>* waitSemaphores, const std::vector<VkSemaphoreSubmitInfo>* signalSemaphores,
     const sync::CVulkanFence* fence) const {
-        VkSubmitInfo2 vkSubmitInfo2 = {
+        VkSubmitInfo2 vkSubmitInfo2  {
             .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,
             .commandBufferInfoCount = static_cast<uint32_t>(commandSubmitInfos.size()),
             .pCommandBufferInfos = commandSubmitInfos.data(),

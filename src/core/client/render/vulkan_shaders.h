@@ -17,11 +17,9 @@ namespace cvulkan::client::render::shader {
         CVulkanShaderModule(const core::CVulkanContext& context, std::string_view shaderSpvFileName, VkShaderStageFlagBits stage);
         ~CVulkanShaderModule();
 
-        CVULKAN_NO_COPY(CVulkanShaderModule);
+        CVULKAN_NO_COPY_NO_ASSIGN_MOVE(CVulkanShaderModule);
 
         CVulkanShaderModule(CVulkanShaderModule&&) noexcept = default;
-
-        CVulkanShaderModule& operator=(CVulkanShaderModule&&) = delete;
 
         [[nodiscard]] VkShaderModule vkShaderModule() const {
             return _vkShaderModule;

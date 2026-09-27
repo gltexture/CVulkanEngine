@@ -6,35 +6,11 @@
 
 #include "vulkan_commands.h"
 #include "vulkan_config.h"
+#include "vulkan_images.h"
 #include "vulkan_render_core.h"
 #include "vulkan_synchronization.h"
 
 namespace cvulkan::client::render::core {
-    CVulkanImageView::CVulkanImageView(const CVulkanContext& context, const CVulkanImageViewData& view_data, const VkImage& vk_image) : _context(context) {
-        const VkImageViewCreateInfo image_view_create_info = {
-            .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-            .image = vk_image,
-            .viewType = view_data.viewType,
-            .format = view_data.format,
-            .subresourceRange = {
-                .aspectMask = view_data.aspectMask,
-                .baseMipLevel = 0,
-                .levelCount = view_data.mipLevels,
-                .baseArrayLayer = view_data.baseArrayLayer,
-                .layerCount = view_data.layerCount
-            }
-        };
-        utility::vkCheck(vkCreateImageView(this->_context.device().vkDevice(), &image_view_create_info, nullptr, &this->_vkImageView), "Failed to createImageView image view");
-        this->_vkImage = vk_image;
-    }
-
-    CVulkanImageView::~CVulkanImageView() {
-        if (this->_vkImageView != VK_NULL_HANDLE) {
-            vkDestroyImageView(this->_context.device().vkDevice(), this->_vkImageView, nullptr);
-            this->_vkImageView = VK_NULL_HANDLE;
-        }
-    }
-
     CVulkanSwapChain::CVulkanSwapChain(const CVulkanContext& context, const VkSurfaceKHR& vkSurface, const VkSurfaceCapabilitiesKHR& vkSurfaceCapabilities, const VkFormat& vkFormat, const VkColorSpaceKHR& vkColorSpace) : _context(context) {
         constexpr uint32_t requestedImages = renderConfig::SWAP_CHAIN_IMAGES;
 
@@ -87,9 +63,12 @@ namespace cvulkan::client::render::core {
             std::vector<VkImage> images(this->numImages());
             utility::vkCheck(vkGetSwapchainImagesKHR(this->_context.device().vkDevice(), this->_vkSwapChain, &this->_numImages, images.data()), "Failed to create swapChain Images");
 
-            const CVulkanImageViewData image_view_data = {.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .format = vkFormat};
+            const CVulkanImage2DViewData image_view_data {
+                ._aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                ._format = vkFormat
+            };
             this->_imageViews.reserve(images.size());
-            for (const auto image: images) {
+            for (const auto image : images) {
                 this->_imageViews.emplace_back(this->_context, image_view_data, image);
             }
         }
@@ -157,7 +136,7 @@ namespace cvulkan::client::render::core {
 
     bool CVulkanSwapChain::presentImage(const CVulkanQueue& queue, const sync::CVulkanSemaphore& renderCompleteSemaphore, const uint32_t& imageIndex) const {
         const VkSemaphore vkSemaphore = renderCompleteSemaphore.vkSemaphore();
-        const VkPresentInfoKHR presentInfo = {
+        const VkPresentInfoKHR presentInfo  {
             .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
             .waitSemaphoreCount = 1,
             .pWaitSemaphores = &vkSemaphore,

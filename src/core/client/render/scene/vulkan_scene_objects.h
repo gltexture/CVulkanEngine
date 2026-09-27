@@ -1,0 +1,51 @@
+//
+// Created by ded on 24.09.2026.
+//
+
+#pragma once
+#include <string>
+
+#include "client/render/vulkan_utility.h"
+#include "glm/gtc/quaternion.hpp"
+
+namespace cvulkan::client::render::entity {
+    struct CVulkanEntityTransform {
+        glm::vec3 _position{0.0f, 0.0f, 0.0f};
+        glm::quat _rotation{1.0f, 0.0f, 0.0f, 0.0f};
+        glm::vec3 _scale{1.0f};
+
+        [[nodiscard]] glm::mat4 modelMatrix() const {
+            return glm::translate(glm::mat4{1.0f}, this->_position) * glm::mat4_cast(this->_rotation) * glm::scale(glm::mat4{1.0f}, this->_scale);
+        }
+    };
+
+    class CVulkanSceneEntity {
+    public:
+        CVulkanSceneEntity(const std::string& id, const std::string& modelId);
+        ~CVulkanSceneEntity();
+
+        CVULKAN_NO_COPY(CVulkanSceneEntity);
+        CVulkanSceneEntity(CVulkanSceneEntity&& other) = default;
+
+        [[nodiscard]] const std::string& id() const {
+            return _id;
+        }
+
+        [[nodiscard]] const std::string& modelId() const {
+            return _modelId;
+        }
+
+        [[nodiscard]] const CVulkanEntityTransform& transform() const {
+            return _transform;
+        }
+
+        [[nodiscard]] CVulkanEntityTransform& transform() {
+            return _transform;
+        }
+
+    private:
+        std::string _id;
+        std::string _modelId;
+        CVulkanEntityTransform _transform;
+    };
+}

@@ -37,7 +37,7 @@ namespace cvulkan::client::render::cache {
         commandBuffer.submitAndWait(queue);
     }
 
-    const structs::CVulkanModel& CVulkanModelsCache::getModel(const std::string_view id) {
+    const structs::CVulkanModel& CVulkanModelsCache::getModel(const std::string_view id) const {
         return this->_modelsCache.at(std::string{id});
     }
 }
