@@ -1,0 +1,82 @@
+//
+// Created by ded on 08.10.2026.
+//
+
+#pragma once
+#include <filesystem>
+
+#include "client/render/vulkan_utility.h"
+
+namespace cvulkan::client::render::core {
+    class CVulkanCommandBuffer;
+    class CVulkanContext;
+    class CVulkanBuffer;
+    class CVulkanImage2DView;
+    class CVulkanImage2D;
+}
+
+namespace cvulkan::client::render::asset {
+    struct CVulkanImageSrc {
+        ~CVulkanImageSrc();
+
+        unsigned char*& _data;
+        size_t _dataSize;
+        glm::vec2 _size;
+        uint32_t _channels;
+    };
+
+    class CVulkanTexture2D {
+    public:
+        CVulkanTexture2D(const core::CVulkanContext& context, const std::string& id, const CVulkanImageSrc& imageSrc, const VkFormat& format);
+        ~CVulkanTexture2D();
+
+        CVULKAN_NO_COPY(CVulkanTexture2D);
+        CVulkanTexture2D(CVulkanTexture2D&& other) noexcept;
+        CVulkanTexture2D& operator=(CVulkanTexture2D&& other) noexcept;
+
+        void recordTextureTransition(const core::CVulkanCommandBuffer& commandBuffer);
+        void recordCopyBuffer(const core::CVulkanCommandBuffer& commandBuffer, const core::CVulkanBuffer& bufferData) const;
+
+        void destroyStgBuffer();
+
+        [[nodiscard]] const std::string& id() const {
+            return _id;
+        }
+
+        [[nodiscard]] const glm::vec2& size() const {
+            return _size;
+        }
+
+        [[nodiscard]] bool recordedTransitionFlag() const {
+            return _recordedTransition;
+        }
+
+        [[nodiscard]] const core::CVulkanImage2D* image() const {
+            return _image.get();
+        }
+
+        [[nodiscard]] const core::CVulkanImage2DView* imageView() const {
+            return _imageView.get();
+        }
+
+        [[nodiscard]] const core::CVulkanBuffer* stgBuffer() const {
+            return _stgBuffer.get();
+        }
+
+    protected:
+        void createStgBuffer(const core::CVulkanContext& context, unsigned char*& _data, const size_t& _dataSize);
+
+    private:
+        std::string _id;
+        glm::vec2 _size;
+        bool _recordedTransition {false};
+        std::unique_ptr<core::CVulkanImage2D> _image;
+        std::unique_ptr<core::CVulkanImage2DView> _imageView;
+        std::unique_ptr<core::CVulkanBuffer> _stgBuffer;
+    };
+
+
+    namespace imageLoad {
+        CVulkanImageSrc loadImage(const std::filesystem::path& imagePath);
+    }
+}

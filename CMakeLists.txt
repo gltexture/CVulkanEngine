@@ -8,13 +8,13 @@ include(FetchContent)
 
 FetchContent_Declare(
         glm
-        GIT_REPOSITORY https://github.com/g-truc/glm
+        GIT_REPOSITORY https://github.com/g-truc/glm.git
         GIT_TAG 1.0.3
 )
 
 FetchContent_Declare(
         glfw
-        GIT_REPOSITORY https://github.com/glfw/glfw
+        GIT_REPOSITORY https://github.com/glfw/glfw.git
         GIT_TAG 3.5.1
 )
 
@@ -24,6 +24,7 @@ FetchContent_Declare(
         GIT_TAG v1.17.0
 )
 
+set(ASSIMP_WARNINGS_AS_ERRORS OFF CACHE BOOL "" FORCE)
 set(SHADERC_SKIP_TESTS ON CACHE BOOL "" FORCE)
 set(SHADERC_SKIP_EXAMPLES ON CACHE BOOL "" FORCE)
 
@@ -43,9 +44,20 @@ FetchContent_Declare(
         GIT_TAG main
 )
 FetchContent_Declare(
-    shaderc
-    GIT_REPOSITORY https://github.com/google/shaderc.git
-    GIT_TAG v2026.4
+        shaderc
+        GIT_REPOSITORY https://github.com/google/shaderc.git
+        GIT_TAG v2026.4
+)
+
+FetchContent_Declare(
+        assimp
+        GIT_REPOSITORY https://github.com/assimp/assimp.git
+        GIT_TAG v6.0.5
+)
+FetchContent_Declare(
+        json
+        GIT_REPOSITORY https://github.com/nlohmann/json.git
+        GIT_TAG v3.12.0
 )
 
 FetchContent_MakeAvailable(
@@ -56,6 +68,8 @@ FetchContent_MakeAvailable(
         shaderc
         glfw
         glm
+        assimp
+        json
 )
 
 find_package(Vulkan REQUIRED)
@@ -86,6 +100,13 @@ add_executable(CVulkanEngine
         src/core/client/render/vulkan_transform.h
         src/core/client/render/scene/vulkan_scene_objects.cpp
         src/core/client/render/scene/vulkan_scene_objects.h
+        src/core/client/render/assets/asset_shaders.cpp
+        src/core/client/render/assets/asset_shaders.h
+        src/core/client/render/assets/asset_models.cpp
+        src/core/client/render/assets/asset_models.h
+        src/core/client/render/assets/asset_textures.cpp
+        src/core/client/render/assets/asset_textures.h
+        src/core/util/collections.hpp
 )
 
 add_link_options("-fuse-ld=lld")
@@ -107,14 +128,19 @@ target_precompile_headers(CVulkanEngine PRIVATE
 )
 
 target_link_libraries(
-    CVulkanEngine
-    PRIVATE Vulkan::Vulkan
-    PRIVATE glfw
-    PRIVATE glm::glm
-    PRIVATE spdlog::spdlog
-    PRIVATE shaderc_combined
+        CVulkanEngine
+        PRIVATE Vulkan::Vulkan
+        PRIVATE glfw
+        PRIVATE glm::glm
+        PRIVATE spdlog::spdlog
+        PRIVATE shaderc_combined
+        PRIVATE assimp
+        PRIVATE nlohmann_json::nlohmann_json
 )
 
 target_include_directories(CVulkanEngine
-    PRIVATE ${CMAKE_SOURCE_DIR}/src/core
+        PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/external
+)
+target_include_directories(CVulkanEngine
+        PRIVATE ${CMAKE_SOURCE_DIR}/src/core
 )

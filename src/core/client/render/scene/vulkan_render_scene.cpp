@@ -9,6 +9,7 @@
 #include "client/render/vulkan_commands.h"
 #include "client/render/vulkan_images.h"
 #include "client/render/vulkan_render_loop.h"
+#include "client/render/assets/asset_shaders.h"
 #include "shaderc/shaderc.h"
 
 namespace cvulkan::client::render::scene {
@@ -201,8 +202,8 @@ namespace cvulkan::client::render::scene {
         }, this->_renderLoop.commandPools()[0], this->_renderLoop.graphicsQueue());
 
         {
-            shader::compileShaderIfOutOfDate("test.v", shaderc_glsl_vertex_shader);
-            shader::compileShaderIfOutOfDate("test.f", shaderc_glsl_fragment_shader);
+            asset::shaderLoad::compileShaderIfOutOfDate("test.v", shaderc_glsl_vertex_shader);
+            asset::shaderLoad::compileShaderIfOutOfDate("test.f", shaderc_glsl_fragment_shader);
 
             std::vector<shader::CVulkanShaderModule> shaderModules  {};
             shaderModules.reserve(2);

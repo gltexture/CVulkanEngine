@@ -42,6 +42,7 @@ namespace cvulkan::client::render::core {
             this->_vkDeviceMemory = VK_NULL_HANDLE;
         }
     }
+    
     void CVulkanBuffer::mapMem() {
         if (this->_mappedMemory == nullptr) {
             utility::vkCheck(vkMapMemory(this->_context.device().vkDevice(), this->_vkDeviceMemory, 0, this->_vkAllocationSize, 0, &this->_mappedMemory), "Failed to bind buffer memory");
