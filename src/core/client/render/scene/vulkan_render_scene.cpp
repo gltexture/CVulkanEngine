@@ -24,7 +24,7 @@ namespace cvulkan::client::render::scene {
                     VK_IMAGE_ASPECT_COLOR_BIT);
      */
 
-    void CVulkanSceneRenderer::renderScene(const core::CVulkanCommandBuffer& commandBuffer, const uint32_t& imageIndex) const {
+    void CVulkanSceneRenderer::renderScene(const vk::CVulkanCommandBuffer& commandBuffer, const uint32_t& imageIndex) const {
         utility::imageBarrier(
             commandBuffer.vkCommandBuffer(),
             this->_context.swapChain().imageViews()[imageIndex].vkImage(),
@@ -128,7 +128,7 @@ namespace cvulkan::client::render::scene {
 
             this->_depthAttachments.reserve(this->_context.swapChain().numImages());
             for (uint32_t i = 0; i < this->_context.swapChain().numImages(); ++i) {
-                this->_depthAttachments.emplace_back(core::CVulkanAttachment2D::createSimpleAttachment(this->_context, {this->_context.swapChain().extent().width, this->_context.swapChain().extent().height, 1}, VK_FORMAT_D16_UNORM, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT));
+                this->_depthAttachments.emplace_back(vk::CVulkanAttachment2D::createSimpleAttachment(this->_context, {this->_context.swapChain().extent().width, this->_context.swapChain().extent().height, 1}, VK_FORMAT_D16_UNORM, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT));
             }
 
             this->_vkDepthAttachmentsInfo.resize(this->_context.swapChain().numImages());
@@ -210,14 +210,14 @@ namespace cvulkan::client::render::scene {
             shaderModules.emplace_back(this->_context, "test.v.spv", VK_SHADER_STAGE_VERTEX_BIT);
             shaderModules.emplace_back(this->_context, "test.f.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 
-            std::vector<core::CVulkanPushConstantRange> pushConstantRanges {};
+            std::vector<vk::CVulkanPushConstantRange> pushConstantRanges {};
             pushConstantRanges.reserve(1);
             pushConstantRanges.emplace_back(VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(CVulkanPushConstants));
 
             const structs::CVulkanVertexStruct vertexStruct{this->_context};
-            const core::CVulkanPipelineBuildInfo buildInfo{shaderModules, pushConstantRanges, vertexStruct.vkPipelineVertexInputStateCreateInfo(), this->_context.surface().vkFormat(), VK_FORMAT_D16_UNORM};
+            const vk::CVulkanPipelineBuildInfo buildInfo{shaderModules, pushConstantRanges, vertexStruct.vkPipelineVertexInputStateCreateInfo(), this->_context.surface().vkFormat(), VK_FORMAT_D16_UNORM};
 
-            this->_defaultRenderPipeline = std::make_unique<core::CVulkanPipeline>(this->_context, buildInfo);
+            this->_defaultRenderPipeline = std::make_unique<vk::CVulkanPipeline>(this->_context, buildInfo);
 
             {
                 entity::CVulkanSceneEntity entity = {"CubeEnt", "Cube"};
@@ -228,7 +228,7 @@ namespace cvulkan::client::render::scene {
         }
     }
 
-    CVulkanSceneRenderer::CVulkanSceneRenderer(const core::CVulkanContext& context, const loop::CVulkanRenderLoop& renderLoop)
+    CVulkanSceneRenderer::CVulkanSceneRenderer(const vk::CVulkanContext& context, const loop::CVulkanRenderLoop& renderLoop)
         : _context(context), _caches(context), _renderLoop(renderLoop), _projection({glm::radians(60.0f), 0.1f, 1024.0f, {context.swapChain().extent()}}) {
         this->loadResources();
         this->createRenderData();

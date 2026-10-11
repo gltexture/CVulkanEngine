@@ -14,7 +14,7 @@ namespace cvulkan::client::render::sync {
     class CVulkanFence;
 }
 
-namespace cvulkan::client::render::core {
+namespace cvulkan::client::render::vk {
     class CVulkanQueue;
     class CVulkanContext;
     struct CVulkanPhysicalDevice;

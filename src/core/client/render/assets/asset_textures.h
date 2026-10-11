@@ -7,7 +7,7 @@
 
 #include "client/render/vulkan_utility.h"
 
-namespace cvulkan::client::render::core {
+namespace cvulkan::client::render::vk {
     class CVulkanCommandBuffer;
     class CVulkanContext;
     class CVulkanBuffer;
@@ -27,15 +27,15 @@ namespace cvulkan::client::render::asset {
 
     class CVulkanTexture2D {
     public:
-        CVulkanTexture2D(const core::CVulkanContext& context, const std::string& id, const CVulkanImageSrc& imageSrc, const VkFormat& format);
+        CVulkanTexture2D(const vk::CVulkanContext& context, const std::string& id, const CVulkanImageSrc& imageSrc, const VkFormat& format);
         ~CVulkanTexture2D();
 
         CVULKAN_NO_COPY(CVulkanTexture2D);
         CVulkanTexture2D(CVulkanTexture2D&& other) noexcept;
         CVulkanTexture2D& operator=(CVulkanTexture2D&& other) noexcept;
 
-        void recordTextureTransition(const core::CVulkanCommandBuffer& commandBuffer);
-        void recordCopyBuffer(const core::CVulkanCommandBuffer& commandBuffer, const core::CVulkanBuffer& bufferData) const;
+        void recordTextureTransition(const vk::CVulkanCommandBuffer& commandBuffer);
+        void recordCopyBuffer(const vk::CVulkanCommandBuffer& commandBuffer, const vk::CVulkanBuffer& bufferData) const;
 
         void destroyStgBuffer();
 
@@ -51,28 +51,28 @@ namespace cvulkan::client::render::asset {
             return _recordedTransition;
         }
 
-        [[nodiscard]] const core::CVulkanImage2D* image() const {
+        [[nodiscard]] const vk::CVulkanImage2D* image() const {
             return _image.get();
         }
 
-        [[nodiscard]] const core::CVulkanImage2DView* imageView() const {
+        [[nodiscard]] const vk::CVulkanImage2DView* imageView() const {
             return _imageView.get();
         }
 
-        [[nodiscard]] const core::CVulkanBuffer* stgBuffer() const {
+        [[nodiscard]] const vk::CVulkanBuffer* stgBuffer() const {
             return _stgBuffer.get();
         }
 
     protected:
-        void createStgBuffer(const core::CVulkanContext& context, unsigned char*& _data, const size_t& _dataSize);
+        void createStgBuffer(const vk::CVulkanContext& context, unsigned char*& _data, const size_t& _dataSize);
 
     private:
         std::string _id;
         glm::vec2 _size;
         bool _recordedTransition {false};
-        std::unique_ptr<core::CVulkanImage2D> _image;
-        std::unique_ptr<core::CVulkanImage2DView> _imageView;
-        std::unique_ptr<core::CVulkanBuffer> _stgBuffer;
+        std::unique_ptr<vk::CVulkanImage2D> _image;
+        std::unique_ptr<vk::CVulkanImage2DView> _imageView;
+        std::unique_ptr<vk::CVulkanBuffer> _stgBuffer;
     };
 
 

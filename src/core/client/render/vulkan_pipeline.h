@@ -6,7 +6,7 @@
 
 #include "vulkan_shaders.h"
 
-namespace cvulkan::client::render::core {
+namespace cvulkan::client::render::vk {
     class CVulkanContext;
 
     struct CVulkanPushConstantRange {

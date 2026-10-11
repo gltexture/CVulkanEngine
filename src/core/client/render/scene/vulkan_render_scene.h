@@ -20,7 +20,7 @@ namespace cvulkan::client::render::loop {
     class CVulkanRenderLoop;
 }
 
-namespace cvulkan::client::render::core {
+namespace cvulkan::client::render::vk {
     class CVulkanAttachment2D;
     class CVulkanCommandBuffer;
     class CVulkanContext;
@@ -52,12 +52,12 @@ namespace cvulkan::client::render::scene {
 
     class CVulkanSceneRenderer {
     public:
-        CVulkanSceneRenderer(const core::CVulkanContext& context, const loop::CVulkanRenderLoop& renderLoop);
+        CVulkanSceneRenderer(const vk::CVulkanContext& context, const loop::CVulkanRenderLoop& renderLoop);
         ~CVulkanSceneRenderer();
 
         CVULKAN_NO_COPY(CVulkanSceneRenderer);
 
-        void renderScene(const core::CVulkanCommandBuffer& commandBuffer, const uint32_t& imageIndex) const;
+        void renderScene(const vk::CVulkanCommandBuffer& commandBuffer, const uint32_t& imageIndex) const;
 
         void resize();
 
@@ -78,15 +78,15 @@ namespace cvulkan::client::render::scene {
         void loadResources();
 
     private:
-        const core::CVulkanContext& _context;
+        const vk::CVulkanContext& _context;
         CVulkanSceneEntitiesCollection _entitiesCollection {};
         cache::CVulkanCacheCollection _caches;
         const loop::CVulkanRenderLoop& _renderLoop;
         transform::CVulkanSceneProjection _projection;
-        std::unique_ptr<core::CVulkanPipeline> _defaultRenderPipeline {};
+        std::unique_ptr<vk::CVulkanPipeline> _defaultRenderPipeline {};
         std::vector<VkRenderingAttachmentInfo> _vkColorAttachmentsInfo{};
         std::vector<VkRenderingAttachmentInfo> _vkDepthAttachmentsInfo{};
-        std::vector<core::CVulkanAttachment2D> _depthAttachments{};
+        std::vector<vk::CVulkanAttachment2D> _depthAttachments{};
         std::vector<VkRenderingInfo> _vkRenderingInfo{};
     };
 }

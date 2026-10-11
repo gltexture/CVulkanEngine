@@ -6,7 +6,7 @@
 #include "vulkan_render_core.h"
 #include "vulkan_utility.h"
 
-namespace cvulkan::client::render::core {
+namespace cvulkan::client::render::vk {
     CVulkanPipelineCache::CVulkanPipelineCache(const CVulkanContext& context) : _context(context) {
         constexpr VkPipelineCacheCreateInfo pipelineCacheCreateInfo  {
             .sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO,

@@ -6,14 +6,14 @@
 
 #include "vulkan_utility.h"
 
-namespace cvulkan::client::render::core {
+namespace cvulkan::client::render::vk {
     class CVulkanContext;
 }
 
 namespace cvulkan::client::render::sync {
     class CVulkanSemaphore {
     public:
-        explicit CVulkanSemaphore(const core::CVulkanContext& context);
+        explicit CVulkanSemaphore(const vk::CVulkanContext& context);
         ~CVulkanSemaphore();
 
         CVULKAN_NO_COPY(CVulkanSemaphore);
@@ -28,13 +28,13 @@ namespace cvulkan::client::render::sync {
         }
 
     private:
-        const core::CVulkanContext& _context;
+        const vk::CVulkanContext& _context;
         VkSemaphore _vkSemaphore{};
     };
 
     class CVulkanFence {
     public:
-        explicit CVulkanFence(const core::CVulkanContext& context, bool signaled);
+        explicit CVulkanFence(const vk::CVulkanContext& context, bool signaled);
         ~CVulkanFence();
 
         CVULKAN_NO_COPY(CVulkanFence);
@@ -53,7 +53,7 @@ namespace cvulkan::client::render::sync {
         }
 
     private:
-        const core::CVulkanContext& _context;
+        const vk::CVulkanContext& _context;
         VkFence _vkFence{};
     };
 }

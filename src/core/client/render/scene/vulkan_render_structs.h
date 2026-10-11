@@ -15,22 +15,20 @@ namespace cvulkan::client::render::structs {
     static constexpr uint32_t UV_COMPONENTS = 2;
 
 
-    struct CVulkanRawMeshData {
-        std::string id;
-        std::vector<float> positions;
-        std::vector<float> uv;
-        std::vector<uint32_t> indices;
-    };
+    //struct CVulkanRawMeshData {
+    //    std::string id;
+    //    std::vector<float> positions;
+    //    std::vector<float> uv;
+    //    std::vector<uint32_t> indices;
+    //};
 
-    struct CVulkanRawModelData {
-        std::string id;
-        std::vector<CVulkanRawMeshData> meshes;
+    struct CVulkanMaterial {
+        std::string _id;
     };
-
 
     class CVulkanVertexStruct {
     public:
-        explicit CVulkanVertexStruct(const core::CVulkanContext& context);
+        explicit CVulkanVertexStruct(const vk::CVulkanContext& context);
 
         ~CVulkanVertexStruct();
 
@@ -41,7 +39,7 @@ namespace cvulkan::client::render::structs {
         }
 
     private:
-        const core::CVulkanContext& _context;
+        const vk::CVulkanContext& _context;
         VkPipelineVertexInputStateCreateInfo _vkPipelineVertexInputStateCreateInfo{};
         std::vector<VkVertexInputAttributeDescription> _vkVertexInputAttributeDescriptions{};
         std::vector<VkVertexInputBindingDescription> _vkVertexInputBindingDescriptions{};
@@ -49,7 +47,7 @@ namespace cvulkan::client::render::structs {
 
     class CVulkanMesh {
     public:
-        CVulkanMesh(const std::string& id, core::CVulkanBuffer&& verticesBuffer, core::CVulkanBuffer&& indicesBuffer, const uint32_t& numIndices);
+        CVulkanMesh(const std::string& id, vk::CVulkanBuffer&& verticesBuffer, vk::CVulkanBuffer&& indicesBuffer, const uint32_t& numIndices, const std::string& materialId);
         ~CVulkanMesh();
 
         CVULKAN_NO_COPY_NO_ASSIGN_MOVE(CVulkanMesh);
@@ -59,11 +57,11 @@ namespace cvulkan::client::render::structs {
             return _id;
         }
 
-        [[nodiscard]] const core::CVulkanBuffer& verticesBuffer() const {
+        [[nodiscard]] const vk::CVulkanBuffer& verticesBuffer() const {
             return _verticesBuffer;
         }
 
-        [[nodiscard]] const core::CVulkanBuffer& indicesBuffer() const {
+        [[nodiscard]] const vk::CVulkanBuffer& indicesBuffer() const {
             return _indicesBuffer;
         }
 
@@ -73,9 +71,10 @@ namespace cvulkan::client::render::structs {
 
     private:
         std::string _id;
-        core::CVulkanBuffer _verticesBuffer;
-        core::CVulkanBuffer _indicesBuffer;
+        vk::CVulkanBuffer _verticesBuffer;
+        vk::CVulkanBuffer _indicesBuffer;
         uint32_t _numIndices;
+        std::string _materialId;
     };
 
     class CVulkanModel {

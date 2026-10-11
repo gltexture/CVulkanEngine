@@ -6,7 +6,7 @@
 
 #include "vulkan_render_core.h"
 
-namespace cvulkan::client::render::core {
+namespace cvulkan::client::render::vk {
     CVulkanImage2D::CVulkanImage2D(const CVulkanContext& context, const CVulkanImage2DData& imageData) : _context(context) {
         this->_format = imageData._format;
         this->_mipLevels = imageData._mipLevels;

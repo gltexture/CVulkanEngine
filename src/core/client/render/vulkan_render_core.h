@@ -10,7 +10,7 @@
 #include "vulkan_swapchain.h"
 #include "util/logger.inl"
 
-namespace cvulkan::client::render::core {
+namespace cvulkan::client::render::vk {
     using QueueFamilyBitMask = uint32_t;
 
     struct CVulkanQueueFamilyBitMasks {

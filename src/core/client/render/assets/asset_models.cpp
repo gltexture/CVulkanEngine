@@ -12,10 +12,71 @@
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
 
-#include "../../../../../cmake-build-debug/_deps/assimp-src/include/assimp/cimport.h"
+#include "client/render/scene/vulkan_render_structs.h"
 
 namespace cvulkan::client::render::asset {
     constexpr uint32_t IMPORT_FLAGS = aiProcess_GenSmoothNormals | aiProcess_JoinIdenticalVertices | aiProcess_Triangulate | aiProcess_FixInfacingNormals | aiProcess_CalcTangentSpace | aiProcess_PreTransformVertices;
+
+    void to_json(nlohmann::json& json, const modelGen::CVulkanModelData& model) {
+        json = nlohmann::json{
+                    {"id", model._id},
+                    {"meshes", model._meshes},
+                    {"idx_path", model._idxPath.string()},
+                    {"vtx_path", model._vtxPath.string()}
+        };
+    }
+
+    void from_json(const nlohmann::json& json, modelGen::CVulkanModelData& model) {
+        json.at("id").get_to(model._id);
+        json.at("meshes").get_to(model._meshes);
+        model._idxPath = {json.at("idx_path").get<std::string>()};
+        model._vtxPath = {json.at("vtx_path").get<std::string>()};
+    }
+
+    void to_json(nlohmann::json& json, const modelGen::CVulkanMaterialData& material) {
+        json = nlohmann::json{
+                        {"id", material._id},
+                        {"texturePath", material._texturePath},
+                        {"diffuseColor", {
+                            material._diffuseColor.x,
+                            material._diffuseColor.y,
+                            material._diffuseColor.z,
+                            material._diffuseColor.w
+                           }}
+        };
+    }
+
+    void from_json(const nlohmann::json& json, modelGen::CVulkanMaterialData& material) {
+        json.at("id").get_to(material._id);
+        json.at("texture_path").get_to(material._texturePath);
+        const auto& color = json.at("diffuse_color");
+        material._diffuseColor = glm::vec4{
+            color.at(0).get<float>(),
+            color.at(1).get<float>(),
+            color.at(2).get<float>(),
+            color.at(3).get<float>()
+        };
+    }
+
+    void to_json(nlohmann::json& json, const modelGen::CVulkanMeshData& mesh) {
+        json = nlohmann::json{
+                    {"id", mesh._id},
+                    {"material_id", mesh._materialId},
+                    {"vertex_offset", mesh._vertexOffset},
+                    {"vertex_size", mesh._vtxSize},
+                    {"index_offset", mesh._indexOffset},
+                    {"index_size", mesh._idxSize}
+        };
+    }
+
+    void from_json(const nlohmann::json& json, modelGen::CVulkanMeshData& mesh) {
+        json.at("id").get_to(mesh._id);
+        json.at("material_id").get_to(mesh._materialId);
+        json.at("vertex_offset").get_to(mesh._vertexOffset);
+        json.at("vertex_size").get_to(mesh._vtxSize);
+        json.at("index_offset").get_to(mesh._indexOffset);
+        json.at("index_size").get_to(mesh._idxSize);
+    }
 
     void modelGen::processAndGenModel(const std::filesystem::path& mPath) {
         logging::info("Processing model {}", mPath.string());
@@ -96,7 +157,7 @@ namespace cvulkan::client::render::asset {
         logging::info("Generated idx file {}", outIdxPath.string());
     }
 
-    CVulkanMeshData modelGen::processMesh(const aiScene& assimpScene, const aiMesh& assimpMesh, const std::vector<CVulkanMaterialData>& materials, CVulkanModelBinData& modelBinData, uint32_t pos) {
+    modelGen::CVulkanMeshData modelGen::processMesh(const aiScene& assimpScene, const aiMesh& assimpMesh, const std::vector<CVulkanMaterialData>& materials, CVulkanModelBinData& modelBinData, uint32_t pos) {
         const std::vector<float> vertices = processVertices(assimpMesh);
         std::vector<float> uv = processUV(assimpMesh);
         const std::vector<uint32_t> indices = processIndices(assimpMesh);
@@ -136,9 +197,9 @@ namespace cvulkan::client::render::asset {
             ._id = id,
             ._materialId = materialId,
             ._indexOffset = modelBinData._idxOffset,
-            ._indexSize = idxInc,
+            ._idxSize = idxInc,
             ._vertexOffset = modelBinData._vtxOffset,
-            ._vertexSize = vtxInc,
+            ._vtxSize = vtxInc,
         };
 
         modelBinData._vtxOffset += vtxInc;
@@ -184,7 +245,7 @@ namespace cvulkan::client::render::asset {
         return vertices;
     }
 
-    CVulkanMaterialData modelGen::processMaterial(const aiScene& assimpScene, const aiMaterial& assimpMaterial, const std::filesystem::path& baseDir, const std::string& modelId, uint32_t pos) {
+    modelGen::CVulkanMaterialData modelGen::processMaterial(const aiScene& assimpScene, const aiMaterial& assimpMaterial, const std::filesystem::path& baseDir, const std::string& modelId, uint32_t pos) {
         logging::debug("Processing material {}", modelId);
         aiColor4D color{};
         glm::vec4 colorVec{};
@@ -197,7 +258,7 @@ namespace cvulkan::client::render::asset {
             colorVec.w = color.a;
         }
 
-        const std::filesystem::path texturePath = modelGen::processAndGetTexture(assimpScene, assimpMaterial, baseDir, aiTextureType_DIFFUSE);
+        const std::filesystem::path texturePath = processAndGetTexture(assimpScene, assimpMaterial, baseDir, aiTextureType_DIFFUSE);
         return {std::format("{}-mat-{}", modelId, pos), texturePath, colorVec};
     }
 
@@ -238,7 +299,7 @@ namespace cvulkan::client::render::asset {
     }
 
 
-    std::vector<CVulkanMaterialData> modelLoad::loadMaterials(const std::filesystem::path& path) {
+    std::vector<modelGen::CVulkanMaterialData> modelLoad::loadMaterials(const std::filesystem::path& path) {
         logging::info("Loading materials from {}", path.string());
         std::ifstream reader{path, std::ios::in | std::ios::binary};
         if (!reader) {
@@ -246,10 +307,10 @@ namespace cvulkan::client::render::asset {
         }
         nlohmann::json json;
         reader >> json;
-        return json.get<std::vector<CVulkanMaterialData>>();
+        return json.get<std::vector<modelGen::CVulkanMaterialData>>();
     }
 
-    CVulkanModelData modelLoad::loadModel(const std::filesystem::path& path) {
+    modelGen::CVulkanModelData modelLoad::loadModel(const std::filesystem::path& path) {
         logging::info("Loading model from {}", path.string());
         std::ifstream reader{path, std::ios::in | std::ios::binary};
         if (!reader) {
@@ -257,6 +318,6 @@ namespace cvulkan::client::render::asset {
         }
         nlohmann::json json;
         reader >> json;
-        return json.get<CVulkanModelData>();
+        return json.get<modelGen::CVulkanModelData>();
     }
 }

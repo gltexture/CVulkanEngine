@@ -5,9 +5,10 @@
 #include "vulkan_buffers.h"
 
 #include "vulkan_commands.h"
+#include "assets/asset_models.h"
 #include "scene/vulkan_render_structs.h"
 
-namespace cvulkan::client::render::core {
+namespace cvulkan::client::render::vk {
     CVulkanBuffer::CVulkanBuffer(const CVulkanContext& context, const VkBufferUsageFlags& usage, const uint32_t& reqMask, const VkDeviceSize& size) : _context(context) {
         this->_vkRequestedSize = size;
         const VkBufferCreateInfo bufferCreateInfo  {
@@ -42,7 +43,7 @@ namespace cvulkan::client::render::core {
             this->_vkDeviceMemory = VK_NULL_HANDLE;
         }
     }
-    
+
     void CVulkanBuffer::mapMem() {
         if (this->_mappedMemory == nullptr) {
             utility::vkCheck(vkMapMemory(this->_context.device().vkDevice(), this->_vkDeviceMemory, 0, this->_vkAllocationSize, 0, &this->_mappedMemory), "Failed to bind buffer memory");
@@ -60,48 +61,40 @@ namespace cvulkan::client::render::core {
         const VkBufferCopy copyRegion  {
             .srcOffset = 0,
             .dstOffset = 0,
-            .size = this->src.vkRequestedSize()
+            .size = this->_src.vkRequestedSize()
         };
-        vkCmdCopyBuffer(commandBuffer.vkCommandBuffer(), this->src.vkBuffer(), this->dst.vkBuffer(), 1, &copyRegion);
+        vkCmdCopyBuffer(commandBuffer.vkCommandBuffer(), this->_src.vkBuffer(), this->_dst.vkBuffer(), 1, &copyRegion);
     }
 
-    CVulkanTransferBufferData createVerticesBuffer(const CVulkanContext& context, const structs::CVulkanRawMeshData& rawMeshData) {
-        const VkDeviceSize bufferSize = (rawMeshData.uv.size() + rawMeshData.positions.size()) * sizeof(float);
+    CVulkanTransferBufferData createVerticesBuffer(const CVulkanContext& context, const asset::modelGen::CVulkanMeshData& rawMeshData, const std::filesystem::path& vtxPath) {
+        const VkDeviceSize bufferSize = rawMeshData._vtxSize;
 
         CVulkanBuffer src{context, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, bufferSize};
         CVulkanBuffer dst{context, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, bufferSize};
 
-        std::vector<float> vertices;
-        vertices.reserve(rawMeshData.positions.size() + rawMeshData.uv.size());
-        const size_t vertexCount = rawMeshData.positions.size() / 3;
-
-        for (size_t i = 0; i < vertexCount; ++i) {
-            const size_t pos = i * 3;
-            const size_t uv = i * 2;
-
-            vertices.push_back(rawMeshData.positions[pos]);
-            vertices.push_back(rawMeshData.positions[pos + 1]);
-            vertices.push_back(rawMeshData.positions[pos + 2]);
-
-            vertices.push_back(rawMeshData.uv[uv]);
-            vertices.push_back(rawMeshData.uv[uv + 1]);
+        std::ifstream binFile {vtxPath, std::ios::binary | std::ios::in};
+        if (!binFile) {
+            throw std::runtime_error(std::format("Failed to open {}", vtxPath.string()));
         }
-
         src.mapMem();
-        std::memcpy(src.mappedMemory(), vertices.data(), bufferSize);
+        binFile.read(static_cast<char*>(src.mappedMemory()), bufferSize);
         src.unMapMem();
 
         return {(std::move(src)), (std::move(dst))};
     }
 
-    CVulkanTransferBufferData createIndicesBuffers(const CVulkanContext& context, const structs::CVulkanRawMeshData& rawMeshData) {
-        const VkDeviceSize bufferSize = rawMeshData.indices.size() * sizeof(uint32_t);
+    CVulkanTransferBufferData createIndicesBuffers(const CVulkanContext& context, const asset::modelGen::CVulkanMeshData& rawMeshData, const std::filesystem::path& idxPath) {
+        const VkDeviceSize bufferSize = rawMeshData._idxSize;
 
         CVulkanBuffer src{context, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, bufferSize};
         CVulkanBuffer dst{context, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, bufferSize};
 
+        std::ifstream binFile {idxPath, std::ios::binary | std::ios::in};
+        if (!binFile) {
+            throw std::runtime_error(std::format("Failed to open {}", idxPath.string()));
+        }
         src.mapMem();
-        std::memcpy(src.mappedMemory(), rawMeshData.indices.data(), bufferSize);
+        binFile.read(static_cast<char*>(src.mappedMemory()), bufferSize);
         src.unMapMem();
 
         return {(std::move(src)), (std::move(dst))};

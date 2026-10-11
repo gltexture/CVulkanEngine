@@ -7,7 +7,7 @@
 #include "vulkan_ext.h"
 #include "vulkan_render_loop.h"
 
-namespace cvulkan::client::render::core {
+namespace cvulkan::client::render::vk {
     std::unique_ptr<CVulkanContext> vulkanContext;
 
     CVulkanInstance::CVulkanInstance(const CVulkanContextBuildData& contextBuildData, const CVulkanInstanceBuildData& instanceBuildData) {

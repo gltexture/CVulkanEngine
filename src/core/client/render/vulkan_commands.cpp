@@ -5,7 +5,7 @@
 #include "vulkan_commands.h"
 #include "vulkan_synchronization.h"
 
-namespace cvulkan::client::render::core {
+namespace cvulkan::client::render::vk {
     CVulkanCommandPool::CVulkanCommandPool(const CVulkanContext& context, const uint32_t queueFamilyIndex, const bool supportReset)
     : _context{context}, _queueFamilyIndex{queueFamilyIndex}, _supportReset{supportReset} {
         VkCommandPoolCreateInfo commandPoolCreateInfo  {

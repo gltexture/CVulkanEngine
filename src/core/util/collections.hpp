@@ -17,7 +17,7 @@ namespace cvulkan::collection {
 
         CVULKAN_NO_COPY_NO_MOVE(IndexedMap)
 
-        void put(K key, V value) {
+        void emplace(K key, V value) {
             auto it = this->_map.find(key);
             if (it == this->_map.end()) {
                 this->_keys.push_back(key);
@@ -27,12 +27,12 @@ namespace cvulkan::collection {
             }
         }
 
-        [[nodiscard]] int getIndexOf(const K& key) const {
+        [[nodiscard]] int32_t getIndexOf(const K& key) const {
             const auto it = std::find(this->_keys.begin(), this->_keys.end(), key);
             if (it == this->_keys.end()) {
                 return -1;
             }
-            return static_cast<int>(std::distance(this->_keys.begin(), it));
+            return static_cast<int32_t>(std::distance(this->_keys.begin(), it));
         }
 
         [[nodiscard]] const V& getValueAtIndex(std::size_t i) const {

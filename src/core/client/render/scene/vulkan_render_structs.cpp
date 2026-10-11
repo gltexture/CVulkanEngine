@@ -5,7 +5,7 @@
 #include "vulkan_render_structs.h"
 
 namespace cvulkan::client::render::structs {
-    CVulkanVertexStruct::CVulkanVertexStruct(const core::CVulkanContext& context) : _context(context) {
+    CVulkanVertexStruct::CVulkanVertexStruct(const vk::CVulkanContext& context) : _context(context) {
         this->_vkVertexInputAttributeDescriptions.resize(NUMBER_OF_ATTRIBUTES);
         this->_vkVertexInputBindingDescriptions.resize(1);
 
@@ -52,8 +52,8 @@ namespace cvulkan::client::render::structs {
     CVulkanVertexStruct::~CVulkanVertexStruct() {
     }
 
-    CVulkanMesh::CVulkanMesh(const std::string& id, core::CVulkanBuffer&& verticesBuffer, core::CVulkanBuffer&& indicesBuffer, const uint32_t& numIndices)
-        : _id(id), _verticesBuffer(std::move(verticesBuffer)), _indicesBuffer(std::move(indicesBuffer)), _numIndices(numIndices) {
+    CVulkanMesh::CVulkanMesh(const std::string& id, vk::CVulkanBuffer&& verticesBuffer, vk::CVulkanBuffer&& indicesBuffer, const uint32_t& numIndices, const std::string& materialId)
+        : _id(id), _verticesBuffer(std::move(verticesBuffer)), _indicesBuffer(std::move(indicesBuffer)), _numIndices(numIndices), _materialId(materialId) {
     }
 
     CVulkanMesh::~CVulkanMesh() {

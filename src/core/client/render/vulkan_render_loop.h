@@ -8,25 +8,25 @@
 #include "vulkan_commands.h"
 #include "vulkan_synchronization.h"
 
-namespace cvulkan::client::render::core {
+namespace cvulkan::client::render::vk {
     class CVulkanContext;
 }
 
 namespace cvulkan::client::render::loop {
     class CVulkanRenderLoop {
     public:
-        explicit CVulkanRenderLoop(core::CVulkanContext& context);
+        explicit CVulkanRenderLoop(vk::CVulkanContext& context);
         ~CVulkanRenderLoop();
 
         CVULKAN_NO_COPY(CVulkanRenderLoop)
 
         void runRenderLoop();
 
-        [[nodiscard]] const std::vector<core::CVulkanCommandPool>& commandPools() const {
+        [[nodiscard]] const std::vector<vk::CVulkanCommandPool>& commandPools() const {
             return _commandPools;
         }
 
-        [[nodiscard]] const std::vector<core::CVulkanCommandBuffer>& commandBuffers() const {
+        [[nodiscard]] const std::vector<vk::CVulkanCommandBuffer>& commandBuffers() const {
             return _commandBuffers;
         }
 
@@ -46,11 +46,11 @@ namespace cvulkan::client::render::loop {
             return _currentFrame;
         }
 
-        [[nodiscard]] const core::CVulkanQueue& graphicsQueue() const {
+        [[nodiscard]] const vk::CVulkanQueue& graphicsQueue() const {
             return *_graphicsQueue;
         }
 
-        [[nodiscard]] const core::CVulkanQueue& presentQueue() const {
+        [[nodiscard]] const vk::CVulkanQueue& presentQueue() const {
             return *_presentQueue;
         }
 
@@ -61,29 +61,29 @@ namespace cvulkan::client::render::loop {
         void resize();
 
     protected:
-        static void recordingStart(const core::CVulkanCommandPool& commandPool, const core::CVulkanCommandBuffer& commandBuffer);
+        static void recordingStart(const vk::CVulkanCommandPool& commandPool, const vk::CVulkanCommandBuffer& commandBuffer);
 
-        static void recordingStop(const core::CVulkanCommandBuffer& commandBuffer);
+        static void recordingStop(const vk::CVulkanCommandBuffer& commandBuffer);
 
         void waitForFence() const;
 
-        void submit(const core::CVulkanCommandBuffer& commandBuffer, const uint32_t& imageIndex) const;
+        void submit(const vk::CVulkanCommandBuffer& commandBuffer, const uint32_t& imageIndex) const;
     private:
-        core::CVulkanContext& _context;
-        std::vector<core::CVulkanCommandPool> _commandPools{};
-        std::vector<core::CVulkanCommandBuffer> _commandBuffers{};
+        vk::CVulkanContext& _context;
+        std::vector<vk::CVulkanCommandPool> _commandPools{};
+        std::vector<vk::CVulkanCommandBuffer> _commandBuffers{};
         std::vector<sync::CVulkanFence> _fences{};
         std::vector<sync::CVulkanSemaphore> _presentationCompleteSemaphores{};
         std::vector<sync::CVulkanSemaphore> _renderCompleteSemaphores{};
         uint32_t _currentFrame {0};
-        std::unique_ptr<core::CVulkanQueue> _graphicsQueue;
-        std::unique_ptr<core::CVulkanQueue> _presentQueue;
+        std::unique_ptr<vk::CVulkanQueue> _graphicsQueue;
+        std::unique_ptr<vk::CVulkanQueue> _presentQueue;
         bool _shouldBeResized {false};
     };
 
     extern std::unique_ptr<CVulkanRenderLoop> renderLoop;
 
-    void createRendering(core::CVulkanContext& context);
+    void createRendering(vk::CVulkanContext& context);
 
     void runRendering();
 

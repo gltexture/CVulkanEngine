@@ -12,17 +12,17 @@ namespace cvulkan::client::render::loop {
     std::unique_ptr<scene::CVulkanSceneRenderer> sceneRenderer;
     std::unique_ptr<CVulkanRenderLoop> renderLoop;
 
-    CVulkanRenderLoop::CVulkanRenderLoop(core::CVulkanContext& context) : _context{context} {
+    CVulkanRenderLoop::CVulkanRenderLoop(vk::CVulkanContext& context) : _context{context} {
         uint32_t graphicsQueueFamilyIndex = UINT32_MAX;
         uint32_t presentationQueueFamilyIndex = UINT32_MAX;
         for (const auto& t: this->_context.device().queueFamiliesRegistry().registeredData()) {
-            if (t._bitMask & core::CVulkanQueueFamilyBitMasks::GRAPHICS) {
+            if (t._bitMask & vk::CVulkanQueueFamilyBitMasks::GRAPHICS) {
                 graphicsQueueFamilyIndex = t._queueFamilyIndex;
                 break;
             }
         }
         for (const auto& t: this->_context.device().queueFamiliesRegistry().registeredData()) {
-            if (t._bitMask & core::CVulkanQueueFamilyBitMasks::PRESENT) {
+            if (t._bitMask & vk::CVulkanQueueFamilyBitMasks::PRESENT) {
                 presentationQueueFamilyIndex = t._queueFamilyIndex;
                 break;
             }
@@ -53,20 +53,20 @@ namespace cvulkan::client::render::loop {
         }
 
         {
-            this->_graphicsQueue =std::make_unique<core::CVulkanQueue>(this->_context, graphicsQueueFamilyIndex, 0);
-            this->_presentQueue =std::make_unique<core::CVulkanQueue>(this->_context, presentationQueueFamilyIndex, 0);
+            this->_graphicsQueue =std::make_unique<vk::CVulkanQueue>(this->_context, graphicsQueueFamilyIndex, 0);
+            this->_presentQueue =std::make_unique<vk::CVulkanQueue>(this->_context, presentationQueueFamilyIndex, 0);
         }
     }
 
     CVulkanRenderLoop::~CVulkanRenderLoop() {
     }
 
-    void CVulkanRenderLoop::recordingStart(const core::CVulkanCommandPool& commandPool, const core::CVulkanCommandBuffer& commandBuffer) {
+    void CVulkanRenderLoop::recordingStart(const vk::CVulkanCommandPool& commandPool, const vk::CVulkanCommandBuffer& commandBuffer) {
         commandPool.reset();
         commandBuffer.beginRecording();
     }
 
-    void CVulkanRenderLoop::recordingStop(const core::CVulkanCommandBuffer& commandBuffer) {
+    void CVulkanRenderLoop::recordingStop(const vk::CVulkanCommandBuffer& commandBuffer) {
         commandBuffer.endRecording();
     }
 
@@ -74,7 +74,7 @@ namespace cvulkan::client::render::loop {
         this->_fences[this->_currentFrame].wait();
     }
 
-    void CVulkanRenderLoop::submit(const core::CVulkanCommandBuffer& commandBuffer, const uint32_t& imageIndex) const {
+    void CVulkanRenderLoop::submit(const vk::CVulkanCommandBuffer& commandBuffer, const uint32_t& imageIndex) const {
         const sync::CVulkanFence& fence = this->_fences[this->_currentFrame];
         fence.reset();
         const VkCommandBufferSubmitInfo commands  {
@@ -98,8 +98,8 @@ namespace cvulkan::client::render::loop {
     }
 
     void CVulkanRenderLoop::runRenderLoop() {
-        const core::CVulkanCommandPool& commandPool = this->_commandPools[this->_currentFrame];
-        const core::CVulkanCommandBuffer& commandBuffer = this->_commandBuffers[this->_currentFrame];
+        const vk::CVulkanCommandPool& commandPool = this->_commandPools[this->_currentFrame];
+        const vk::CVulkanCommandBuffer& commandBuffer = this->_commandBuffers[this->_currentFrame];
 
         this->waitForFence();
         this->recordingStart(commandPool, commandBuffer);
@@ -145,7 +145,7 @@ namespace cvulkan::client::render::loop {
         this->_shouldBeResized = false;
     }
 
-    void createRendering(core::CVulkanContext& context) {
+    void createRendering(vk::CVulkanContext& context) {
         renderLoop = std::make_unique<CVulkanRenderLoop>(context);
         sceneRenderer = std::make_unique<scene::CVulkanSceneRenderer>(context, *renderLoop);
     }

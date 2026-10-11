@@ -5,7 +5,7 @@
 #pragma once
 #include "vulkan_utility.h"
 
-namespace cvulkan::client::render::core {
+namespace cvulkan::client::render::vk {
     class CVulkanContext;
 
     struct CVulkanImage2DData {

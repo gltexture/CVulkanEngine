@@ -9,14 +9,14 @@
 
 #include "vulkan_utility.h"
 
-namespace cvulkan::client::render::core {
+namespace cvulkan::client::render::vk {
     class CVulkanContext;
 }
 
 namespace cvulkan::client::render::shader {
     class CVulkanShaderModule {
     public:
-        CVulkanShaderModule(const core::CVulkanContext& context, std::string_view shaderSpvFileName, VkShaderStageFlagBits stage);
+        CVulkanShaderModule(const vk::CVulkanContext& context, std::string_view shaderSpvFileName, VkShaderStageFlagBits stage);
         ~CVulkanShaderModule();
 
         CVULKAN_NO_COPY_NO_ASSIGN_MOVE(CVulkanShaderModule);
@@ -32,7 +32,7 @@ namespace cvulkan::client::render::shader {
         }
 
     private:
-        const core::CVulkanContext& _context;
+        const vk::CVulkanContext& _context;
         const VkShaderStageFlagBits _stage;
         VkShaderModule _vkShaderModule{};
     };

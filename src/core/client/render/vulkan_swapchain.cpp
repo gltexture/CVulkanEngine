@@ -10,7 +10,7 @@
 #include "vulkan_render_core.h"
 #include "vulkan_synchronization.h"
 
-namespace cvulkan::client::render::core {
+namespace cvulkan::client::render::vk {
     CVulkanSwapChain::CVulkanSwapChain(const CVulkanContext& context, const VkSurfaceKHR& vkSurface, const VkSurfaceCapabilitiesKHR& vkSurfaceCapabilities, const VkFormat& vkFormat, const VkColorSpaceKHR& vkColorSpace) : _context(context) {
         constexpr uint32_t requestedImages = renderConfig::SWAP_CHAIN_IMAGES;
 

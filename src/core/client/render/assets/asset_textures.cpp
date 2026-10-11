@@ -32,19 +32,19 @@ namespace cvulkan::client::render::asset {
         };
     }
 
-    CVulkanTexture2D::CVulkanTexture2D(const core::CVulkanContext& context, const std::string& id, const CVulkanImageSrc& imageSrc, const VkFormat& format) : _id(id), _size(imageSrc._size) {
+    CVulkanTexture2D::CVulkanTexture2D(const vk::CVulkanContext& context, const std::string& id, const CVulkanImageSrc& imageSrc, const VkFormat& format) : _id(id), _size(imageSrc._size) {
         this->createStgBuffer(context, imageSrc._data, imageSrc._dataSize);
-        const core::CVulkanImage2DData image2DData {
+        const vk::CVulkanImage2DData image2DData {
             ._format = format,
             ._usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
             ._extent = {static_cast<uint32_t>(imageSrc._size.x), static_cast<uint32_t>(imageSrc._size.y), 1},
         };
-        this->_image = std::make_unique<core::CVulkanImage2D>(context, image2DData);
-        const core::CVulkanImage2DViewData imageViewData {
+        this->_image = std::make_unique<vk::CVulkanImage2D>(context, image2DData);
+        const vk::CVulkanImage2DViewData imageViewData {
             ._aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
             ._format = format
         };
-        this->_imageView = std::make_unique<core::CVulkanImage2DView>(context, imageViewData, this->_image->vkImage());
+        this->_imageView = std::make_unique<vk::CVulkanImage2DView>(context, imageViewData, this->_image->vkImage());
     }
 
     CVulkanTexture2D::~CVulkanTexture2D() {
@@ -72,7 +72,7 @@ namespace cvulkan::client::render::asset {
         return *this;
     }
 
-    void CVulkanTexture2D::recordTextureTransition(const core::CVulkanCommandBuffer& commandBuffer) {
+    void CVulkanTexture2D::recordTextureTransition(const vk::CVulkanCommandBuffer& commandBuffer) {
         if (this->_stgBuffer != nullptr && !this->recordedTransitionFlag()) {
             this->_recordedTransition = true;
             utility::imageBarrier(commandBuffer.vkCommandBuffer(), _image->vkImage(),
@@ -97,7 +97,7 @@ namespace cvulkan::client::render::asset {
         }
     }
 
-    void CVulkanTexture2D::recordCopyBuffer(const core::CVulkanCommandBuffer& commandBuffer, const core::CVulkanBuffer& bufferData) const {
+    void CVulkanTexture2D::recordCopyBuffer(const vk::CVulkanCommandBuffer& commandBuffer, const vk::CVulkanBuffer& bufferData) const {
         const VkBufferImageCopy bufferImageCopy {
             .bufferOffset = 0,
             .bufferRowLength = 0,
@@ -120,8 +120,8 @@ namespace cvulkan::client::render::asset {
         }
     }
 
-    void CVulkanTexture2D::createStgBuffer(const core::CVulkanContext& context, unsigned char*& _data, const size_t& _dataSize) {
-        this->_stgBuffer = std::make_unique<core::CVulkanBuffer>(context, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, static_cast<VkDeviceSize>(_dataSize));
+    void CVulkanTexture2D::createStgBuffer(const vk::CVulkanContext& context, unsigned char*& _data, const size_t& _dataSize) {
+        this->_stgBuffer = std::make_unique<vk::CVulkanBuffer>(context, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, static_cast<VkDeviceSize>(_dataSize));
         this->_stgBuffer->mapMem();
         std::memcpy(this->_stgBuffer->mappedMemory(), _data, _dataSize);
         this->_stgBuffer->unMapMem();

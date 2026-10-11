@@ -5,11 +5,11 @@
 #pragma once
 #include "vulkan_render_core.h"
 
-namespace cvulkan::client::render::structs {
-    struct CVulkanRawMeshData;
+namespace cvulkan::client::render::asset::modelGen {
+    struct CVulkanMeshData;
 }
 
-namespace cvulkan::client::render::core {
+namespace cvulkan::client::render::vk {
     class CVulkanCommandBuffer;
 
     class CVulkanBuffer {
@@ -27,7 +27,6 @@ namespace cvulkan::client::render::core {
         }
 
         void mapMem();
-
         void unMapMem();
 
         [[nodiscard]] VkBuffer vkBuffer() const {
@@ -65,13 +64,12 @@ namespace cvulkan::client::render::core {
 
 
     struct CVulkanTransferBufferData {
-        CVulkanBuffer src;
-        CVulkanBuffer dst;
+        CVulkanBuffer _src;
+        CVulkanBuffer _dst;
 
         void recordTransferCommand(const CVulkanCommandBuffer& commandBuffer) const;
     };
 
-    CVulkanTransferBufferData createVerticesBuffer(const CVulkanContext& context, const structs::CVulkanRawMeshData& rawMeshData);
-
-    CVulkanTransferBufferData createIndicesBuffers(const CVulkanContext& context, const structs::CVulkanRawMeshData& rawMeshData);
+    CVulkanTransferBufferData createVerticesBuffer(const CVulkanContext& context, const asset::modelGen::CVulkanMeshData& rawMeshData, const std::filesystem::path& vtxPath);
+    CVulkanTransferBufferData createIndicesBuffers(const CVulkanContext& context, const asset::modelGen::CVulkanMeshData& rawMeshData, const std::filesystem::path& idxPath);
 }

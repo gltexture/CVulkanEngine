@@ -5,7 +5,7 @@
 #pragma once
 #include "vulkan_render_core.h"
 
-namespace cvulkan::client::render::core {
+namespace cvulkan::client::render::vk {
     struct CVulkanInheritanceInfo {
         const VkFormat depthFormat;
         const std::vector<VkFormat> colorFormats;
