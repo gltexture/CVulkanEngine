@@ -8,7 +8,7 @@
 #include "vulkan_utility.h"
 
 namespace cvulkan::client::render::sync {
-    CVulkanSemaphore::CVulkanSemaphore(const vk::CVulkanContext& context) : _context(context) {
+    CVulkanSemaphore::CVulkanSemaphore(const vk::CVulkanContext& context) : _context{context} {
         constexpr VkSemaphoreCreateInfo createInfo  {
             .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
         };
@@ -22,7 +22,7 @@ namespace cvulkan::client::render::sync {
         }
     }
 
-    CVulkanFence::CVulkanFence(const vk::CVulkanContext& context, const bool signaled) : _context(context) {
+    CVulkanFence::CVulkanFence(const vk::CVulkanContext& context, const bool signaled) : _context{context} {
         const uint32_t sign = signaled ? VK_FENCE_CREATE_SIGNALED_BIT : 0;
         const VkFenceCreateInfo vk_fence_create_info  {
             .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,

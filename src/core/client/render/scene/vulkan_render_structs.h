@@ -69,6 +69,10 @@ namespace cvulkan::client::render::structs {
             return _numIndices;
         }
 
+        [[nodiscard]] const std::string& materialId() const {
+            return _materialId;
+        }
+
     private:
         std::string _id;
         vk::CVulkanBuffer _verticesBuffer;

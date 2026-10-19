@@ -3,6 +3,7 @@ project(CVulkanEngine)
 
 set(CMAKE_CXX_STANDARD 20) 
 set(CMAKE_CXX_STANDARD_REQUIRED ON) 
+set(CMAKE_BUILD_PARALLEL_LEVEL 8)
 
 include(FetchContent)
 
@@ -107,6 +108,11 @@ add_executable(CVulkanEngine
         src/core/client/render/assets/asset_textures.cpp
         src/core/client/render/assets/asset_textures.h
         src/core/util/collections.hpp
+        src/core/client/render/vulkan_descriptors.cpp
+        src/core/client/render/vulkan_descriptors.h
+        src/core/client/render/vulkan_descriptors.cpp
+        src/core/client/render/_impl/stbi_impl.cpp
+        src/core/client/render/_impl/stbi_impl.cpp
 )
 
 add_link_options("-fuse-ld=lld")

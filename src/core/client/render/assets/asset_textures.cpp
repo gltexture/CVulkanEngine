@@ -44,7 +44,7 @@ namespace cvulkan::client::render::asset {
             ._aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
             ._format = format
         };
-        this->_imageView = std::make_unique<vk::CVulkanImage2DView>(context, imageViewData, this->_image->vkImage());
+        this->_imageView = std::make_unique<vk::CVulkanImage2DView>(context, imageViewData, this->_image->vkImage(), false);
     }
 
     CVulkanTexture2D::~CVulkanTexture2D() {

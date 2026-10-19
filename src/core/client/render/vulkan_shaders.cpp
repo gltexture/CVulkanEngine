@@ -11,7 +11,7 @@
 #include "shaderc/shaderc.h"
 
 namespace cvulkan::client::render::shader {
-    CVulkanShaderModule::CVulkanShaderModule(const vk::CVulkanContext& context, std::string_view shaderSpvFileName, const VkShaderStageFlagBits stage) : _context(context), _stage(stage) {
+    CVulkanShaderModule::CVulkanShaderModule(const vk::CVulkanContext& context, std::string_view shaderSpvFileName, const VkShaderStageFlagBits stage) : _context{context}, _stage(stage) {
         std::ifstream spv{utility::RESOURCES_SHADERS_COMPILED / std::string(shaderSpvFileName), std::ios::binary | std::ios::ate};
         if (!spv) {
             throw std::runtime_error(std::format("Failed to open shader file {}", shaderSpvFileName));

@@ -3,11 +3,15 @@
 //
 
 #include "vulkan_pipeline.h"
+
+#include <ranges>
+
 #include "vulkan_render_core.h"
+#include "vulkan_shaders.h"
 #include "vulkan_utility.h"
 
 namespace cvulkan::client::render::vk {
-    CVulkanPipelineCache::CVulkanPipelineCache(const CVulkanContext& context) : _context(context) {
+    CVulkanPipelineCache::CVulkanPipelineCache(const CVulkanContext& context) : _context{context} {
         constexpr VkPipelineCacheCreateInfo pipelineCacheCreateInfo  {
             .sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO,
         };
@@ -23,18 +27,18 @@ namespace cvulkan::client::render::vk {
         }
     }
 
-    CVulkanPipelineBuildInfo::CVulkanPipelineBuildInfo(const std::vector<shader::CVulkanShaderModule>& shaderModules, const std::vector<CVulkanPushConstantRange>& pushConstantRanges, const VkPipelineVertexInputStateCreateInfo& vertexInputInfo, const VkFormat& colorFormat, const VkFormat& depthFormat)
-        : _colorFormat(colorFormat), _depthFormat(depthFormat), _pushConstantRanges(pushConstantRanges), _shaderModules(shaderModules), _vertexInputInfo(vertexInputInfo) {
+    CVulkanPipelineBuildInfo::CVulkanPipelineBuildInfo(const std::vector<Ref_CVulkanDescriptorSetLayout>& descriptorSetLayouts, const std::vector<Ref_CVulkanShaderModule>& shaderModules, const std::vector<Ref_CVulkanPushConstantRange>& pushConstantRanges, const VkPipelineVertexInputStateCreateInfo& vertexInputInfo, const VkFormat& colorFormat, const VkFormat& depthFormat)
+        : _colorFormat(colorFormat), _depthFormat(depthFormat), _pushConstantRanges(pushConstantRanges), _shaderModules(shaderModules), _descriptorSetLayouts(descriptorSetLayouts), _vertexInputInfo(vertexInputInfo) {
     }
 
-    CVulkanPipeline::CVulkanPipeline(const CVulkanContext& context, const CVulkanPipelineBuildInfo& buildInfo) : _context(context) {
+    CVulkanPipeline::CVulkanPipeline(const CVulkanContext& context, const CVulkanPipelineBuildInfo& buildInfo) : _context{context} {
         std::vector<VkPipelineShaderStageCreateInfo> shaderStages{};
         shaderStages.reserve(buildInfo.shaderModules().size());
         for (const auto& t: buildInfo.shaderModules()) {
             const VkPipelineShaderStageCreateInfo shaderStageCreateInfo  {
                 .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-                .stage = t.stage(),
-                .module = t.vkShaderModule(),
+                .stage = t.get().stage(),
+                .module = t.get().vkShaderModule(),
                 .pName = "main"
             };
             shaderStages.emplace_back(shaderStageCreateInfo);
@@ -104,21 +108,27 @@ namespace cvulkan::client::render::vk {
 
         std::vector<VkPushConstantRange> pushConstantRanges {};
         pushConstantRanges.reserve(buildInfo.pushConstantRanges().size());
-        for (const auto& [stage, offset, size] : buildInfo.pushConstantRanges()) {
+        for (const auto& t : buildInfo.pushConstantRanges()) {
             const VkPushConstantRange pushConstantRange {
-                .stageFlags = stage,
-                .offset = offset,
-                .size = size
+                .stageFlags = t.get().stage,
+                .offset = t.get().offset,
+                .size = t.get().size
             };
             pushConstantRanges.push_back(pushConstantRange);
         }
-        VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo {
-            .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO
+
+        const auto layouts = buildInfo.descriptorSetLayouts() | std::views::transform([](const auto& t) {
+            return t.get().vkDescriptorSetLayout();
+        });
+        const std::vector descriptorSetLayouts (layouts.begin(), layouts.end());
+
+        const VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo {
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+            .setLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size()),
+            .pSetLayouts = descriptorSetLayouts.data(),
+            .pushConstantRangeCount = static_cast<uint32_t>(pushConstantRanges.size()),
+            .pPushConstantRanges = pushConstantRanges.data()
         };
-        if (!pushConstantRanges.empty()) {
-            pipelineLayoutCreateInfo.pPushConstantRanges = pushConstantRanges.data();
-            pipelineLayoutCreateInfo.pushConstantRangeCount = static_cast<uint32_t>(pushConstantRanges.size());
-        }
 
 
         utility::vkCheck(vkCreatePipelineLayout(this->_context.device().vkDevice(), &pipelineLayoutCreateInfo, nullptr, &this->_vkPipelineLayout), "Failed to create pipeline layout");

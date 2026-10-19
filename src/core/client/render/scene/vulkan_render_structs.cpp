@@ -5,7 +5,7 @@
 #include "vulkan_render_structs.h"
 
 namespace cvulkan::client::render::structs {
-    CVulkanVertexStruct::CVulkanVertexStruct(const vk::CVulkanContext& context) : _context(context) {
+    CVulkanVertexStruct::CVulkanVertexStruct(const vk::CVulkanContext& context) : _context{context} {
         this->_vkVertexInputAttributeDescriptions.resize(NUMBER_OF_ATTRIBUTES);
         this->_vkVertexInputBindingDescriptions.resize(1);
 

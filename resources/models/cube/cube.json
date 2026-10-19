@@ -1,0 +1,15 @@
+{
+    "id": "cube",
+    "idx_path": "..\\resources\\models\\cube\\cube.idx",
+    "meshes": [
+        {
+            "id": "cubemtl_0",
+            "index_offset": 0,
+            "index_size": 144,
+            "material_id": "cube-mat-1",
+            "vertex_offset": 0,
+            "vertex_size": 480
+        }
+    ],
+    "vtx_path": "..\\resources\\models\\cube\\cube.vtx"
+}

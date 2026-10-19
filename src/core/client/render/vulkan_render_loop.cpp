@@ -5,7 +5,7 @@
 #include "vulkan_render_loop.h"
 
 #include "vulkan_commands.h"
-#include "vulkan_config.h"
+#include "vulkan_config.hpp"
 #include "scene/vulkan_render_scene.h"
 
 namespace cvulkan::client::render::loop {
@@ -53,8 +53,8 @@ namespace cvulkan::client::render::loop {
         }
 
         {
-            this->_graphicsQueue =std::make_unique<vk::CVulkanQueue>(this->_context, graphicsQueueFamilyIndex, 0);
-            this->_presentQueue =std::make_unique<vk::CVulkanQueue>(this->_context, presentationQueueFamilyIndex, 0);
+            this->_graphicsQueue = std::make_unique<vk::CVulkanQueue>(this->_context, graphicsQueueFamilyIndex, 0);
+            this->_presentQueue = std::make_unique<vk::CVulkanQueue>(this->_context, presentationQueueFamilyIndex, 0);
         }
     }
 

@@ -6,6 +6,8 @@
 #include "vulkan_utility.h"
 
 namespace cvulkan::client::render::vk {
+    static constexpr uint32_t MAX_ANISOTROPY = 16;
+
     class CVulkanContext;
 
     struct CVulkanImage2DData {
@@ -24,6 +26,13 @@ namespace cvulkan::client::render::vk {
         uint32_t _layerCount = 1;
         uint32_t _mipLevels = 1;
         VkImageViewType _viewType = VK_IMAGE_VIEW_TYPE_2D;
+    };
+
+    struct CVulkanSamplerInfo {
+        VkSamplerAddressMode _addressMode;
+        VkBorderColor _borderColor;
+        float _mipLevels;
+        bool _anisotropy;
     };
 
     class CVulkanImage2D {
@@ -64,7 +73,7 @@ namespace cvulkan::client::render::vk {
 
     class CVulkanImage2DView {
     public:
-        explicit CVulkanImage2DView(const CVulkanContext& context, const CVulkanImage2DViewData& view_data, const VkImage& vk_image);
+        CVulkanImage2DView(const CVulkanContext& context, const CVulkanImage2DViewData& view_data, const VkImage& vk_image, bool depthImage);
         ~CVulkanImage2DView();
 
         CVULKAN_NO_COPY_NO_ASSIGN_MOVE(CVulkanImage2DView);
@@ -82,10 +91,15 @@ namespace cvulkan::client::render::vk {
             return _vkImageView;
         }
 
+        [[nodiscard]] bool depthImage() const {
+            return _depthImage;
+        }
+
     private:
         const CVulkanContext& _context;
         VkImage _vkImage{};
         VkImageView _vkImageView{};
+        bool _depthImage{};
     };
 
     class CVulkanAttachment2D {
@@ -115,5 +129,24 @@ namespace cvulkan::client::render::vk {
         CVulkanImage2D _image;
         CVulkanImage2DView _view;
         bool depthAttachment;
+    };
+
+    class CVulkanSampler {
+    public:
+        CVulkanSampler(const CVulkanContext& context, const CVulkanSamplerInfo& samplerInfo);
+        ~CVulkanSampler();
+
+        CVULKAN_NO_COPY(CVulkanSampler)
+        CVulkanSampler(CVulkanSampler&& other) noexcept : _context(other._context), _sampler(other._sampler) {
+            other._sampler = VK_NULL_HANDLE;
+        }
+
+        [[nodiscard]] VkSampler vkSampler() const {
+            return _sampler;
+        }
+
+    private:
+        const CVulkanContext& _context;
+        VkSampler _sampler;
     };
 }

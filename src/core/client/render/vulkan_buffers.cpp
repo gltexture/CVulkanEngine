@@ -9,7 +9,7 @@
 #include "scene/vulkan_render_structs.h"
 
 namespace cvulkan::client::render::vk {
-    CVulkanBuffer::CVulkanBuffer(const CVulkanContext& context, const VkBufferUsageFlags& usage, const uint32_t& reqMask, const VkDeviceSize& size) : _context(context) {
+    CVulkanBuffer::CVulkanBuffer(const CVulkanContext& context, const VkBufferUsageFlags& usage, const uint32_t& reqMask, const VkDeviceSize& size) : _context{context} {
         this->_vkRequestedSize = size;
         const VkBufferCreateInfo bufferCreateInfo  {
             .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
@@ -98,5 +98,18 @@ namespace cvulkan::client::render::vk {
         src.unMapMem();
 
         return {(std::move(src)), (std::move(dst))};
+    }
+
+    CVulkanBuffer buffutil::allocateHostVisibleBuffer(const CVulkanContext& context, CVulkanDescriptorAllocator& allocator, const VkDeviceSize size, const VkBufferUsageFlags usage, const std::string& id, const CVulkanDescriptorSetLayout& layout) {
+        CVulkanBuffer buffer {context, usage, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, size};
+        const auto& t = allocator.allocateDescriptorSets(id, 1, layout).front();
+        t.setBuffer(buffer, buffer.vkRequestedSize(), layout.layoutInfoArray().front()._binding, layout.layoutInfoArray().front()._descType);
+        return buffer;
+    }
+
+    void buffutil::copyMatrixToBuffer(CVulkanBuffer& buffer, const glm::mat4& matrix, const uint32_t offset) {
+        buffer.mapMem();
+        std::memcpy(static_cast<char*>(buffer.mappedMemory()) + offset, &matrix, sizeof(glm::mat4));
+        buffer.unMapMem();
     }
 }

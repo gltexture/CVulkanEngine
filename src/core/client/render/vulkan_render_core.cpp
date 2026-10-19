@@ -287,21 +287,26 @@ namespace cvulkan::client::render::vk {
 
         VkPhysicalDeviceVulkan13Features features13  {
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES,
-            .synchronization2 = true,
-            .dynamicRendering = true
+            .synchronization2 = VK_TRUE,
+            .dynamicRendering = VK_TRUE
         };
         VkPhysicalDeviceFeatures2 features2  {
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
             .pNext = &features13
         };
 
+        if (physicalDevice.vkPhysicalDeviceFeatures().samplerAnisotropy) {
+            this->_supportedSamplerAnisotropy = true;
+            features2.features.samplerAnisotropy = VK_TRUE;
+        }
+
         vkDeviceCreateInfo.pNext = &features2;
         vkDeviceCreateInfo.pEnabledFeatures = nullptr;
         vkDeviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(physicalDevice.vkDeviceLayersExtensionsData()._enabledExtensions.size());
         vkDeviceCreateInfo.enabledLayerCount = static_cast<uint32_t>(physicalDevice.vkDeviceLayersExtensionsData()._enabledLayers.size());
 
-        std::vector<const char *> enabledLayerNames{};
-        std::vector<const char *> enabledExtNames{};
+        std::vector<const char*> enabledLayerNames{};
+        std::vector<const char*> enabledExtNames{};
 
         for (const auto& layer: physicalDevice.vkDeviceLayersExtensionsData()._enabledLayers) {
             enabledLayerNames.emplace_back(layer.c_str());
@@ -341,12 +346,12 @@ namespace cvulkan::client::render::vk {
         const CVulkanPhysicalDeviceBuildData& physicalDeviceBuildData,
         const CVulkanLogicalDeviceBuildData& logicalDeviceBuildData)
     : _glfwWindow{window},
-    _instance(contextBuildData, instanceBuildData),
+    _instance{contextBuildData, instanceBuildData},
     _physicalDevice(contextBuildData, this->_instance, physicalDeviceBuildData),
     _surface{std::make_unique<CVulkanSurface>(*this)},
-    _device(contextBuildData, this->_physicalDevice, this->_surface->vkSurface(), logicalDeviceBuildData),
+    _device{contextBuildData, this->_physicalDevice, this->_surface->vkSurface(), logicalDeviceBuildData},
     _swapChain{std::make_unique<CVulkanSwapChain>(*this, this->_surface->vkSurface(), this->_surface->vkSurfaceCapabilities(), this->_surface->vkFormat(), this->_surface->vkColorSpace())},
-    _pipelineCache(*this) {
+    _pipelineCache{*this} {
     }
 
     void CVulkanContext::resize() {

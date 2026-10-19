@@ -14,7 +14,7 @@ namespace cvulkan::client::render::vk {
 
     class CVulkanCommandPool {
     public:
-        CVulkanCommandPool(const CVulkanContext& context, const uint32_t queueFamilyIndex, const bool supportReset);
+        CVulkanCommandPool(const CVulkanContext& context, uint32_t queueFamilyIndex, bool supportReset);
         ~CVulkanCommandPool();
 
         CVULKAN_NO_COPY_NO_ASSIGN_MOVE(CVulkanCommandPool)

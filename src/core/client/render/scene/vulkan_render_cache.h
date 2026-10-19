@@ -10,6 +10,7 @@
 #include "vulkan_render_structs.h"
 #include "client/render/vulkan_commands.h"
 #include "util/collections.hpp"
+#include "client/render/assets/asset_textures.h"
 
 namespace cvulkan::client::render::asset {
     namespace modelGen {
@@ -18,7 +19,7 @@ namespace cvulkan::client::render::asset {
     }
 
     struct CVulkanImageSrc;
-    class CVulkanTexture2D;
+
 }
 
 namespace cvulkan::client::render::vk {
@@ -32,7 +33,7 @@ namespace cvulkan::client::render::cache {
     class CVulkanModelsCache {
     public:
         explicit CVulkanModelsCache(const vk::CVulkanContext& context)
-            : _context(context) { }
+            : _context{context} { }
         ~CVulkanModelsCache();
 
         CVULKAN_NO_COPY_NO_ASSIGN_MOVE(CVulkanModelsCache)
@@ -53,7 +54,7 @@ namespace cvulkan::client::render::cache {
     class CVulkanTexturesCache {
     public:
         explicit CVulkanTexturesCache(const vk::CVulkanContext& context)
-            : _context(context) { }
+            : _context{context} { }
         ~CVulkanTexturesCache();
 
         CVULKAN_NO_COPY_NO_ASSIGN_MOVE(CVulkanTexturesCache)
@@ -79,7 +80,7 @@ namespace cvulkan::client::render::cache {
     class CVulkanMaterialsCache {
     public:
         explicit CVulkanMaterialsCache(const vk::CVulkanContext& context)
-            : _context(context) { }
+            : _context{context} { }
         ~CVulkanMaterialsCache();
 
         CVULKAN_NO_COPY_NO_ASSIGN_MOVE(CVulkanMaterialsCache)
@@ -109,11 +110,11 @@ namespace cvulkan::client::render::cache {
     class CVulkanCacheCollection {
     public:
         explicit CVulkanCacheCollection(const vk::CVulkanContext& context)
-            : _context(context), _modelCache{context}, _texturesCache{context} { }
+            : _context{context}, _modelCache{context}, _texturesCache{context}, _materialsCache{context} { }
 
         CVULKAN_NO_COPY_NO_ASSIGN_MOVE(CVulkanCacheCollection)
 
-        [[nodiscard]] const CVulkanModelsCache& modelCache() {
+        [[nodiscard]] CVulkanModelsCache& modelCache() {
             return _modelCache;
         }
 
@@ -121,13 +122,26 @@ namespace cvulkan::client::render::cache {
             return _modelCache;
         }
 
+        [[nodiscard]] CVulkanTexturesCache& texturesCache() {
+            return _texturesCache;
+        }
+
         [[nodiscard]] const CVulkanTexturesCache& texturesCache() const {
             return _texturesCache;
+        }
+
+        [[nodiscard]] CVulkanMaterialsCache& materialsCache() {
+            return _materialsCache;
+        }
+
+        [[nodiscard]] const CVulkanMaterialsCache& materialsCache() const {
+            return _materialsCache;
         }
 
     private:
         const vk::CVulkanContext& _context;
         CVulkanModelsCache _modelCache;
         CVulkanTexturesCache _texturesCache;
+        CVulkanMaterialsCache _materialsCache;
     };
 }

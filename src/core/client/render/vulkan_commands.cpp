@@ -7,7 +7,7 @@
 
 namespace cvulkan::client::render::vk {
     CVulkanCommandPool::CVulkanCommandPool(const CVulkanContext& context, const uint32_t queueFamilyIndex, const bool supportReset)
-    : _context{context}, _queueFamilyIndex{queueFamilyIndex}, _supportReset{supportReset} {
+        : _context{context}, _queueFamilyIndex{queueFamilyIndex}, _supportReset{supportReset} {
         VkCommandPoolCreateInfo commandPoolCreateInfo  {
             .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
             .queueFamilyIndex = this->_queueFamilyIndex,
@@ -95,7 +95,7 @@ namespace cvulkan::client::render::vk {
         fence.wait();
     }
 
-    CVulkanQueue::CVulkanQueue(const CVulkanContext& context, uint32_t const queueFamilyIndex, const uint32_t queueIndex) : _context(context) {
+    CVulkanQueue::CVulkanQueue(const CVulkanContext& context, uint32_t const queueFamilyIndex, const uint32_t queueIndex) : _context{context} {
         vkGetDeviceQueue(this->_context.device().vkDevice(), queueFamilyIndex, queueIndex, &this->_vkQueue);
         this->_queueFamilyIndex = queueFamilyIndex;
     }

@@ -40,32 +40,34 @@ namespace cvulkan::client::render::asset {
         return compiledShader;
     }
 
-    void shaderLoad::compileShaderIfOutOfDate(const std::string& shaderName, const uint32_t shaderType) {
-        const std::filesystem::path glslFile{utility::RESOURCES_SHADERS / shaderName};
-        const std::filesystem::path spvFile{utility::RESOURCES_SHADERS_COMPILED / (std::string{shaderName} + ".spv")};
+    void shaderLoad::compileShaderIfOutOfDate(const std::filesystem::path& relativePath, const uint32_t shaderType) {
+         std::filesystem::path spvRelativePath = relativePath;
+         spvRelativePath += ".spv";
+         const std::filesystem::path glslFile{utility::RESOURCES_SHADERS / relativePath};
+         const std::filesystem::path spvFile{utility::RESOURCES_SHADERS_COMPILED / spvRelativePath};
 
-        if (!std::filesystem::exists(spvFile) || (std::filesystem::last_write_time(glslFile) > std::filesystem::last_write_time(spvFile))) {
-            std::ifstream fileShaderCode{glslFile, std::ios::in};
-            if (!fileShaderCode) {
-                throw std::runtime_error(std::format("Failed to open glsl file {}", glslFile.string()));
-            }
-            const std::string shaderCode{
-                std::istreambuf_iterator<char>{fileShaderCode},
-                std::istreambuf_iterator<char>{}
-            };
-            const std::vector<char> compiledBytes = compileShader(shaderName, shaderCode, shaderType);
-            std::filesystem::create_directories(spvFile.parent_path());
-            std::ofstream file{spvFile, std::ios::trunc | std::ios::out | std::ios::binary};
-            if (!file) {
-                throw std::runtime_error(std::format("Failed to open SPIR-V file {}", spvFile.string()));
-            }
-            file.write(compiledBytes.data(), compiledBytes.size());
-            if (!file) {
-                throw std::runtime_error(std::format("Failed to write SPIR-V file {}", spvFile.string()));
-            }
-            logging::debug("Compiled shader {}", shaderName);
-        } else {
-            logging::debug("Shader {} already compiled, skipping", shaderName);
-        }
-    }
+         if (!std::filesystem::exists(spvFile) || (std::filesystem::last_write_time(glslFile) > std::filesystem::last_write_time(spvFile))) {
+             std::ifstream fileShaderCode{glslFile, std::ios::in};
+             if (!fileShaderCode) {
+                 throw std::runtime_error(std::format("Failed to open glsl file {}", glslFile.string()));
+             }
+             const std::string shaderCode{
+                 std::istreambuf_iterator<char>{fileShaderCode},
+                 std::istreambuf_iterator<char>{}
+             };
+             const std::vector<char> compiledBytes = compileShader(spvRelativePath.filename().string(), shaderCode, shaderType);
+             std::filesystem::create_directories(spvFile.parent_path());
+             std::ofstream file{spvFile, std::ios::trunc | std::ios::out | std::ios::binary};
+             if (!file) {
+                 throw std::runtime_error(std::format("Failed to open SPIR-V file {}", spvFile.string()));
+             }
+             file.write(compiledBytes.data(), compiledBytes.size());
+             if (!file) {
+                 throw std::runtime_error(std::format("Failed to write SPIR-V file {}", spvFile.string()));
+             }
+             logging::debug("Compiled shader {}", spvRelativePath.filename().string());
+         } else {
+             logging::debug("Shader {} already compiled, skipping", spvRelativePath.filename().string());
+         }
+     }
 }

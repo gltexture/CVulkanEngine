@@ -27,8 +27,8 @@ namespace cvulkan::client::render::vk {
 }
 
 struct CVulkanPushConstants {
-    glm::mat4 projection;
     glm::mat4 model;
+    uint32_t materialId;
 };
 
 namespace cvulkan::client::render::scene {
@@ -73,8 +73,18 @@ namespace cvulkan::client::render::scene {
             return _projection;
         }
 
+        [[nodiscard]] vk::CVulkanDescriptorAllocator& descriptorAllocator() {
+            return _descriptorAllocator;
+        }
+
+        [[nodiscard]] const vk::CVulkanDescriptorAllocator& descriptorAllocator() const {
+            return _descriptorAllocator;
+        }
+
     protected:
+        void loadMaterials();
         void createRenderData();
+        void initCacheData(const std::vector<asset::modelGen::CVulkanMaterialData>& materials, const std::vector<asset::modelGen::CVulkanModelData>& models);
         void loadResources();
 
     private:
@@ -88,5 +98,15 @@ namespace cvulkan::client::render::scene {
         std::vector<VkRenderingAttachmentInfo> _vkDepthAttachmentsInfo{};
         std::vector<vk::CVulkanAttachment2D> _depthAttachments{};
         std::vector<VkRenderingInfo> _vkRenderingInfo{};
+
+        vk::CVulkanDescriptorAllocator _descriptorAllocator;
+
+        std::unique_ptr<vk::CVulkanDescriptorSetLayout> _descVertexUniformLayout {};
+        std::unique_ptr<vk::CVulkanDescriptorSetLayout> _descFragmentStorageLayout {};
+        std::unique_ptr<vk::CVulkanDescriptorSetLayout> _descTextureLayout {};
+
+        std::unique_ptr<vk::CVulkanSampler> _defaultTextureSampler {};
+
+        std::unique_ptr<vk::CVulkanBuffer> _bufferProjMatrix {};
     };
 }

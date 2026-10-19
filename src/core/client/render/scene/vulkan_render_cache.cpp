@@ -6,9 +6,8 @@
 
 #include <ranges>
 
-#include "client/render/vulkan_config.h"
+#include "client/render/vulkan_config.hpp"
 #include "client/render/assets/asset_models.h"
-#include "client/render/assets/asset_textures.h"
 
 namespace cvulkan::client::render::cache {
     CVulkanModelsCache::~CVulkanModelsCache() {
@@ -61,7 +60,7 @@ namespace cvulkan::client::render::cache {
         logging::debug("Transiting textures cache...");
         if (const uint32_t numTextures = this->_indexedTexturesMap.map().size(); numTextures < renderConfig::MAX_TEXTURES_IN_CACHE) {
             for (int i = 0; i < renderConfig::MAX_TEXTURES_IN_CACHE - numTextures; i++) {
-                this->loadTexture(std::format("default_texture_{}", std::to_string(counter++)), utility::_ERROR_TEXTURE, VK_FORMAT_R8G8B8A8_SRGB);
+                this->loadTexture(std::format("default_texture_{}", std::to_string(counter++)), utility::ERROR_TEXTURE, VK_FORMAT_R8G8B8A8_SRGB);
             }
         }
         const vk::CVulkanCommandBuffer commandBuffer{this->_context, commandPool, true, true};

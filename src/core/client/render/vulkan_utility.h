@@ -7,19 +7,18 @@
 
 namespace cvulkan::utility {
     inline const std::filesystem::path ROOT{".."};
-    inline const std::filesystem::path RAW{"raw"};
 
     inline const std::filesystem::path RESOURCES_FOLDER{ROOT / "resources"};
     inline const std::filesystem::path RESOURCES_SHADERS {RESOURCES_FOLDER / "shaders"};
     inline const std::filesystem::path RESOURCES_SHADERS_COMPILED {RESOURCES_FOLDER / "shaders" / "compiled"};
 
     inline const std::filesystem::path MODELS{"models"};
-    inline const std::filesystem::path RESOURCES_MODELS{RESOURCES_FOLDER / "models"};
-    inline const std::filesystem::path RAW_MODELS{ROOT / RAW / "models"};
+    inline const std::filesystem::path RESOURCES_MODELS_COMPILED{RESOURCES_FOLDER / MODELS / "compiled"};
+    inline const std::filesystem::path RESOURCES_MODELS{RESOURCES_FOLDER / MODELS};
 
     inline const std::filesystem::path TEXTURES{"textures"};
 
-    inline const std::filesystem::path _ERROR_TEXTURE{RESOURCES_FOLDER / TEXTURES / "default.png"};
+    inline const std::filesystem::path ERROR_TEXTURE{RESOURCES_FOLDER / TEXTURES / "default.png"};
 
 #define CVULKAN_NO_COPY(Type) \
     Type(const Type&) = delete; \

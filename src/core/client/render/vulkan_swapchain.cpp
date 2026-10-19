@@ -5,13 +5,13 @@
 #include "vulkan_swapchain.h"
 
 #include "vulkan_commands.h"
-#include "vulkan_config.h"
+#include "vulkan_config.hpp"
 #include "vulkan_images.h"
 #include "vulkan_render_core.h"
 #include "vulkan_synchronization.h"
 
 namespace cvulkan::client::render::vk {
-    CVulkanSwapChain::CVulkanSwapChain(const CVulkanContext& context, const VkSurfaceKHR& vkSurface, const VkSurfaceCapabilitiesKHR& vkSurfaceCapabilities, const VkFormat& vkFormat, const VkColorSpaceKHR& vkColorSpace) : _context(context) {
+    CVulkanSwapChain::CVulkanSwapChain(const CVulkanContext& context, const VkSurfaceKHR& vkSurface, const VkSurfaceCapabilitiesKHR& vkSurfaceCapabilities, const VkFormat& vkFormat, const VkColorSpaceKHR& vkColorSpace) : _context{context} {
         constexpr uint32_t requestedImages = renderConfig::SWAP_CHAIN_IMAGES;
 
         uint32_t imageCount = -1;
@@ -69,7 +69,7 @@ namespace cvulkan::client::render::vk {
             };
             this->_imageViews.reserve(images.size());
             for (const auto image : images) {
-                this->_imageViews.emplace_back(this->_context, image_view_data, image);
+                this->_imageViews.emplace_back(this->_context, image_view_data, image, false);
             }
         }
 
@@ -84,7 +84,7 @@ namespace cvulkan::client::render::vk {
         }
     }
 
-    CVulkanSurface::CVulkanSurface(const CVulkanContext& context) : _context(context) {
+    CVulkanSurface::CVulkanSurface(const CVulkanContext& context) : _context{context} {
         utility::vkCheck(glfwCreateWindowSurface(context.instance().vkInstance(), this->_context.glfwWindow().glfwWindowDescriptor(), nullptr, &this->_vkSurface));
         utility::vkCheck(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(context.physicalDevice().vkPhysicalDevice(), this->_vkSurface, &this->_vkSurfaceCapabilities));
         calcSurfaceFormat(this->_context.physicalDevice(), this->_vkSurface, this->_vkFormat, this->_vkColorSpace);

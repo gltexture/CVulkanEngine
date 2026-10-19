@@ -3,10 +3,21 @@
 //
 
 #pragma once
+#include "vulkan_utility.h"
 
-#include "vulkan_shaders.h"
+
+namespace cvulkan::client::render::shader {
+    class CVulkanShaderModule;
+}
 
 namespace cvulkan::client::render::vk {
+    struct CVulkanPushConstantRange;
+    class CVulkanDescriptorSetLayout;
+
+    using Ref_CVulkanDescriptorSetLayout = std::reference_wrapper<const CVulkanDescriptorSetLayout>;
+    using Ref_CVulkanShaderModule = std::reference_wrapper<const shader::CVulkanShaderModule>;
+    using Ref_CVulkanPushConstantRange = std::reference_wrapper<const CVulkanPushConstantRange>;
+
     class CVulkanContext;
 
     struct CVulkanPushConstantRange {
@@ -33,9 +44,9 @@ namespace cvulkan::client::render::vk {
 
     class CVulkanPipelineBuildInfo {
     public:
-        CVulkanPipelineBuildInfo(const std::vector<shader::CVulkanShaderModule>& shaderModules, const std::vector<CVulkanPushConstantRange>& pushConstantRanges, const VkPipelineVertexInputStateCreateInfo& vertexInputInfo, const VkFormat& colorFormat, const VkFormat& depthFormat);
-        CVulkanPipelineBuildInfo(const std::vector<shader::CVulkanShaderModule>& shaderModules, const std::vector<CVulkanPushConstantRange>& pushConstantRanges, const VkPipelineVertexInputStateCreateInfo& vertexInputInfo, const VkFormat& colorFormat)
-            : CVulkanPipelineBuildInfo(shaderModules, pushConstantRanges, vertexInputInfo, colorFormat, VK_FORMAT_UNDEFINED) {};
+        CVulkanPipelineBuildInfo(const std::vector<Ref_CVulkanDescriptorSetLayout>& descriptorSetLayouts, const std::vector<Ref_CVulkanShaderModule>& shaderModules, const std::vector<Ref_CVulkanPushConstantRange>& pushConstantRanges, const VkPipelineVertexInputStateCreateInfo& vertexInputInfo, const VkFormat& colorFormat, const VkFormat& depthFormat);
+        CVulkanPipelineBuildInfo(const std::vector<Ref_CVulkanDescriptorSetLayout>& descriptorSetLayouts, const std::vector<Ref_CVulkanShaderModule>& shaderModules, const std::vector<Ref_CVulkanPushConstantRange>& pushConstantRanges, const VkPipelineVertexInputStateCreateInfo& vertexInputInfo, const VkFormat& colorFormat)
+            : CVulkanPipelineBuildInfo((descriptorSetLayouts), (shaderModules), (pushConstantRanges), vertexInputInfo, colorFormat, VK_FORMAT_UNDEFINED) {};
         ~CVulkanPipelineBuildInfo() = default;
 
         CVULKAN_NO_COPY(CVulkanPipelineBuildInfo);
@@ -48,12 +59,16 @@ namespace cvulkan::client::render::vk {
             return _depthFormat;
         }
 
-        [[nodiscard]] const std::vector<CVulkanPushConstantRange>& pushConstantRanges() const {
+        [[nodiscard]] const std::vector<Ref_CVulkanPushConstantRange>& pushConstantRanges() const {
             return _pushConstantRanges;
         }
 
-        [[nodiscard]] const std::vector<shader::CVulkanShaderModule>& shaderModules() const {
+        [[nodiscard]] const std::vector<Ref_CVulkanShaderModule>& shaderModules() const {
             return _shaderModules;
+        }
+
+        [[nodiscard]] const std::vector<Ref_CVulkanDescriptorSetLayout>& descriptorSetLayouts() const {
+            return _descriptorSetLayouts;
         }
 
         [[nodiscard]] const VkPipelineVertexInputStateCreateInfo& vertexInputInfo() const {
@@ -63,8 +78,9 @@ namespace cvulkan::client::render::vk {
     private:
         VkFormat _colorFormat{};
         VkFormat _depthFormat{};
-        const std::vector<CVulkanPushConstantRange>& _pushConstantRanges;
-        const std::vector<shader::CVulkanShaderModule>& _shaderModules;
+        const std::vector<Ref_CVulkanPushConstantRange>& _pushConstantRanges;
+        const std::vector<Ref_CVulkanShaderModule>& _shaderModules;
+        const std::vector<Ref_CVulkanDescriptorSetLayout>& _descriptorSetLayouts;
         VkPipelineVertexInputStateCreateInfo _vertexInputInfo{};
     };
 

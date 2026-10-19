@@ -72,4 +72,9 @@ namespace cvulkan::client::render::vk {
 
     CVulkanTransferBufferData createVerticesBuffer(const CVulkanContext& context, const asset::modelGen::CVulkanMeshData& rawMeshData, const std::filesystem::path& vtxPath);
     CVulkanTransferBufferData createIndicesBuffers(const CVulkanContext& context, const asset::modelGen::CVulkanMeshData& rawMeshData, const std::filesystem::path& idxPath);
+
+    namespace buffutil {
+        CVulkanBuffer allocateHostVisibleBuffer(const CVulkanContext& context, CVulkanDescriptorAllocator& allocator, VkDeviceSize size, VkBufferUsageFlags usage, const std::string& id, const CVulkanDescriptorSetLayout& layout);
+        void copyMatrixToBuffer(CVulkanBuffer& buffer, const glm::mat4& matrix, uint32_t offset);
+    }
 }

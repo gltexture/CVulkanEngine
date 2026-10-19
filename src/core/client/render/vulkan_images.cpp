@@ -7,7 +7,7 @@
 #include "vulkan_render_core.h"
 
 namespace cvulkan::client::render::vk {
-    CVulkanImage2D::CVulkanImage2D(const CVulkanContext& context, const CVulkanImage2DData& imageData) : _context(context) {
+    CVulkanImage2D::CVulkanImage2D(const CVulkanContext& context, const CVulkanImage2DData& imageData) : _context{context} {
         this->_format = imageData._format;
         this->_mipLevels = imageData._mipLevels;
 
@@ -51,7 +51,7 @@ namespace cvulkan::client::render::vk {
         }
     }
 
-    CVulkanImage2DView::CVulkanImage2DView(const CVulkanContext& context, const CVulkanImage2DViewData& view_data, const VkImage& vk_image) : _context(context) {
+    CVulkanImage2DView::CVulkanImage2DView(const CVulkanContext& context, const CVulkanImage2DViewData& view_data, const VkImage& vk_image, bool depthImage) : _context{context}, _depthImage{depthImage} {
         const VkImageViewCreateInfo image_view_create_info  {
             .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
             .image = vk_image,
@@ -77,7 +77,7 @@ namespace cvulkan::client::render::vk {
     }
 
     CVulkanAttachment2D::CVulkanAttachment2D(const CVulkanContext& context, CVulkanImage2D&& image, CVulkanImage2DView&& view, const bool depthAttachment)
-    : _context(context), _image(std::move(image)), _view(std::move(view)), depthAttachment(depthAttachment) {
+    : _context{context}, _image(std::move(image)), _view(std::move(view)), depthAttachment(depthAttachment) {
     }
 
     CVulkanAttachment2D::~CVulkanAttachment2D() {
@@ -110,8 +110,40 @@ namespace cvulkan::client::render::vk {
             ._format = image.format()
         };
 
-        CVulkanImage2DView view{context, imageViewData, image.vkImage()};
+        CVulkanImage2DView view{context, imageViewData, image.vkImage(), depthAttachment};
 
         return CVulkanAttachment2D{context, std::move(image), std::move(view), depthAttachment};
+    }
+
+    CVulkanSampler::CVulkanSampler(const CVulkanContext& context, const CVulkanSamplerInfo& samplerInfo) : _context{context} {
+        VkSamplerCreateInfo createInfo {
+            .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+            .magFilter = VK_FILTER_NEAREST,
+            .minFilter = VK_FILTER_NEAREST,
+            .mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST,
+            .addressModeU = samplerInfo._addressMode,
+            .addressModeV = samplerInfo._addressMode,
+            .addressModeW = samplerInfo._addressMode,
+            .mipLodBias = 0.0f,
+            .compareEnable = false,
+            .compareOp = VK_COMPARE_OP_NEVER,
+            .minLod = 0.0f,
+            .maxLod = samplerInfo._mipLevels,
+            .borderColor = samplerInfo._borderColor,
+            .unnormalizedCoordinates = false
+        };
+        if (samplerInfo._anisotropy && context.device().supportSamplerAnisotropy()) {
+            createInfo.anisotropyEnable = VK_TRUE;
+            createInfo.maxAnisotropy = MAX_ANISOTROPY;
+        }
+
+        utility::vkCheck(vkCreateSampler(context.device().vkDevice(), &createInfo, nullptr, &this->_sampler), "Failed to create sampler");
+    }
+
+    CVulkanSampler::~CVulkanSampler() {
+        if (this->_sampler != VK_NULL_HANDLE) {
+            vkDestroySampler(this->_context.device().vkDevice(), this->_sampler, nullptr);
+            this->_sampler = VK_NULL_HANDLE;
+        }
     }
 }

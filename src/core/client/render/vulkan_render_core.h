@@ -6,11 +6,13 @@
 #include <vulkan/vulkan_core.h>
 
 #include "glfw_window.h"
+#include "vulkan_descriptors.h"
 #include "vulkan_pipeline.h"
 #include "vulkan_swapchain.h"
 #include "util/logger.inl"
 
 namespace cvulkan::client::render::vk {
+    class CVulkanDescriptorAllocator;
     using QueueFamilyBitMask = uint32_t;
 
     struct CVulkanQueueFamilyBitMasks {
@@ -182,6 +184,10 @@ namespace cvulkan::client::render::vk {
             return _queueFamiliesRegistry;
         }
 
+        [[nodiscard]] bool supportSamplerAnisotropy() const {
+            return _supportedSamplerAnisotropy;
+        }
+
         void deviceWaitIdle() const {
             vkDeviceWaitIdle(this->_vkDevice);
         }
@@ -189,6 +195,7 @@ namespace cvulkan::client::render::vk {
     private:
         VkDevice _vkDevice{};
         CVulkanQueueFamiliesRegistry _queueFamiliesRegistry{};
+        bool _supportedSamplerAnisotropy {false};
     };
 
     class CVulkanContext {

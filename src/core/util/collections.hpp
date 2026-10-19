@@ -5,6 +5,7 @@
 #pragma once
 #include <algorithm>
 #include <map>
+#include <ranges>
 #include <vector>
 
 #include "client/render/vulkan_utility.h"
@@ -49,6 +50,15 @@ namespace cvulkan::collection {
 
         [[nodiscard]] std::map<K, V>& map() {
             return _map;
+        }
+
+        [[nodiscard]] std::vector<std::reference_wrapper<const V>> values() const {
+            std::vector<std::reference_wrapper<const V>> result;
+            result.reserve(_map.size());
+            for (const auto& value : _map | std::views::values) {
+                result.emplace_back(std::cref(value));
+            }
+            return result;
         }
 
         [[nodiscard]] const std::vector<K>& keys() const {

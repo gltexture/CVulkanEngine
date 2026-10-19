@@ -6,9 +6,9 @@
 #include <filesystem>
 #include <fstream>
 #include <nlohmann/json.hpp>
+#include <assimp/material.h>
 
 struct aiMesh;
-enum aiTextureType : int;
 struct aiScene;
 struct aiMaterial;
 
@@ -46,10 +46,11 @@ namespace cvulkan::client::render::asset {
                 _vtxOutput.write(reinterpret_cast<const char*>(&value), sizeof(value));
             }
 
-            void writeIDX(const float value) {
+            void writeIDX(const uint32_t value) {
                 _idxOutput.write(reinterpret_cast<const char*>(&value), sizeof(value));
             }
         };
+
 
         void to_json(nlohmann::json& json, const CVulkanMaterialData& material);
         void from_json(const nlohmann::json& json, CVulkanMaterialData& material);
