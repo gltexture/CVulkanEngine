@@ -3,13 +3,14 @@
 #include <memory>
 #include <unordered_set>
 #include <vector>
+#include <vulkan/vk_enum_string_helper.h>
 #include <vulkan/vulkan_core.h>
 
 #include "glfw_window.h"
 #include "vulkan_descriptors.h"
 #include "vulkan_pipeline.h"
 #include "vulkan_swapchain.h"
-#include "util/logger.inl"
+#include "../../utility/logger.inl"
 
 namespace cvulkan::client::render::vk {
     class CVulkanDescriptorAllocator;
@@ -208,7 +209,7 @@ namespace cvulkan::client::render::vk {
             const CVulkanLogicalDeviceBuildData& logicalDeviceBuildData);
         ~CVulkanContext() = default;
 
-        CVULKAN_NO_COPY(CVulkanContext)
+        CLASS_NO_COPY(CVulkanContext)
 
         void resize();
 
@@ -286,4 +287,18 @@ namespace cvulkan::client::render::vk {
     void createRenderCore(const window::CVulkanWindow& window);
     void runRender();
     void cleanRenderCore();
+
+    namespace util {
+        uint32_t getMemoryTypeIndexFromProperties(const VkPhysicalDeviceMemoryProperties& memoryProperties, uint32_t typeBits, const uint32_t& reqMask);
+
+        inline void vkCheck(const VkResult vkResult, std::string_view errMsg) {
+            if (vkResult != VK_SUCCESS) {
+                throw std::runtime_error{std::format("{} -> {}", string_VkResult(vkResult),errMsg)};
+            }
+        }
+
+        inline void vkCheck(const VkResult vkResult) {
+            vkCheck(vkResult, "Unknown");
+        }
+    }
 }

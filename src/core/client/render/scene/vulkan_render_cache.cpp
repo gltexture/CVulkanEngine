@@ -20,12 +20,12 @@ namespace cvulkan::client::render::cache {
         const vk::CVulkanCommandBuffer commandBuffer{this->_context, commandPool, true, true};
         commandBuffer.beginRecording();
 
-        for (const auto& [id, meshes, idxPath, vtxPath]: models) {
+        for (const auto& [id, meshes, _materialsPath_Relative, _cachePath_Relative, _idxPath_Relative, _vtxPath_Relative] : models) {
             logging::trace("Loading model {}", id);
             this->_modelsMap.emplace(id, structs::CVulkanModel{id});
             for (const auto& mesh : meshes) {
-                vk::CVulkanTransferBufferData verticesBuffers = vk::createVerticesBuffer(this->_context, mesh, vtxPath);
-                vk::CVulkanTransferBufferData indicesBuffer = vk::createIndicesBuffers(this->_context, mesh, idxPath);
+                vk::CVulkanTransferBufferData verticesBuffers = vk::createVerticesBuffer(this->_context, mesh, io_utils::RES_RESOLVER / (_vtxPath_Relative));
+                vk::CVulkanTransferBufferData indicesBuffer = vk::createIndicesBuffers(this->_context, mesh, io_utils::RES_RESOLVER / (_idxPath_Relative));
 
                 verticesBuffers.recordTransferCommand(commandBuffer);
                 indicesBuffer.recordTransferCommand(commandBuffer);
@@ -60,7 +60,7 @@ namespace cvulkan::client::render::cache {
         logging::debug("Transiting textures cache...");
         if (const uint32_t numTextures = this->_indexedTexturesMap.map().size(); numTextures < renderConfig::MAX_TEXTURES_IN_CACHE) {
             for (int i = 0; i < renderConfig::MAX_TEXTURES_IN_CACHE - numTextures; i++) {
-                this->loadTexture(std::format("default_texture_{}", std::to_string(counter++)), utility::ERROR_TEXTURE, VK_FORMAT_R8G8B8A8_SRGB);
+                this->loadTexture(std::format("default_texture_{}", std::to_string(counter++)), io_utils::RES_RESOLVER / io_utils::CVulkanResourcePath{io_utils::ERROR_TEXTURE}, VK_FORMAT_R8G8B8A8_SRGB);
             }
         }
         const vk::CVulkanCommandBuffer commandBuffer{this->_context, commandPool, true, true};
@@ -84,13 +84,13 @@ namespace cvulkan::client::render::cache {
             return it->second;
         }
         auto texture = asset::CVulkanTexture2D {this->_context, id, srcImage, format};
-        this->_indexedTexturesMap.emplace(std::move(id), std::move(texture));
+        this->_indexedTexturesMap.emplace(id, std::move(texture));
         return this->_indexedTexturesMap.getValueAtIndex(this->_indexedTexturesMap.map().size() - 1);
     }
 
     const asset::CVulkanTexture2D* CVulkanTexturesCache::loadTexture(const std::string& id, const std::filesystem::path& texturePath, const VkFormat& format) {
         const asset::CVulkanImageSrc srcImage = asset::imageLoad::loadImage(texturePath);
-        const asset::CVulkanTexture2D& texture = this->loadTexture(std::move(id), srcImage, format);
+        const asset::CVulkanTexture2D& texture = this->loadTexture(id, srcImage, format);
         return &texture;
     }
 
@@ -123,20 +123,21 @@ namespace cvulkan::client::render::cache {
         uint32_t offset = 0;
         for (uint32_t i = 0; i < numMaterials; i++) {
             const auto& [_id, _texturePath, _diffuseColor] = materials.at(i);
-            const std::filesystem::path& texturePath = _texturePath;
-            const bool hasTexture = !texturePath.empty();
+            int32_t texturePos = -1;
+            int32_t hasTextureValue32 = 0;
 
-            if (hasTexture) {
-                texturesCache.loadTexture(texturePath.string(), texturePath, VK_FORMAT_R8G8B8A8_SRGB);
+            if (!_texturePath.isEmpty()) {
+                if (const std::filesystem::path texturePath = io_utils::RES_RESOLVER / _texturePath; std::filesystem::is_regular_file(texturePath)) {
+                    texturesCache.loadTexture(texturePath.string(), texturePath, VK_FORMAT_R8G8B8A8_SRGB);
+                    texturePos = texturesCache.getPosition(texturePath.string());
+                    hasTextureValue32 = 1;
+                }
             }
-
-            const int32_t texturePos = hasTexture ? texturesCache.getPosition(texturePath.string()) : -1;
 
             const structs::CVulkanMaterial material {_id};
             this->_indexedMaterialsMap.emplace(material._id, material);
 
             auto* mappedMemory = static_cast<char*>(transferBufferData._src.mappedMemory());
-            const int32_t hasTextureValue32 = hasTexture ? 1 : 0;
             std::memcpy(mappedMemory + offset, &_diffuseColor, sizeof(glm::vec4)); offset += sizeof(glm::vec4);
             std::memcpy(mappedMemory + offset, &hasTextureValue32, sizeof(hasTextureValue32)); offset += sizeof(hasTextureValue32);
             std::memcpy(mappedMemory + offset, &texturePos, sizeof(texturePos)); offset += sizeof(texturePos);

@@ -3,7 +3,10 @@
 //
 
 #pragma once
+#include <filesystem>
+
 #include "vulkan_render_core.h"
+#include "utility/sys_utils.h"
 
 namespace cvulkan::client::render::asset::modelGen {
     struct CVulkanMeshData;
@@ -17,7 +20,7 @@ namespace cvulkan::client::render::vk {
         explicit CVulkanBuffer(const CVulkanContext& context, const VkBufferUsageFlags& usage, const uint32_t& reqMask, const VkDeviceSize& size);
         ~CVulkanBuffer();
 
-        CVULKAN_NO_COPY_NO_ASSIGN_MOVE(CVulkanBuffer);
+        CLASS_NO_COPY_NO_ASSIGN_MOVE(CVulkanBuffer);
 
         CVulkanBuffer(CVulkanBuffer&& other) noexcept
             : _context{other._context}, _vkBuffer{other._vkBuffer}, _vkAllocationSize{other._vkAllocationSize}, _vkRequestedSize{other._vkRequestedSize}, _vkDeviceMemory{other._vkDeviceMemory}, _mappedMemory{other._mappedMemory} {

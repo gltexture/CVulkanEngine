@@ -17,7 +17,7 @@ namespace cvulkan::client::render::vk {
             .usage = usage,
             .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         };
-        utility::vkCheck(vkCreateBuffer(this->_context.device().vkDevice(), &bufferCreateInfo, nullptr, &this->_vkBuffer), "Failed to create buffer");
+        vk::util::vkCheck(vkCreateBuffer(this->_context.device().vkDevice(), &bufferCreateInfo, nullptr, &this->_vkBuffer), "Failed to create buffer");
 
         VkMemoryRequirements memoryRequirements  {};
         vkGetBufferMemoryRequirements(this->_context.device().vkDevice(), this->_vkBuffer, &memoryRequirements);
@@ -25,12 +25,12 @@ namespace cvulkan::client::render::vk {
         const VkMemoryAllocateInfo memoryAllocateInfo  {
             .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
             .allocationSize = memoryRequirements.size,
-            .memoryTypeIndex = utility::getMemoryTypeIndexFromProperties(context.physicalDevice().vkMemoryProperties(), memoryRequirements.memoryTypeBits, reqMask),
+            .memoryTypeIndex = vk::util::getMemoryTypeIndexFromProperties(context.physicalDevice().vkMemoryProperties(), memoryRequirements.memoryTypeBits, reqMask),
         };
         this->_vkAllocationSize = memoryAllocateInfo.allocationSize;
 
-        utility::vkCheck(vkAllocateMemory(this->_context.device().vkDevice(), &memoryAllocateInfo, nullptr, &this->_vkDeviceMemory), "Failed to allocate memory");
-        utility::vkCheck(vkBindBufferMemory(this->_context.device().vkDevice(), this->_vkBuffer, this->_vkDeviceMemory, 0), "Failed to bind buffer memory");
+        vk::util::vkCheck(vkAllocateMemory(this->_context.device().vkDevice(), &memoryAllocateInfo, nullptr, &this->_vkDeviceMemory), "Failed to allocate memory");
+        vk::util::vkCheck(vkBindBufferMemory(this->_context.device().vkDevice(), this->_vkBuffer, this->_vkDeviceMemory, 0), "Failed to bind buffer memory");
     }
 
     CVulkanBuffer::~CVulkanBuffer() {
@@ -46,7 +46,7 @@ namespace cvulkan::client::render::vk {
 
     void CVulkanBuffer::mapMem() {
         if (this->_mappedMemory == nullptr) {
-            utility::vkCheck(vkMapMemory(this->_context.device().vkDevice(), this->_vkDeviceMemory, 0, this->_vkAllocationSize, 0, &this->_mappedMemory), "Failed to bind buffer memory");
+            vk::util::vkCheck(vkMapMemory(this->_context.device().vkDevice(), this->_vkDeviceMemory, 0, this->_vkAllocationSize, 0, &this->_mappedMemory), "Failed to bind buffer memory");
         }
     }
 

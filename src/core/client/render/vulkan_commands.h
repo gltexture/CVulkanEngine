@@ -17,7 +17,7 @@ namespace cvulkan::client::render::vk {
         CVulkanCommandPool(const CVulkanContext& context, uint32_t queueFamilyIndex, bool supportReset);
         ~CVulkanCommandPool();
 
-        CVULKAN_NO_COPY_NO_ASSIGN_MOVE(CVulkanCommandPool)
+        CLASS_NO_COPY_NO_ASSIGN_MOVE(CVulkanCommandPool)
 
         CVulkanCommandPool(CVulkanCommandPool&& other) noexcept
             : _context{other._context}, _vkCommandPool{other._vkCommandPool}, _queueFamilyIndex{other._queueFamilyIndex}, _supportReset{other._supportReset} {
@@ -42,7 +42,7 @@ namespace cvulkan::client::render::vk {
         CVulkanCommandBuffer(const CVulkanContext& context, const CVulkanCommandPool& commandPool, const bool primary, const bool oneTimeSubmit);
         ~CVulkanCommandBuffer();
 
-        CVULKAN_NO_COPY_NO_ASSIGN_MOVE(CVulkanCommandBuffer)
+        CLASS_NO_COPY_NO_ASSIGN_MOVE(CVulkanCommandBuffer)
 
         CVulkanCommandBuffer(CVulkanCommandBuffer&& other) noexcept
             : _context{other._context}, _vkCommandBuffer{other._vkCommandBuffer}, _commandPool{other._commandPool}, _primary(other._primary), _oneTimeSubmit(other._oneTimeSubmit) {
@@ -82,7 +82,7 @@ namespace cvulkan::client::render::vk {
         explicit CVulkanQueue(const CVulkanContext& context, uint32_t queueFamilyIndex, uint32_t queueIndex);
         ~CVulkanQueue() = default;
 
-        CVULKAN_NO_COPY(CVulkanQueue);
+        CLASS_NO_COPY(CVulkanQueue);
 
         void submitQueue(const std::vector<VkCommandBufferSubmitInfo>& commandSubmitInfos, const std::vector<VkSemaphoreSubmitInfo>* waitSemaphores, const std::vector<VkSemaphoreSubmitInfo>* signalSemaphores,
                     const sync::CVulkanFence* fence) const;

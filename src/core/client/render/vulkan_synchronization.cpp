@@ -5,14 +5,14 @@
 #include "vulkan_synchronization.h"
 
 #include "vulkan_render_core.h"
-#include "vulkan_utility.h"
+
 
 namespace cvulkan::client::render::sync {
     CVulkanSemaphore::CVulkanSemaphore(const vk::CVulkanContext& context) : _context{context} {
         constexpr VkSemaphoreCreateInfo createInfo  {
             .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
         };
-        utility::vkCheck(vkCreateSemaphore(this->_context.device().vkDevice(), &createInfo, nullptr, &this->_vkSemaphore), "Failed to create semaphore");
+        vk::util::vkCheck(vkCreateSemaphore(this->_context.device().vkDevice(), &createInfo, nullptr, &this->_vkSemaphore), "Failed to create semaphore");
     }
 
     CVulkanSemaphore::~CVulkanSemaphore() {
@@ -28,7 +28,7 @@ namespace cvulkan::client::render::sync {
             .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
             .flags = sign,
         };
-        utility::vkCheck(vkCreateFence(this->_context.device().vkDevice(), &vk_fence_create_info, nullptr, &this->_vkFence), "Failed to create fence");
+        vk::util::vkCheck(vkCreateFence(this->_context.device().vkDevice(), &vk_fence_create_info, nullptr, &this->_vkFence), "Failed to create fence");
     }
 
     CVulkanFence::~CVulkanFence() {

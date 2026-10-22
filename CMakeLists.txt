@@ -82,7 +82,6 @@ add_executable(CVulkanEngine
         src/core/client/control/client_keyboard_control.cpp
         src/core/client/control/client_controls.cpp
         src/core/client/render/vulkan_render_core.cpp
-        src/core/client/render/vulkan_utility.cpp
         src/core/client/render/vulkan_ext.cpp
         src/core/client/render/vulkan_commands.cpp
         src/core/client/render/vulkan_synchronization.cpp
@@ -107,15 +106,26 @@ add_executable(CVulkanEngine
         src/core/client/render/assets/asset_models.h
         src/core/client/render/assets/asset_textures.cpp
         src/core/client/render/assets/asset_textures.h
-        src/core/util/collections.hpp
+        src/core/utility/collections.hpp
         src/core/client/render/vulkan_descriptors.cpp
         src/core/client/render/vulkan_descriptors.h
-        src/core/client/render/vulkan_descriptors.cpp
         src/core/client/render/_impl/stbi_impl.cpp
-        src/core/client/render/_impl/stbi_impl.cpp
+        src/core/client/render/_impl/stbiw_impl.cpp
+        src/core/utility/sys_utils.cpp
+        src/core/utility/sys_utils.h
+        src/core/utility/io_utils.cpp
+        src/core/utility/io_utils.h
 )
 
 add_link_options("-fuse-ld=lld")
+
+target_compile_definitions(CVulkanEngine PRIVATE
+        $<$<CONFIG:RelWithDebInfo>:ENGINE_DEV_MODE>
+)
+
+target_compile_definitions(CVulkanEngine PRIVATE
+        $<$<CONFIG:Release>:ENGINE_DEV_MODE>
+)
 
 target_compile_definitions(CVulkanEngine PRIVATE
         GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -145,7 +155,7 @@ target_link_libraries(
 )
 
 target_include_directories(CVulkanEngine
-        PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/external
+        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/libs
 )
 target_include_directories(CVulkanEngine
         PRIVATE ${CMAKE_SOURCE_DIR}/src/core

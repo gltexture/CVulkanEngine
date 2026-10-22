@@ -1,9 +1,9 @@
 #include "vulkan_render_core.h"
-#include "util/logger.h"
+#include "../../utility/logger.h"
 #include <unordered_set>
 
 #include "GLFW/glfw3.h"
-#include "vulkan_utility.h"
+
 #include "vulkan_ext.h"
 #include "vulkan_render_loop.h"
 
@@ -31,7 +31,7 @@ namespace cvulkan::client::render::vk {
                 this->tryIncludeInstanceExtension(setOfExtensions, extension);
             }
 
-            if constexpr (utility::checkOS(utility::MAC)) {
+            if constexpr (sys_utils::checkOS(sys_utils::MAC)) {
                 this->tryIncludeInstanceExtension(setOfExtensions, EXT_VK_KHR_portability_enumeration());
                 USE_PORTABILITY_MODE = this->_vkInstanceLrExtData.hasVkInstanceRequiredExtension(EXT_VK_KHR_portability_enumeration());
             }
@@ -68,7 +68,7 @@ namespace cvulkan::client::render::vk {
                 vk_debug_utils_messenger_create_info_ext = ext::createDebugMessengerCreateInfo();
                 instanceCreateInfo.pNext = &vk_debug_utils_messenger_create_info_ext;
             }
-            utility::vkCheck(vkCreateInstance(&instanceCreateInfo, nullptr, &this->_vkInstance));
+            vk::util::vkCheck(vkCreateInstance(&instanceCreateInfo, nullptr, &this->_vkInstance));
             logging::info("Successfully created vulkan instance!");
 
             if (contextBuildData._debugMode && this->_vkInstanceLrExtData.hasVkInstanceRequiredExtension(EXT_VK_EXT_DEBUG_UTILS_EXTENSION_NAME())) {
@@ -76,7 +76,7 @@ namespace cvulkan::client::render::vk {
                 if (func == nullptr) {
                     throw std::runtime_error{"Failed to load vkCreateDebugUtilsMessengerEXT"};
                 }
-                utility::vkCheck(func(this->_vkInstance, &vk_debug_utils_messenger_create_info_ext, nullptr, &this->_vkDebugMessenger));
+                vk::util::vkCheck(func(this->_vkInstance, &vk_debug_utils_messenger_create_info_ext, nullptr, &this->_vkDebugMessenger));
                 logging::debug("Created debug messenger");
             }
         }
@@ -127,12 +127,12 @@ namespace cvulkan::client::render::vk {
         const CVulkanPhysicalDeviceBuildData& physicalDeviceBuildData) {
 
         uint32_t physicalDeviceCount = 0;
-        utility::vkCheck(vkEnumeratePhysicalDevices(instance.vkInstance(), &physicalDeviceCount, nullptr), "Failed to get physical devices");
+        vk::util::vkCheck(vkEnumeratePhysicalDevices(instance.vkInstance(), &physicalDeviceCount, nullptr), "Failed to get physical devices");
         if (physicalDeviceCount > 0) {
             std::vector<VkPhysicalDevice> priorityVectorToChooseDevice{};
             std::vector<VkPhysicalDevice> physicalDevices{};
             physicalDevices.resize(physicalDeviceCount);
-            utility::vkCheck(vkEnumeratePhysicalDevices(instance.vkInstance(), &physicalDeviceCount, physicalDevices.data()), "Failed to get physical devices");
+            vk::util::vkCheck(vkEnumeratePhysicalDevices(instance.vkInstance(), &physicalDeviceCount, physicalDevices.data()), "Failed to get physical devices");
             {
                 std::unordered_set<std::string> availableLayers{};
                 std::unordered_set<std::string> availableExtensions{};
@@ -203,9 +203,9 @@ namespace cvulkan::client::render::vk {
                         vkGetPhysicalDeviceProperties2(this->_vkPhysicalDevice, &this->_vkPhysicalDeviceProperties2);
 
                         uint32_t count = 0;
-                        utility::vkCheck(vkEnumerateDeviceExtensionProperties(this->_vkPhysicalDevice, nullptr, &count, nullptr), "Failed to get device ext");
+                        vk::util::vkCheck(vkEnumerateDeviceExtensionProperties(this->_vkPhysicalDevice, nullptr, &count, nullptr), "Failed to get device ext");
                         this->_vkDeviceExtensions.resize(count);
-                        utility::vkCheck(vkEnumerateDeviceExtensionProperties(this->_vkPhysicalDevice, nullptr, &count, this->_vkDeviceExtensions.data()), "Failed to get device ext");
+                        vk::util::vkCheck(vkEnumerateDeviceExtensionProperties(this->_vkPhysicalDevice, nullptr, &count, this->_vkDeviceExtensions.data()), "Failed to get device ext");
 
                         vkGetPhysicalDeviceMemoryProperties(this->_vkPhysicalDevice, &this->_vkMemoryProperties);
                         vkGetPhysicalDeviceFeatures(this->_vkPhysicalDevice, &this->_vkPhysicalDeviceFeatures);
@@ -225,7 +225,7 @@ namespace cvulkan::client::render::vk {
                         this->tryIncludeDeviceExtension(availableExtensions, t);
                     }
 
-                    if constexpr (utility::checkOS(utility::MAC)) {
+                    if constexpr (sys_utils::checkOS(sys_utils::MAC)) {
                         this->tryIncludeDeviceExtension(availableExtensions, EXT_VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME());
                     }
                 } else {
@@ -318,7 +318,7 @@ namespace cvulkan::client::render::vk {
         vkDeviceCreateInfo.ppEnabledExtensionNames = enabledExtNames.data();
         vkDeviceCreateInfo.ppEnabledLayerNames = enabledLayerNames.data();
 
-        utility::vkCheck(vkCreateDevice(physicalDevice.vkPhysicalDevice(), &vkDeviceCreateInfo, nullptr, &this->_vkDevice));
+        vk::util::vkCheck(vkCreateDevice(physicalDevice.vkPhysicalDevice(), &vkDeviceCreateInfo, nullptr, &this->_vkDevice));
 
         logging::info("vkDevice:");
         for (const auto& t: this->_queueFamiliesRegistry.registeredData()) {
@@ -369,14 +369,14 @@ namespace cvulkan::client::render::vk {
         std::unordered_set<std::string> set{};
         uint32_t extensionsCount = 0;
         std::vector<VkExtensionProperties> extensionProperties{};
-        utility::vkCheck(vkEnumerateInstanceExtensionProperties(nullptr, &extensionsCount, nullptr), "Failed to get instance ext");
+        vk::util::vkCheck(vkEnumerateInstanceExtensionProperties(nullptr, &extensionsCount, nullptr), "Failed to get instance ext");
         if (extensionsCount == 0) {
             logging::error("No vulkan instance extensions available");
             return set;
         }
         logging::info("Available {} instance vulkan extensions", extensionsCount);
         extensionProperties.resize(extensionsCount);
-        utility::vkCheck(vkEnumerateInstanceExtensionProperties(nullptr, &extensionsCount, extensionProperties.data()), "Failed to get instance ext");
+        vk::util::vkCheck(vkEnumerateInstanceExtensionProperties(nullptr, &extensionsCount, extensionProperties.data()), "Failed to get instance ext");
         for (uint32_t i = 0; i < extensionsCount; i++) {
             const VkExtensionProperties& prop = extensionProperties[i];
             logging::debug("+ instance extension {}", prop.extensionName);
@@ -389,14 +389,14 @@ namespace cvulkan::client::render::vk {
         std::unordered_set<std::string> set{};
         uint32_t layerCount = 0;
         std::vector<VkLayerProperties> layerProperties{};
-        utility::vkCheck(vkEnumerateInstanceLayerProperties(&layerCount, nullptr), "Failed to get instance layers");
+        vk::util::vkCheck(vkEnumerateInstanceLayerProperties(&layerCount, nullptr), "Failed to get instance layers");
         if (layerCount == 0) {
             logging::error("No vulkan instance layers available");
             return set;
         }
         logging::info("Available {} instance vulkan layers", layerCount);
         layerProperties.resize(layerCount);
-        utility::vkCheck(vkEnumerateInstanceLayerProperties(&layerCount, layerProperties.data()), "Failed to get instance layers");
+        vk::util::vkCheck(vkEnumerateInstanceLayerProperties(&layerCount, layerProperties.data()), "Failed to get instance layers");
         for (uint32_t i = 0; i < layerCount; i++) {
             const VkLayerProperties& prop = layerProperties[i];
             logging::debug("+ Instance Layer {}", prop.layerName);
@@ -409,14 +409,14 @@ namespace cvulkan::client::render::vk {
         std::unordered_set<std::string> set{};
         uint32_t extensionsCount = 0;
         std::vector<VkExtensionProperties> extensionProperties{};
-        utility::vkCheck(vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionsCount, nullptr), "Failed to get device ext");
+        vk::util::vkCheck(vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionsCount, nullptr), "Failed to get device ext");
         if (extensionsCount == 0) {
             logging::error("No vulkan device extensions available");
             return set;
         }
         logging::info("Available {} device vulkan extensions", extensionsCount);
         extensionProperties.resize(extensionsCount);
-        utility::vkCheck(vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionsCount, extensionProperties.data()), "Failed to get device ext");
+        vk::util::vkCheck(vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionsCount, extensionProperties.data()), "Failed to get device ext");
         for (uint32_t i = 0; i < extensionsCount; i++) {
             const VkExtensionProperties& prop = extensionProperties[i];
             logging::debug("+ device extension {}", prop.extensionName);
@@ -429,14 +429,14 @@ namespace cvulkan::client::render::vk {
         std::unordered_set<std::string> set{};
         uint32_t layerCount = 0;
         std::vector<VkLayerProperties> layerProperties{};
-        utility::vkCheck(vkEnumerateDeviceLayerProperties(device, &layerCount, nullptr), "Failed to get device layers");
+        vk::util::vkCheck(vkEnumerateDeviceLayerProperties(device, &layerCount, nullptr), "Failed to get device layers");
         if (layerCount == 0) {
             logging::error("No vulkan device layers available");
             return set;
         }
         logging::info("Available {} device vulkan layers", layerCount);
         layerProperties.resize(layerCount);
-        utility::vkCheck(vkEnumerateDeviceLayerProperties(device, &layerCount, layerProperties.data()), "Failed to get device layers");
+        vk::util::vkCheck(vkEnumerateDeviceLayerProperties(device, &layerCount, layerProperties.data()), "Failed to get device layers");
         for (uint32_t i = 0; i < layerCount; i++) {
             const VkLayerProperties& prop = layerProperties[i];
             logging::debug("+ Device Layer {}", prop.layerName);
@@ -498,7 +498,7 @@ namespace cvulkan::client::render::vk {
 
     void createRenderCore(const window::CVulkanWindow& window) {
         const CVulkanContextBuildData contextBuildData {
-            utility::debug_mode
+            sys_utils::debug_mode
         };
 
         const CVulkanInstanceBuildData instanceBuildData {
@@ -542,5 +542,21 @@ namespace cvulkan::client::render::vk {
             loop::destroyRendering();
         }
         vulkanContext.reset();
+    }
+
+    uint32_t util::getMemoryTypeIndexFromProperties(const VkPhysicalDeviceMemoryProperties& memoryProperties, uint32_t typeBits, const uint32_t& reqMask) {
+        const VkMemoryType* vkMemoryTypes = memoryProperties.memoryTypes;
+        uint32_t result = UINT32_MAX;
+        for (uint32_t i = 0; i < VK_MAX_MEMORY_TYPES; i++) {
+            if ((typeBits & 1) && (vkMemoryTypes[i].propertyFlags & reqMask) == reqMask) {
+                result = i;
+                break;
+            }
+            typeBits >>= 1;
+        }
+        if (result == UINT32_MAX) {
+            throw std::runtime_error("Failed to find memoryType");
+        }
+        return result;
     }
 }

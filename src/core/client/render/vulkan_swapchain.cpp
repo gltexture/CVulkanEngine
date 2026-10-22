@@ -56,12 +56,12 @@ namespace cvulkan::client::render::vk {
             swapChainCreateInfo.presentMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
         }
 
-        utility::vkCheck(vkCreateSwapchainKHR(this->_context.device().vkDevice(), &swapChainCreateInfo, nullptr, &this->_vkSwapChain));
+        vk::util::vkCheck(vkCreateSwapchainKHR(this->_context.device().vkDevice(), &swapChainCreateInfo, nullptr, &this->_vkSwapChain));
 
         {
-            utility::vkCheck(vkGetSwapchainImagesKHR(this->_context.device().vkDevice(), this->_vkSwapChain, &this->_numImages, nullptr), "Failed to create swapChain Images");
+            vk::util::vkCheck(vkGetSwapchainImagesKHR(this->_context.device().vkDevice(), this->_vkSwapChain, &this->_numImages, nullptr), "Failed to create swapChain Images");
             std::vector<VkImage> images(this->numImages());
-            utility::vkCheck(vkGetSwapchainImagesKHR(this->_context.device().vkDevice(), this->_vkSwapChain, &this->_numImages, images.data()), "Failed to create swapChain Images");
+            vk::util::vkCheck(vkGetSwapchainImagesKHR(this->_context.device().vkDevice(), this->_vkSwapChain, &this->_numImages, images.data()), "Failed to create swapChain Images");
 
             const CVulkanImage2DViewData image_view_data {
                 ._aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
@@ -85,8 +85,8 @@ namespace cvulkan::client::render::vk {
     }
 
     CVulkanSurface::CVulkanSurface(const CVulkanContext& context) : _context{context} {
-        utility::vkCheck(glfwCreateWindowSurface(context.instance().vkInstance(), this->_context.glfwWindow().glfwWindowDescriptor(), nullptr, &this->_vkSurface));
-        utility::vkCheck(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(context.physicalDevice().vkPhysicalDevice(), this->_vkSurface, &this->_vkSurfaceCapabilities));
+        vk::util::vkCheck(glfwCreateWindowSurface(context.instance().vkInstance(), this->_context.glfwWindow().glfwWindowDescriptor(), nullptr, &this->_vkSurface));
+        vk::util::vkCheck(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(context.physicalDevice().vkPhysicalDevice(), this->_vkSurface, &this->_vkSurfaceCapabilities));
         calcSurfaceFormat(this->_context.physicalDevice(), this->_vkSurface, this->_vkFormat, this->_vkColorSpace);
         logging::info("Created vkSurface");
     }
@@ -101,12 +101,12 @@ namespace cvulkan::client::render::vk {
 
     void CVulkanSurface::calcSurfaceFormat(const CVulkanPhysicalDevice& physical_device_data, const VkSurfaceKHR& vkSurface, VkFormat& vkFormat, VkColorSpaceKHR& vkColorSpace) {
         uint32_t surfaceFormatCount = 0;
-        utility::vkCheck(vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device_data.vkPhysicalDevice(), vkSurface, &surfaceFormatCount, nullptr));
+        vk::util::vkCheck(vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device_data.vkPhysicalDevice(), vkSurface, &surfaceFormatCount, nullptr));
         if (surfaceFormatCount == 0) {
             throw std::runtime_error("Failed to get surface format count");
         }
         std::vector<VkSurfaceFormatKHR> surfaceFormats(surfaceFormatCount);
-        utility::vkCheck(vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device_data.vkPhysicalDevice(), vkSurface, &surfaceFormatCount, surfaceFormats.data()));
+        vk::util::vkCheck(vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device_data.vkPhysicalDevice(), vkSurface, &surfaceFormatCount, surfaceFormats.data()));
         vkFormat = VK_FORMAT_B8G8R8A8_SRGB;
         vkColorSpace = surfaceFormats[0].colorSpace;
         for (const auto& [f, c]: surfaceFormats) {

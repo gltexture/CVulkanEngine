@@ -7,8 +7,8 @@
 #include "vulkan_buffers.h"
 #include "vulkan_config.hpp"
 #include "vulkan_render_core.h"
-#include "vulkan_utility.h"
-#include "util/logger.h"
+
+#include "../../utility/logger.h"
 
 namespace cvulkan::client::render::vk {
     CVulkanDescriptorsPool::CVulkanDescriptorsPool(const CVulkanContext& context, const std::vector<CVulkanDescriptorTypeCount>& descriptorTypeCounts) : _context{context}, _descriptorTypeCounts{descriptorTypeCounts} {
@@ -33,7 +33,7 @@ namespace cvulkan::client::render::vk {
             .poolSizeCount = static_cast<uint32_t>(poolSizes.size()),
             .pPoolSizes = poolSizes.data()
         };
-        utility::vkCheck(vkCreateDescriptorPool(context.device().vkDevice(), &poolCreateInfo, nullptr, &this->_vkDescriptorPool), "Failed to create descriptor pool");
+        vk::util::vkCheck(vkCreateDescriptorPool(context.device().vkDevice(), &poolCreateInfo, nullptr, &this->_vkDescriptorPool), "Failed to create descriptor pool");
     }
 
     CVulkanDescriptorsPool::~CVulkanDescriptorsPool() {
@@ -45,7 +45,7 @@ namespace cvulkan::client::render::vk {
     }
 
     void CVulkanDescriptorsPool::freeDescriptorSet(const VkDescriptorSet& descriptorSet) const {
-        utility::vkCheck(vkFreeDescriptorSets(this->_context.device().vkDevice(), this->_vkDescriptorPool, 1, &descriptorSet), "Failed to free descriptor set");
+        vk::util::vkCheck(vkFreeDescriptorSets(this->_context.device().vkDevice(), this->_vkDescriptorPool, 1, &descriptorSet), "Failed to free descriptor set");
     }
 
     CVulkanDescriptorSetLayout::CVulkanDescriptorSetLayout(const CVulkanContext& context, const std::vector<CVulkanLayoutInfo>&& layoutInfoArray) : _context{context}, _layoutInfoArray{std::move(layoutInfoArray)} {
@@ -68,7 +68,7 @@ namespace cvulkan::client::render::vk {
             .bindingCount = static_cast<uint32_t>(layoutBindings.size()),
             .pBindings = layoutBindings.data()
         };
-        utility::vkCheck(vkCreateDescriptorSetLayout(context.device().vkDevice(), &vkDescriptorSetLayoutCreateInfo, nullptr, &this->_vkDescriptorSetLayout), "Failed to create descriptor set layout");
+        vk::util::vkCheck(vkCreateDescriptorSetLayout(context.device().vkDevice(), &vkDescriptorSetLayoutCreateInfo, nullptr, &this->_vkDescriptorSetLayout), "Failed to create descriptor set layout");
     }
 
     CVulkanDescriptorSetLayout::~CVulkanDescriptorSetLayout() {
@@ -89,7 +89,7 @@ namespace cvulkan::client::render::vk {
             .pSetLayouts = &layout
         };
 
-        utility::vkCheck(vkAllocateDescriptorSets(context.device().vkDevice(), &descriptorAllocateInfo, &this->_vkDescriptorSet), "Failed to create descriptor set");
+        vk::util::vkCheck(vkAllocateDescriptorSets(context.device().vkDevice(), &descriptorAllocateInfo, &this->_vkDescriptorSet), "Failed to create descriptor set");
     }
 
     CVulkanDescriptorSet::~CVulkanDescriptorSet() {

@@ -25,7 +25,7 @@ namespace cvulkan::client::render::vk {
             .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
         };
 
-        utility::vkCheck(vkCreateImage(context.device().vkDevice(), &vkImageCreateInfo, nullptr, &this->_vkImage), "Failed to create image");
+        vk::util::vkCheck(vkCreateImage(context.device().vkDevice(), &vkImageCreateInfo, nullptr, &this->_vkImage), "Failed to create image");
 
         VkMemoryRequirements vkMemoryRequirements{};
         vkGetImageMemoryRequirements(context.device().vkDevice(), this->_vkImage, &vkMemoryRequirements);
@@ -33,11 +33,11 @@ namespace cvulkan::client::render::vk {
         VkMemoryAllocateInfo vkMemoryAllocateInfo  {
             .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
             .allocationSize = vkMemoryRequirements.size,
-            .memoryTypeIndex = utility::getMemoryTypeIndexFromProperties(context.physicalDevice().vkMemoryProperties(), vkMemoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT),
+            .memoryTypeIndex = vk::util::getMemoryTypeIndexFromProperties(context.physicalDevice().vkMemoryProperties(), vkMemoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT),
         };
 
-        utility::vkCheck(vkAllocateMemory(context.device().vkDevice(), &vkMemoryAllocateInfo, nullptr, &this->_memory),  "Failed to allocate memory");
-        utility::vkCheck(vkBindImageMemory(context.device().vkDevice(), this->_vkImage, this->_memory, 0), "Failed to bind image memory");
+        vk::util::vkCheck(vkAllocateMemory(context.device().vkDevice(), &vkMemoryAllocateInfo, nullptr, &this->_memory),  "Failed to allocate memory");
+        vk::util::vkCheck(vkBindImageMemory(context.device().vkDevice(), this->_vkImage, this->_memory, 0), "Failed to bind image memory");
     }
 
     CVulkanImage2D::~CVulkanImage2D() {
@@ -65,7 +65,7 @@ namespace cvulkan::client::render::vk {
                 .layerCount = view_data._layerCount
             }
         };
-        utility::vkCheck(vkCreateImageView(this->_context.device().vkDevice(), &image_view_create_info, nullptr, &this->_vkImageView), "Failed to createImageView image view");
+        vk::util::vkCheck(vkCreateImageView(this->_context.device().vkDevice(), &image_view_create_info, nullptr, &this->_vkImageView), "Failed to createImageView image view");
         this->_vkImage = vk_image;
     }
 
@@ -137,7 +137,7 @@ namespace cvulkan::client::render::vk {
             createInfo.maxAnisotropy = MAX_ANISOTROPY;
         }
 
-        utility::vkCheck(vkCreateSampler(context.device().vkDevice(), &createInfo, nullptr, &this->_sampler), "Failed to create sampler");
+        vk::util::vkCheck(vkCreateSampler(context.device().vkDevice(), &createInfo, nullptr, &this->_sampler), "Failed to create sampler");
     }
 
     CVulkanSampler::~CVulkanSampler() {
@@ -145,5 +145,36 @@ namespace cvulkan::client::render::vk {
             vkDestroySampler(this->_context.device().vkDevice(), this->_sampler, nullptr);
             this->_sampler = VK_NULL_HANDLE;
         }
+    }
+
+    void img_util::imageBarrier(const VkCommandBuffer commandBuffer, const VkImage image, const VkImageLayout oldLayout, const VkImageLayout newLayout, const VkPipelineStageFlags2 srcStageMask, const VkPipelineStageFlags2 dstStageMask,
+                      const VkAccessFlags2 srcAccessMask, const VkAccessFlags2 dstAccessMask, const VkImageAspectFlags aspectMask) {
+        const VkImageMemoryBarrier2 barrier  {
+            .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+            .srcStageMask = srcStageMask,
+            .srcAccessMask = srcAccessMask,
+            .dstStageMask = dstStageMask,
+            .dstAccessMask = dstAccessMask,
+            .oldLayout = oldLayout,
+            .newLayout = newLayout,
+            .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+            .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+            .image = image,
+            .subresourceRange  {
+                .aspectMask = aspectMask,
+                .baseMipLevel = 0,
+                .levelCount = VK_REMAINING_MIP_LEVELS,
+                .baseArrayLayer = 0,
+                .layerCount = VK_REMAINING_ARRAY_LAYERS,
+            },
+        };
+
+        const VkDependencyInfo dependencyInfo  {
+            .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+            .imageMemoryBarrierCount = 1,
+            .pImageMemoryBarriers = &barrier,
+        };
+
+        vkCmdPipelineBarrier2(commandBuffer, &dependencyInfo);
     }
 }

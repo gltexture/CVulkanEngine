@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "vulkan_images.h"
-#include "vulkan_utility.h"
+#include "utility/sys_utils.h"
 
 namespace cvulkan::client::render::sync {
     class CVulkanSemaphore;
@@ -26,7 +26,7 @@ namespace cvulkan::client::render::vk {
         CVulkanSwapChain(const CVulkanContext& context, const VkSurfaceKHR& vkSurface, const VkSurfaceCapabilitiesKHR& vkSurfaceCapabilities, const VkFormat& vkFormat, const VkColorSpaceKHR& vkColorSpace);
         ~CVulkanSwapChain();
 
-        CVULKAN_NO_COPY_NO_MOVE(CVulkanSwapChain);
+        CLASS_NO_COPY_NO_MOVE(CVulkanSwapChain);
 
         uint32_t acquireSwapChainNextImage(const sync::CVulkanSemaphore& semaphore) const;
 
@@ -61,7 +61,7 @@ namespace cvulkan::client::render::vk {
         explicit CVulkanSurface(const CVulkanContext& context);
         ~CVulkanSurface();
 
-        CVULKAN_NO_COPY_NO_MOVE(CVulkanSurface);
+        CLASS_NO_COPY_NO_MOVE(CVulkanSurface);
 
         [[nodiscard]] VkSurfaceKHR vkSurface() const {
             return _vkSurface;

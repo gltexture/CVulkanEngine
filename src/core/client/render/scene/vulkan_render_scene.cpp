@@ -11,11 +11,9 @@
 #include "client/render/vulkan_commands.h"
 #include "client/render/vulkan_config.hpp"
 #include "client/render/vulkan_images.h"
-#include "client/render/vulkan_render_loop.h"
 #include "client/render/vulkan_shaders.h"
 #include "client/render/assets/asset_shaders.h"
 #include "client/render/assets/asset_models.h"
-#include "client/render/assets/asset_textures.h"
 #include "shaderc/shaderc.h"
 
 namespace cvulkan::client::render::scene {
@@ -35,7 +33,7 @@ namespace cvulkan::client::render::scene {
      */
 
     void CVulkanSceneRenderer::renderScene(const vk::CVulkanCommandBuffer& commandBuffer, const uint32_t& imageIndex) const {
-        utility::imageBarrier(
+        vk::img_util::imageBarrier(
             commandBuffer.vkCommandBuffer(),
             this->_context.swapChain().imageViews()[imageIndex].vkImage(),
             VK_IMAGE_LAYOUT_UNDEFINED,
@@ -46,7 +44,7 @@ namespace cvulkan::client::render::scene {
             VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,
             VK_IMAGE_ASPECT_COLOR_BIT
         );
-        utility::imageBarrier(
+        vk::img_util::imageBarrier(
             commandBuffer.vkCommandBuffer(),
             this->_depthAttachments[imageIndex].image().vkImage(),
             VK_IMAGE_LAYOUT_UNDEFINED,
@@ -116,7 +114,7 @@ namespace cvulkan::client::render::scene {
             vkCmdEndRendering(commandBuffer.vkCommandBuffer());
         }
 
-        utility::imageBarrier(
+        vk::img_util::imageBarrier(
             commandBuffer.vkCommandBuffer(),
             this->_context.swapChain().imageViews()[imageIndex].vkImage(),
             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
@@ -248,11 +246,8 @@ namespace cvulkan::client::render::scene {
             constexpr vk::CVulkanSamplerInfo samplerInfo {VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_BORDER_COLOR_INT_OPAQUE_BLACK, 1, true};
             this->_defaultTextureSampler = std::make_unique<vk::CVulkanSampler>(this->_context, samplerInfo);
 
-            asset::shaderLoad::compileShaderIfOutOfDate(std::filesystem::path{"scene"} / "v.vert", shaderc_glsl_vertex_shader);
-            asset::shaderLoad::compileShaderIfOutOfDate(std::filesystem::path{"scene"} / "f.frag", shaderc_glsl_fragment_shader);
-
-            shader::CVulkanShaderModule shaderV {this->_context, "scene/v.vert.spv", VK_SHADER_STAGE_VERTEX_BIT};
-            shader::CVulkanShaderModule shaderF {this->_context, "scene/f.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT};
+            shader::CVulkanShaderModule shaderV = asset::shaderLoad::compileAndLoadShader(this->_context, io_utils::CVulkanResourcePath{"scene/v.vert"}, shaderc_glsl_vertex_shader, VK_SHADER_STAGE_VERTEX_BIT);
+            shader::CVulkanShaderModule shaderF = asset::shaderLoad::compileAndLoadShader(this->_context, io_utils::CVulkanResourcePath{"scene/f.frag"}, shaderc_glsl_fragment_shader, VK_SHADER_STAGE_FRAGMENT_BIT);
             std::vector<vk::Ref_CVulkanShaderModule> shaderModules  {};
             shaderModules.reserve(2);
             shaderModules.push_back(std::cref(shaderV));
@@ -286,16 +281,13 @@ namespace cvulkan::client::render::scene {
         _descriptorAllocator{context} {
         this->loadResources();
 
-        asset::modelGen::processAndGenModel(utility::RESOURCES_MODELS / "cube" / "cube.obj");
-
-        const asset::modelGen::CVulkanModelData modelData = asset::modelLoad::loadModel(utility::RESOURCES_MODELS / "cube" / "cube.json");
-        const std::vector<asset::modelGen::CVulkanMaterialData> materialData = asset::modelLoad::loadMaterials(utility::RESOURCES_MODELS / "cube" / "cube.mat.json");
+        const asset::modelLoad::CVulkanLoadedModelData loadedModelData = asset::modelLoad::loadModelWithMaterials(io_utils::CVulkanResourcePath {"cube/cube.obj"});
 
         this->createRenderData();
-        this->initCacheData(materialData, {modelData});
+        this->initCacheData(loadedModelData._materialsData, {loadedModelData._modelData});
 
         {
-            entity::CVulkanSceneEntity entity = {"CubeEnt", modelData._id};
+            entity::CVulkanSceneEntity entity = {"CubeEnt", loadedModelData._modelData._id};
             entity.transform()._position = {0.0f, 0.0f, -6.0f};
             entity.transform()._rotation = glm::angleAxis(glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f));
             this->_entitiesCollection.addEntity(std::move(entity));

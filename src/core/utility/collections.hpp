@@ -8,15 +8,13 @@
 #include <ranges>
 #include <vector>
 
-#include "client/render/vulkan_utility.h"
-
 namespace cvulkan::collection {
     template<typename K, typename V>
     class IndexedMap {
     public:
         IndexedMap() = default;
 
-        CVULKAN_NO_COPY_NO_MOVE(IndexedMap)
+        CLASS_NO_COPY_NO_MOVE(IndexedMap)
 
         void emplace(K key, V value) {
             auto it = this->_map.find(key);

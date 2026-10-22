@@ -5,9 +5,11 @@
 #pragma once
 
 #include <string_view>
-#include <vector>
+#include "utility/sys_utils.h"
 
-#include "vulkan_utility.h"
+namespace cvulkan::io_utils {
+    class CVulkanResourcePath;
+}
 
 namespace cvulkan::client::render::vk {
     class CVulkanContext;
@@ -16,10 +18,10 @@ namespace cvulkan::client::render::vk {
 namespace cvulkan::client::render::shader {
     class CVulkanShaderModule {
     public:
-        CVulkanShaderModule(const vk::CVulkanContext& context, std::string_view shaderSpvFileName, VkShaderStageFlagBits stage);
+        CVulkanShaderModule(const vk::CVulkanContext& context, const io_utils::CVulkanResourcePath& shaderSpvFileName, VkShaderStageFlagBits stage);
         ~CVulkanShaderModule();
 
-        CVULKAN_NO_COPY_NO_ASSIGN_MOVE(CVulkanShaderModule);
+        CLASS_NO_COPY_NO_ASSIGN_MOVE(CVulkanShaderModule);
 
         CVulkanShaderModule(CVulkanShaderModule&&) noexcept = default;
 

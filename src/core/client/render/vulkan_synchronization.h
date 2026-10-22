@@ -3,8 +3,7 @@
 //
 
 #pragma once
-
-#include "vulkan_utility.h"
+#include "utility/sys_utils.h"
 
 namespace cvulkan::client::render::vk {
     class CVulkanContext;
@@ -16,7 +15,7 @@ namespace cvulkan::client::render::sync {
         explicit CVulkanSemaphore(const vk::CVulkanContext& context);
         ~CVulkanSemaphore();
 
-        CVULKAN_NO_COPY(CVulkanSemaphore);
+        CLASS_NO_COPY(CVulkanSemaphore);
 
         CVulkanSemaphore(CVulkanSemaphore&& other) noexcept
             : _context{other._context}, _vkSemaphore{other._vkSemaphore} {
@@ -37,7 +36,7 @@ namespace cvulkan::client::render::sync {
         explicit CVulkanFence(const vk::CVulkanContext& context, bool signaled);
         ~CVulkanFence();
 
-        CVULKAN_NO_COPY(CVulkanFence);
+        CLASS_NO_COPY(CVulkanFence);
 
         CVulkanFence(CVulkanFence&& other) noexcept
             : _context{other._context}, _vkFence{other._vkFence} {

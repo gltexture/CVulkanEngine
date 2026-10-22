@@ -5,7 +5,7 @@
 #pragma once
 #include <filesystem>
 
-#include "client/render/vulkan_utility.h"
+#include "utility/sys_utils.h"
 
 namespace cvulkan::client::render::vk {
     class CVulkanCommandBuffer;
@@ -30,7 +30,7 @@ namespace cvulkan::client::render::asset {
         CVulkanTexture2D(const vk::CVulkanContext& context, const std::string& id, const CVulkanImageSrc& imageSrc, const VkFormat& format);
         ~CVulkanTexture2D();
 
-        CVULKAN_NO_COPY(CVulkanTexture2D);
+        CLASS_NO_COPY(CVulkanTexture2D);
         CVulkanTexture2D(CVulkanTexture2D&& other) noexcept;
         CVulkanTexture2D& operator=(CVulkanTexture2D&& other) noexcept;
 

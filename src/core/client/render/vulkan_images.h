@@ -3,7 +3,7 @@
 //
 
 #pragma once
-#include "vulkan_utility.h"
+#include "utility/sys_utils.h"
 
 namespace cvulkan::client::render::vk {
     static constexpr uint32_t MAX_ANISOTROPY = 16;
@@ -40,7 +40,7 @@ namespace cvulkan::client::render::vk {
         CVulkanImage2D(const CVulkanContext& context, const CVulkanImage2DData& imageData);
         ~CVulkanImage2D();
 
-        CVULKAN_NO_COPY(CVulkanImage2D)
+        CLASS_NO_COPY(CVulkanImage2D)
         CVulkanImage2D(CVulkanImage2D&& other) noexcept
             : _context(other._context), _vkImage(other._vkImage), _format(other._format), _mipLevels(other._mipLevels), _memory(other._memory) {
             other._vkImage = VK_NULL_HANDLE;
@@ -76,7 +76,7 @@ namespace cvulkan::client::render::vk {
         CVulkanImage2DView(const CVulkanContext& context, const CVulkanImage2DViewData& view_data, const VkImage& vk_image, bool depthImage);
         ~CVulkanImage2DView();
 
-        CVULKAN_NO_COPY_NO_ASSIGN_MOVE(CVulkanImage2DView);
+        CLASS_NO_COPY_NO_ASSIGN_MOVE(CVulkanImage2DView);
 
         CVulkanImage2DView(CVulkanImage2DView&& other) noexcept : _context{other._context}, _vkImage{other._vkImage}, _vkImageView{other._vkImageView} {
             other._vkImage = VK_NULL_HANDLE;
@@ -107,7 +107,7 @@ namespace cvulkan::client::render::vk {
         CVulkanAttachment2D(const CVulkanContext& context, CVulkanImage2D&& image, CVulkanImage2DView&& view, bool depthAttachment);
         ~CVulkanAttachment2D();
 
-        CVULKAN_NO_COPY(CVulkanAttachment2D)
+        CLASS_NO_COPY(CVulkanAttachment2D)
         CVulkanAttachment2D(CVulkanAttachment2D&& other) noexcept = default;
 
         [[nodiscard]] const CVulkanImage2D& image() const {
@@ -136,7 +136,7 @@ namespace cvulkan::client::render::vk {
         CVulkanSampler(const CVulkanContext& context, const CVulkanSamplerInfo& samplerInfo);
         ~CVulkanSampler();
 
-        CVULKAN_NO_COPY(CVulkanSampler)
+        CLASS_NO_COPY(CVulkanSampler)
         CVulkanSampler(CVulkanSampler&& other) noexcept : _context(other._context), _sampler(other._sampler) {
             other._sampler = VK_NULL_HANDLE;
         }
@@ -149,4 +149,18 @@ namespace cvulkan::client::render::vk {
         const CVulkanContext& _context;
         VkSampler _sampler;
     };
+
+    namespace img_util {
+        void imageBarrier(
+            VkCommandBuffer commandBuffer,
+            VkImage image,
+            VkImageLayout oldLayout,
+            VkImageLayout newLayout,
+            VkPipelineStageFlags2 srcStageMask,
+            VkPipelineStageFlags2 dstStageMask,
+            VkAccessFlags2 srcAccessMask,
+            VkAccessFlags2 dstAccessMask,
+            VkImageAspectFlags aspectMask
+            );
+    }
 }

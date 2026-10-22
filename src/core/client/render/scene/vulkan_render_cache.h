@@ -9,7 +9,7 @@
 
 #include "vulkan_render_structs.h"
 #include "client/render/vulkan_commands.h"
-#include "util/collections.hpp"
+#include "../../../utility/collections.hpp"
 #include "client/render/assets/asset_textures.h"
 
 namespace cvulkan::client::render::asset {
@@ -36,7 +36,7 @@ namespace cvulkan::client::render::cache {
             : _context{context} { }
         ~CVulkanModelsCache();
 
-        CVULKAN_NO_COPY_NO_ASSIGN_MOVE(CVulkanModelsCache)
+        CLASS_NO_COPY_NO_ASSIGN_MOVE(CVulkanModelsCache)
 
         void loadModels(const std::vector<asset::modelGen::CVulkanModelData>& models, const vk::CVulkanCommandPool& commandPool, const vk::CVulkanQueue& queue);
 
@@ -57,7 +57,7 @@ namespace cvulkan::client::render::cache {
             : _context{context} { }
         ~CVulkanTexturesCache();
 
-        CVULKAN_NO_COPY_NO_ASSIGN_MOVE(CVulkanTexturesCache)
+        CLASS_NO_COPY_NO_ASSIGN_MOVE(CVulkanTexturesCache)
 
         void transitTextures(const vk::CVulkanCommandPool& commandPool, const vk::CVulkanQueue& queue);
 
@@ -83,7 +83,7 @@ namespace cvulkan::client::render::cache {
             : _context{context} { }
         ~CVulkanMaterialsCache();
 
-        CVULKAN_NO_COPY_NO_ASSIGN_MOVE(CVulkanMaterialsCache)
+        CLASS_NO_COPY_NO_ASSIGN_MOVE(CVulkanMaterialsCache)
 
         void loadMaterials(const std::vector<asset::modelGen::CVulkanMaterialData>& materials, CVulkanTexturesCache& texturesCache, const vk::CVulkanCommandPool& commandPool, const vk::CVulkanQueue& queue);
 
@@ -112,7 +112,7 @@ namespace cvulkan::client::render::cache {
         explicit CVulkanCacheCollection(const vk::CVulkanContext& context)
             : _context{context}, _modelCache{context}, _texturesCache{context}, _materialsCache{context} { }
 
-        CVULKAN_NO_COPY_NO_ASSIGN_MOVE(CVulkanCacheCollection)
+        CLASS_NO_COPY_NO_ASSIGN_MOVE(CVulkanCacheCollection)
 
         [[nodiscard]] CVulkanModelsCache& modelCache() {
             return _modelCache;

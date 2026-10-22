@@ -1,8 +1,8 @@
 #include "engine_context.h"
 
 #include "client/client_runtime.h"
-#include "client/render/vulkan_utility.h"
-#include "util/logger.inl"
+#include "utility/logger.inl"
+#include "utility/sys_utils.h"
 
 namespace cvulkan {
     EngineContext::EngineContext(EngineData&& engineData) : m_engineData(std::move(engineData)) {
@@ -14,7 +14,7 @@ namespace cvulkan {
 
     void EngineContext::start() const {
         {
-            utility::utilityInitialize();
+            sys_utils::utilityInitialize();
         }
         logging::info("Init application:Start");
         printData(this->m_engineData);

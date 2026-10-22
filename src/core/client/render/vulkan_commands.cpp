@@ -15,7 +15,7 @@ namespace cvulkan::client::render::vk {
         if (this->_supportReset) {
             commandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
         }
-        utility::vkCheck(vkCreateCommandPool(this->_context.device().vkDevice(), &commandPoolCreateInfo, nullptr, &this->_vkCommandPool), "Failed to create command pool");
+        vk::util::vkCheck(vkCreateCommandPool(this->_context.device().vkDevice(), &commandPoolCreateInfo, nullptr, &this->_vkCommandPool), "Failed to create command pool");
         logging::info("Created vkCommandPool");
     }
 
@@ -40,7 +40,7 @@ namespace cvulkan::client::render::vk {
             .level = this->_primary ? VK_COMMAND_BUFFER_LEVEL_PRIMARY : VK_COMMAND_BUFFER_LEVEL_SECONDARY,
             .commandBufferCount = 1,
         };
-        utility::vkCheck(vkAllocateCommandBuffers(this->_context.device().vkDevice(), &commandBufferAllocateInfo, &this->_vkCommandBuffer), "Failed to create command buffer");
+        vk::util::vkCheck(vkAllocateCommandBuffers(this->_context.device().vkDevice(), &commandBufferAllocateInfo, &this->_vkCommandBuffer), "Failed to create command buffer");
         logging::info("Created vkCommandBuffer");
     }
 
@@ -78,11 +78,11 @@ namespace cvulkan::client::render::vk {
             };
             beginInfo.pInheritanceInfo = &inheritanceInfo;
         }
-        utility::vkCheck(vkBeginCommandBuffer(this->_vkCommandBuffer, &beginInfo), "Failed to begin command buffer");
+        vk::util::vkCheck(vkBeginCommandBuffer(this->_vkCommandBuffer, &beginInfo), "Failed to begin command buffer");
     }
 
     void CVulkanCommandBuffer::endRecording() const {
-        utility::vkCheck(vkEndCommandBuffer(this->_vkCommandBuffer), "Failed to end command buffer");
+        vk::util::vkCheck(vkEndCommandBuffer(this->_vkCommandBuffer), "Failed to end command buffer");
     }
 
     void CVulkanCommandBuffer::submitAndWait(const CVulkanQueue& queue) const {
@@ -115,6 +115,6 @@ namespace cvulkan::client::render::vk {
             vkSubmitInfo2.signalSemaphoreInfoCount = static_cast<uint32_t>(signalSemaphores->size());
             vkSubmitInfo2.pSignalSemaphoreInfos = signalSemaphores->data();
         }
-        utility::vkCheck(vkQueueSubmit2(this->_vkQueue, 1, &vkSubmitInfo2, fence != nullptr ? fence->vkFence() : VK_NULL_HANDLE), "Failed to submit command to queue");
+        vk::util::vkCheck(vkQueueSubmit2(this->_vkQueue, 1, &vkSubmitInfo2, fence != nullptr ? fence->vkFence() : VK_NULL_HANDLE), "Failed to submit command to queue");
     }
 }

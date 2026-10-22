@@ -3,7 +3,7 @@
 //
 
 #pragma once
-#include "vulkan_utility.h"
+#include "utility/sys_utils.h"
 
 namespace cvulkan::client::render::vk {
     class CVulkanDescriptorSet;
@@ -35,7 +35,7 @@ namespace cvulkan::client::render::vk {
         CVulkanDescriptorsPool(const CVulkanContext& context, const std::vector<CVulkanDescriptorTypeCount>& descriptorTypeCounts);
         ~CVulkanDescriptorsPool();
 
-        CVULKAN_NO_COPY_NO_ASSIGN_MOVE(CVulkanDescriptorsPool)
+        CLASS_NO_COPY_NO_ASSIGN_MOVE(CVulkanDescriptorsPool)
         CVulkanDescriptorsPool(CVulkanDescriptorsPool&& other) noexcept : _context(other._context), _descriptorTypeCounts(std::move(other._descriptorTypeCounts)), _vkDescriptorPool(other._vkDescriptorPool) {
             other._vkDescriptorPool = VK_NULL_HANDLE;
         };
@@ -68,7 +68,7 @@ namespace cvulkan::client::render::vk {
         CVulkanDescriptorSetLayout(const CVulkanContext& context, const std::vector<CVulkanLayoutInfo>&& layoutInfoArray);
         ~CVulkanDescriptorSetLayout();
 
-        CVULKAN_NO_COPY_NO_ASSIGN_MOVE(CVulkanDescriptorSetLayout)
+        CLASS_NO_COPY_NO_ASSIGN_MOVE(CVulkanDescriptorSetLayout)
         CVulkanDescriptorSetLayout(CVulkanDescriptorSetLayout&& other) noexcept : _context(other._context), _layoutInfoArray(std::move(other._layoutInfoArray)), _vkDescriptorSetLayout(other._vkDescriptorSetLayout) {
             other._vkDescriptorSetLayout = VK_NULL_HANDLE;
         }
@@ -92,7 +92,7 @@ namespace cvulkan::client::render::vk {
         CVulkanDescriptorSet(const CVulkanContext& context, const CVulkanDescriptorsPool& descriptorsPool, const CVulkanDescriptorSetLayout& vkDescriptorSetLayout);
         ~CVulkanDescriptorSet();
 
-        CVULKAN_NO_COPY_NO_ASSIGN_MOVE(CVulkanDescriptorSet)
+        CLASS_NO_COPY_NO_ASSIGN_MOVE(CVulkanDescriptorSet)
         CVulkanDescriptorSet(CVulkanDescriptorSet&& other) noexcept : _context(other._context), _descriptorsPool(other._descriptorsPool), _vkDescriptorSet(other._vkDescriptorSet) {
             other._vkDescriptorSet = VK_NULL_HANDLE;
         }
@@ -117,7 +117,7 @@ namespace cvulkan::client::render::vk {
         explicit CVulkanDescriptorAllocator(const CVulkanContext& context);
         ~CVulkanDescriptorAllocator();
 
-        CVULKAN_NO_COPY_NO_MOVE(CVulkanDescriptorAllocator)
+        CLASS_NO_COPY_NO_MOVE(CVulkanDescriptorAllocator)
 
         std::vector<CVulkanDescriptorSet>& allocateDescriptorSets(const std::string& id, uint32_t count, const CVulkanDescriptorSetLayout& layout);
 

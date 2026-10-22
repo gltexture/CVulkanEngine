@@ -32,7 +32,7 @@ namespace cvulkan::client::render::structs {
 
         ~CVulkanVertexStruct();
 
-        CVULKAN_NO_COPY(CVulkanVertexStruct);
+        CLASS_NO_COPY(CVulkanVertexStruct);
 
         [[nodiscard]] const VkPipelineVertexInputStateCreateInfo& vkPipelineVertexInputStateCreateInfo() const {
             return _vkPipelineVertexInputStateCreateInfo;
@@ -50,7 +50,7 @@ namespace cvulkan::client::render::structs {
         CVulkanMesh(const std::string& id, vk::CVulkanBuffer&& verticesBuffer, vk::CVulkanBuffer&& indicesBuffer, const uint32_t& numIndices, const std::string& materialId);
         ~CVulkanMesh();
 
-        CVULKAN_NO_COPY_NO_ASSIGN_MOVE(CVulkanMesh);
+        CLASS_NO_COPY_NO_ASSIGN_MOVE(CVulkanMesh);
         CVulkanMesh(CVulkanMesh&& other) noexcept = default;
 
         [[nodiscard]] const std::string& id() const {
@@ -86,7 +86,7 @@ namespace cvulkan::client::render::structs {
         explicit CVulkanModel(const std::string& id);
         ~CVulkanModel();
 
-        CVULKAN_NO_COPY_NO_ASSIGN_MOVE(CVulkanModel);
+        CLASS_NO_COPY_NO_ASSIGN_MOVE(CVulkanModel);
         CVulkanModel(CVulkanModel&& other) noexcept = default;
 
         [[nodiscard]] const std::string& id() const {

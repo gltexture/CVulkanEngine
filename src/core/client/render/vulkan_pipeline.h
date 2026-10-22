@@ -3,8 +3,7 @@
 //
 
 #pragma once
-#include "vulkan_utility.h"
-
+#include "utility/sys_utils.h"
 
 namespace cvulkan::client::render::shader {
     class CVulkanShaderModule;
@@ -31,7 +30,7 @@ namespace cvulkan::client::render::vk {
         explicit CVulkanPipelineCache(const CVulkanContext& context);
         ~CVulkanPipelineCache();
 
-        CVULKAN_NO_COPY(CVulkanPipelineCache);
+        CLASS_NO_COPY(CVulkanPipelineCache);
 
         [[nodiscard]] VkPipelineCache vkPipelineCache() const {
             return _vkPipelineCache;
@@ -49,7 +48,7 @@ namespace cvulkan::client::render::vk {
             : CVulkanPipelineBuildInfo((descriptorSetLayouts), (shaderModules), (pushConstantRanges), vertexInputInfo, colorFormat, VK_FORMAT_UNDEFINED) {};
         ~CVulkanPipelineBuildInfo() = default;
 
-        CVULKAN_NO_COPY(CVulkanPipelineBuildInfo);
+        CLASS_NO_COPY(CVulkanPipelineBuildInfo);
 
         [[nodiscard]] VkFormat colorFormat() const {
             return _colorFormat;
@@ -89,7 +88,7 @@ namespace cvulkan::client::render::vk {
         CVulkanPipeline(const CVulkanContext& context, const CVulkanPipelineBuildInfo& buildInfo);
         ~CVulkanPipeline();
 
-        CVULKAN_NO_COPY(CVulkanPipeline);
+        CLASS_NO_COPY(CVulkanPipeline);
 
         [[nodiscard]] VkPipeline vkPipeline() const {
             return _vkPipeline;

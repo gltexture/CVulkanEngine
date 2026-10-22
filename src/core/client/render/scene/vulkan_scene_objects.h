@@ -5,8 +5,9 @@
 #pragma once
 #include <string>
 
-#include "client/render/vulkan_utility.h"
+
 #include "glm/gtc/quaternion.hpp"
+#include "utility/sys_utils.h"
 
 namespace cvulkan::client::render::entity {
     struct CVulkanEntityTransform {
@@ -24,7 +25,7 @@ namespace cvulkan::client::render::entity {
         CVulkanSceneEntity(const std::string& id, const std::string& modelId);
         ~CVulkanSceneEntity();
 
-        CVULKAN_NO_COPY(CVulkanSceneEntity);
+        CLASS_NO_COPY(CVulkanSceneEntity);
         CVulkanSceneEntity(CVulkanSceneEntity&& other) = default;
 
         [[nodiscard]] const std::string& id() const {

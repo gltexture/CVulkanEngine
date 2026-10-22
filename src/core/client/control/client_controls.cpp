@@ -4,7 +4,7 @@
 
 #include "client_keyboard_control.h"
 #include "client_mouse_control.h"
-#include "util/logger.h"
+#include "../../utility/logger.h"
 
 namespace cvulkan::client::control {
     std::unique_ptr<KeyboardControl> g_keyboardControl;

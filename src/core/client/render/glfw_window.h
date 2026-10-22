@@ -3,10 +3,11 @@
 #include <memory>
 
 #include "engine_context.h"
-#include "vulkan_utility.h"
+
 
 #include "GLFW/glfw3.h"
 #include "glm/vec2.hpp"
+#include "utility/sys_utils.h"
 
 namespace cvulkan::client::window {
     class CVulkanWindow {
@@ -14,7 +15,7 @@ namespace cvulkan::client::window {
         explicit CVulkanWindow(const EngineData& engineData);
         ~CVulkanWindow();
 
-        CVULKAN_NO_COPY_NO_ASSIGN_MOVE(CVulkanWindow);
+        CLASS_NO_COPY_NO_ASSIGN_MOVE(CVulkanWindow);
 
         void closeWindow() const;
 

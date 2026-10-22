@@ -3,7 +3,7 @@
 //
 
 #include "asset_textures.h"
-#include <stb_image.h>
+#include <stb_image.hpp>
 #include "client/render/vulkan_images.h"
 #include "client/render/vulkan_buffers.h"
 #include "client/render/vulkan_commands.h"
@@ -75,7 +75,7 @@ namespace cvulkan::client::render::asset {
     void CVulkanTexture2D::recordTextureTransition(const vk::CVulkanCommandBuffer& commandBuffer) {
         if (this->_stgBuffer != nullptr && !this->recordedTransitionFlag()) {
             this->_recordedTransition = true;
-            utility::imageBarrier(commandBuffer.vkCommandBuffer(), _image->vkImage(),
+            vk::img_util::imageBarrier(commandBuffer.vkCommandBuffer(), _image->vkImage(),
                 VK_IMAGE_LAYOUT_UNDEFINED,
                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                 VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT,
@@ -84,7 +84,7 @@ namespace cvulkan::client::render::asset {
                 VK_ACCESS_2_TRANSFER_WRITE_BIT,
                 VK_IMAGE_ASPECT_COLOR_BIT);
             this->recordCopyBuffer(commandBuffer, *this->_stgBuffer);
-            utility::imageBarrier(
+            vk::img_util::imageBarrier(
                 commandBuffer.vkCommandBuffer(), _image->vkImage(),
                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                 VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,

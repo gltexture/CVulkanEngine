@@ -8,14 +8,14 @@
 
 #include "vulkan_render_core.h"
 #include "vulkan_shaders.h"
-#include "vulkan_utility.h"
+
 
 namespace cvulkan::client::render::vk {
     CVulkanPipelineCache::CVulkanPipelineCache(const CVulkanContext& context) : _context{context} {
         constexpr VkPipelineCacheCreateInfo pipelineCacheCreateInfo  {
             .sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO,
         };
-        utility::vkCheck(vkCreatePipelineCache(this->_context.device().vkDevice(), &pipelineCacheCreateInfo, nullptr, &this->_vkPipelineCache), "Error creating vkPipeline cache");
+        vk::util::vkCheck(vkCreatePipelineCache(this->_context.device().vkDevice(), &pipelineCacheCreateInfo, nullptr, &this->_vkPipelineCache), "Error creating vkPipeline cache");
         logging::info("Created vkPipelineCache");
     }
 
@@ -131,7 +131,7 @@ namespace cvulkan::client::render::vk {
         };
 
 
-        utility::vkCheck(vkCreatePipelineLayout(this->_context.device().vkDevice(), &pipelineLayoutCreateInfo, nullptr, &this->_vkPipelineLayout), "Failed to create pipeline layout");
+        vk::util::vkCheck(vkCreatePipelineLayout(this->_context.device().vkDevice(), &pipelineLayoutCreateInfo, nullptr, &this->_vkPipelineLayout), "Failed to create pipeline layout");
         VkGraphicsPipelineCreateInfo createInfo{
             .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
             .pNext = &renderingCreateInfo,
@@ -150,7 +150,7 @@ namespace cvulkan::client::render::vk {
         if (depthStencilStateCreateInfoOptional.has_value()) {
             createInfo.pDepthStencilState = &depthStencilStateCreateInfoOptional.value();
         }
-        utility::vkCheck(vkCreateGraphicsPipelines(this->_context.device().vkDevice(), this->_context.pipelineCache().vkPipelineCache(), 1, &createInfo, nullptr, &this->_vkPipeline), "Error creating graphics pipeline");
+        vk::util::vkCheck(vkCreateGraphicsPipelines(this->_context.device().vkDevice(), this->_context.pipelineCache().vkPipelineCache(), 1, &createInfo, nullptr, &this->_vkPipeline), "Error creating graphics pipeline");
     }
 
     CVulkanPipeline::~CVulkanPipeline() {

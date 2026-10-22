@@ -18,7 +18,7 @@ namespace cvulkan::client::render::loop {
         explicit CVulkanRenderLoop(vk::CVulkanContext& context);
         ~CVulkanRenderLoop();
 
-        CVULKAN_NO_COPY(CVulkanRenderLoop)
+        CLASS_NO_COPY(CVulkanRenderLoop)
 
         void runRenderLoop();
 

@@ -6,7 +6,7 @@
             0.6000000238418579,
             1.0
         ],
-        "id": "cube-mat-0",
+        "id": "cube/cube.obj-mat-0",
         "texturePath": ""
     },
     {
@@ -16,7 +16,7 @@
             0.0,
             1.0
         ],
-        "id": "cube-mat-1",
-        "texturePath": "cube.png"
+        "id": "cube/cube.obj-mat-1",
+        "texturePath": "textures\\cube.png"
     }
 ]

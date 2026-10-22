@@ -10,7 +10,7 @@
 #include "vulkan_render_cache.h"
 #include "client/render/vulkan_pipeline.h"
 #include "client/render/vulkan_transform.h"
-#include "client/render/vulkan_utility.h"
+
 
 namespace cvulkan::client::render::entity {
     class CVulkanSceneEntity;
@@ -37,7 +37,7 @@ namespace cvulkan::client::render::scene {
         CVulkanSceneEntitiesCollection();
         ~CVulkanSceneEntitiesCollection() = default;
 
-        CVULKAN_NO_COPY_NO_MOVE(CVulkanSceneEntitiesCollection);
+        CLASS_NO_COPY_NO_MOVE(CVulkanSceneEntitiesCollection);
 
         [[nodiscard]] const std::map<std::string, entity::CVulkanSceneEntity>& entities() const {
             return _entities;
@@ -55,7 +55,7 @@ namespace cvulkan::client::render::scene {
         CVulkanSceneRenderer(const vk::CVulkanContext& context, const loop::CVulkanRenderLoop& renderLoop);
         ~CVulkanSceneRenderer();
 
-        CVULKAN_NO_COPY(CVulkanSceneRenderer);
+        CLASS_NO_COPY(CVulkanSceneRenderer);
 
         void renderScene(const vk::CVulkanCommandBuffer& commandBuffer, const uint32_t& imageIndex) const;
 
