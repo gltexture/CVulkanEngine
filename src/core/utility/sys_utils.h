@@ -37,7 +37,7 @@ Type& operator=(Type&&) = delete;
     inline constexpr OSType osType = UNDEFINED;
 #endif
 
-#if defined(DEBUG_MODE)
+#if defined(CVULKAN_DEBUG_MODE)
     inline constexpr bool debug_mode = true;
 #else
     inline constexpr bool debug_mode = false;

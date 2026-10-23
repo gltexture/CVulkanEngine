@@ -89,7 +89,7 @@ namespace cvulkan::io_utils {
 
     std::filesystem::path getExecutableDirectory();
 
-#ifdef ENGINE_DEV_MODE
+#ifdef CVULKAN_DEV_MODE
     inline CVulkanResourceResolver RES_RESOLVER {getExecutableDirectory().parent_path() / RESOURCES};
 #else
     inline CVulkanResourceResolver RES_RESOLVER {getExecutableDirectory() / RESOURCES};

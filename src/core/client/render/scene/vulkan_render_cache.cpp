@@ -89,6 +89,9 @@ namespace cvulkan::client::render::cache {
     }
 
     const asset::CVulkanTexture2D* CVulkanTexturesCache::loadTexture(const std::string& id, const std::filesystem::path& texturePath, const VkFormat& format) {
+        if (const auto it = this->_indexedTexturesMap.map().find(id); it != this->_indexedTexturesMap.map().end()) {
+            return &it->second;
+        }
         const asset::CVulkanImageSrc srcImage = asset::imageLoad::loadImage(texturePath);
         const asset::CVulkanTexture2D& texture = this->loadTexture(id, srcImage, format);
         return &texture;
@@ -103,6 +106,7 @@ namespace cvulkan::client::render::cache {
     }
 
     CVulkanMaterialsCache::~CVulkanMaterialsCache() {
+        logging::debug("Cleaned up materials cache");
     }
 
     void CVulkanMaterialsCache::loadMaterials(const std::vector<asset::modelGen::CVulkanMaterialData>& materials, CVulkanTexturesCache& texturesCache, const vk::CVulkanCommandPool& commandPool, const vk::CVulkanQueue& queue) {

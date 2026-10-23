@@ -15,7 +15,7 @@ namespace cvulkan::client::render::vk {
         if (this->_supportReset) {
             commandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
         }
-        vk::util::vkCheck(vkCreateCommandPool(this->_context.device().vkDevice(), &commandPoolCreateInfo, nullptr, &this->_vkCommandPool), "Failed to create command pool");
+        util::vkCheck(vkCreateCommandPool(this->_context.device().vkDevice(), &commandPoolCreateInfo, nullptr, &this->_vkCommandPool), "Failed to create command pool");
         logging::info("Created vkCommandPool");
     }
 
@@ -33,7 +33,7 @@ namespace cvulkan::client::render::vk {
     }
 
     CVulkanCommandBuffer::CVulkanCommandBuffer(const CVulkanContext& context, const CVulkanCommandPool& commandPool, const bool primary, const bool oneTimeSubmit)
-    : _context{context}, _commandPool{commandPool}, _primary{primary}, _oneTimeSubmit{oneTimeSubmit} {
+        : _context{context}, _commandPool{commandPool}, _primary{primary}, _oneTimeSubmit{oneTimeSubmit} {
         const VkCommandBufferAllocateInfo commandBufferAllocateInfo  {
             .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
             .commandPool = this->_commandPool.vkCommandPool(),

@@ -61,7 +61,7 @@ namespace cvulkan::client::render::cache {
 
         void transitTextures(const vk::CVulkanCommandPool& commandPool, const vk::CVulkanQueue& queue);
 
-        const asset::CVulkanTexture2D& loadTexture(const std::string& id, const asset::CVulkanImageSrc& srcImage, const VkFormat& format);
+        const asset::CVulkanTexture2D& loadTexture(const std::string &id, const asset::CVulkanImageSrc &srcImage, const VkFormat &format);
 
         const asset::CVulkanTexture2D* loadTexture(const std::string& id, const std::filesystem::path& texturePath, const VkFormat& format);
 

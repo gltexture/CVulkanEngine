@@ -19,7 +19,12 @@ namespace cvulkan::client::render::asset {
     struct CVulkanImageSrc {
         ~CVulkanImageSrc();
 
-        unsigned char*& _data;
+        CVulkanImageSrc(unsigned char* data, const size_t dataSize, const glm::ivec2 size, const uint32_t channels)
+            : _data(data), _dataSize(dataSize), _size(size), _channels(channels) {}
+
+        CLASS_NO_COPY(CVulkanImageSrc);
+
+        unsigned char* _data;
         size_t _dataSize;
         glm::vec2 _size;
         uint32_t _channels;
@@ -64,7 +69,7 @@ namespace cvulkan::client::render::asset {
         }
 
     protected:
-        void createStgBuffer(const vk::CVulkanContext& context, unsigned char*& _data, const size_t& _dataSize);
+        void createStgBuffer(const vk::CVulkanContext &context, const unsigned char *_data, const size_t &_dataSize);
 
     private:
         std::string _id;

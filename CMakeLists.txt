@@ -120,11 +120,27 @@ add_executable(CVulkanEngine
 add_link_options("-fuse-ld=lld")
 
 target_compile_definitions(CVulkanEngine PRIVATE
-        $<$<CONFIG:RelWithDebInfo>:ENGINE_DEV_MODE>
+        $<$<CONFIG:RelWithDebInfo>:CVULKAN_DEV_MODE>
 )
 
 target_compile_definitions(CVulkanEngine PRIVATE
-        $<$<CONFIG:Release>:ENGINE_DEV_MODE>
+        $<$<CONFIG:Release>:CVULKAN_DEV_MODE>
+)
+
+target_compile_definitions(CVulkanEngine PRIVATE
+        $<$<CONFIG:Debug>:CVULKAN_DEV_MODE>
+)
+
+target_compile_definitions(CVulkanEngine PRIVATE
+        $<$<CONFIG:Debug>:CVULKAN_DEBUG_MODE>
+)
+
+target_compile_definitions(CVulkanEngine PRIVATE
+        $<$<CONFIG:RelWithDebInfo>:CVULKAN_DEBUG_MODE>
+)
+
+target_compile_definitions(CVulkanEngine PRIVATE
+        $<$<CONFIG:Release>:CVULKAN_DEBUG_MODE>
 )
 
 target_compile_definitions(CVulkanEngine PRIVATE
