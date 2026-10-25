@@ -1,11 +1,11 @@
 #include "vulkan_render_core.h"
-#include "../../utility/logger.h"
+#include "utility/logger.h"
 #include <unordered_set>
 
 #include "GLFW/glfw3.h"
 
 #include "vulkan_ext.h"
-#include "vulkan_render_loop.h"
+#include "scene/vulkan_render_loop.h"
 
 namespace cvulkan::client::render::vk {
     std::unique_ptr<CVulkanContext> vulkanContext;
@@ -343,15 +343,14 @@ namespace cvulkan::client::render::vk {
         const CVulkanContextBuildData& contextBuildData,
         const CVulkanInstanceBuildData& instanceBuildData,
         const CVulkanPhysicalDeviceBuildData& physicalDeviceBuildData,
-        const CVulkanLogicalDeviceBuildData& logicalDeviceBuildData)
-    : _glfwWindow{window},
-    _instance{contextBuildData, instanceBuildData},
-    _physicalDevice(contextBuildData, this->_instance, physicalDeviceBuildData),
-    _surface{std::make_unique<CVulkanSurface>(*this)},
-    _device{contextBuildData, this->_physicalDevice, this->_surface->vkSurface(), logicalDeviceBuildData},
-    _swapChain{std::make_unique<CVulkanSwapChain>(*this, this->_surface->vkSurface(), this->_surface->vkSurfaceCapabilities(), this->_surface->vkFormat(), this->_surface->vkColorSpace())},
-    _pipelineCache{*this} {
-    }
+        const CVulkanLogicalDeviceBuildData& logicalDeviceBuildData) :
+            _glfwWindow{window},
+            _instance{contextBuildData, instanceBuildData},
+            _physicalDevice(contextBuildData, this->_instance, physicalDeviceBuildData),
+            _surface{std::make_unique<CVulkanSurface>(*this)},
+            _device{contextBuildData, this->_physicalDevice, this->_surface->vkSurface(), logicalDeviceBuildData},
+            _swapChain{std::make_unique<CVulkanSwapChain>(*this, this->_surface->vkSurface(), this->_surface->vkSurfaceCapabilities(), this->_surface->vkFormat(), this->_surface->vkColorSpace())},
+            _pipelineCache{*this} {}
 
     void CVulkanContext::resize() {
         {
@@ -514,17 +513,22 @@ namespace cvulkan::client::render::vk {
 
         const CVulkanLogicalDeviceBuildData logicalDeviceBuildData {
             std::vector<CVulkanQueueFamilyCreationRequest>{
-                    {
-                        CVulkanQueueFamilyBitMasks::GRAPHICS,
-                        1,
-                        {1.0f}
-                    },
-                    {
-                        CVulkanQueueFamilyBitMasks::PRESENT,
-                        1,
-                        {1.0f}
+                            {
+                                ._bitMask = CVulkanQueueFamilyBitMasks::GRAPHICS,
+                                ._queueCount = 1,
+                                ._priorities = {1.0f}
+                            },
+                            {
+                                ._bitMask = CVulkanQueueFamilyBitMasks::PRESENT,
+                                ._queueCount = 1,
+                                ._priorities = {1.0f}
+                            },
+                            {
+                                ._bitMask = CVulkanQueueFamilyBitMasks::TRANSFER,
+                                ._queueCount = 1,
+                                ._priorities = {1.0f}
+                            },
                     }
-            }
         };
 
         vulkanContext = std::make_unique<CVulkanContext>(
@@ -559,5 +563,14 @@ namespace cvulkan::client::render::vk {
             throw std::runtime_error("Failed to find suitable Vulkan memory type");
         }
         return result;
+    }
+
+    uint32_t util::findQueueFamilyIndex(const CVulkanContext &context, QueueFamilyBitMask bitMask) {
+        for (const auto& queue : context.device().queueFamiliesRegistry().registeredData()) {
+            if (queue._bitMask & bitMask) {
+                return queue._queueFamilyIndex;
+            }
+        }
+        return UINT32_MAX;
     }
 }

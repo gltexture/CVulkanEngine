@@ -277,7 +277,7 @@ namespace cvulkan::client::render::asset {
             fileCache._modifiedTime = std::chrono::duration_cast<std::chrono::milliseconds>(modifiedTime.time_since_epoch()).count();
 
             const auto relativePath = path.lexically_relative(modelRootFullPath);
-            cache._files.emplace(relativePath, std::move(fileCache));
+            cache._files.emplace(relativePath, fileCache);
         }
         return cache;
     }
@@ -501,7 +501,7 @@ namespace cvulkan::client::render::asset {
 
     modelLoad::CVulkanLoadedModelData modelLoad::loadModelWithMaterials(const io_utils::CVulkanResourcePath& modelFile) {
         const auto& relativePath = modelFile.path();
-        const bool isModelJSON =relativePath.filename().string().ends_with(io_utils::MODEL_JSON);
+        const bool isModelJSON = relativePath.filename().string().ends_with(io_utils::MODEL_JSON);
         io_utils::CVulkanResourcePath pathToModelJSON = modelFile;
 
         if (!isModelJSON) {
@@ -533,6 +533,9 @@ namespace cvulkan::client::render::asset {
         logging::debug("Loading model '{}' with materials '{}'", pathToModelJSON.path().string(), pathToMaterialJSON.path().string());
 
         auto materialsData = loadMaterialsJSON(pathToMaterialJSON);
-        return {std::move(modelData), std::move(materialsData)};
+        return {
+            ._modelData = std::move(modelData),
+            ._materialsData = std::move(materialsData)
+        };
     }
 }

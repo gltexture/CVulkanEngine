@@ -289,7 +289,8 @@ namespace cvulkan::client::render::vk {
     void cleanRenderCore();
 
     namespace util {
-        uint32_t getMemoryTypeIndexFromProperties(const VkPhysicalDeviceMemoryProperties& memoryProperties, uint32_t typeBits, const uint32_t& reqMask);
+        [[nodiscard]] uint32_t getMemoryTypeIndexFromProperties(const VkPhysicalDeviceMemoryProperties& memoryProperties, uint32_t typeBits, const uint32_t& reqMask);
+        [[nodiscard]] uint32_t findQueueFamilyIndex(const CVulkanContext& context, QueueFamilyBitMask bitMask);
 
         inline void vkCheck(const VkResult vkResult, std::string_view errMsg) {
             if (vkResult != VK_SUCCESS) {

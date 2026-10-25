@@ -86,7 +86,7 @@ add_executable(CVulkanEngine
         src/core/client/render/vulkan_commands.cpp
         src/core/client/render/vulkan_synchronization.cpp
         src/core/client/render/vulkan_swapchain.cpp
-        src/core/client/render/vulkan_render_loop.cpp
+        src/core/client/render/scene/vulkan_render_loop.cpp
         src/core/client/render/vulkan_buffers.cpp
         src/core/client/render/scene/vulkan_render_scene.cpp
         src/core/client/render/scene/vulkan_render_structs.cpp
@@ -115,6 +115,7 @@ add_executable(CVulkanEngine
         src/core/utility/sys_utils.h
         src/core/utility/io_utils.cpp
         src/core/utility/io_utils.h
+        src/core/client/render/scene/vulkan_render_scene__context.cpp
 )
 
 add_link_options("-fuse-ld=lld")
@@ -125,22 +126,13 @@ target_compile_definitions(CVulkanEngine PRIVATE
 
 target_compile_definitions(CVulkanEngine PRIVATE
         $<$<CONFIG:Release>:CVULKAN_DEV_MODE>
-)
-
-target_compile_definitions(CVulkanEngine PRIVATE
-        $<$<CONFIG:Debug>:CVULKAN_DEV_MODE>
-)
-
-target_compile_definitions(CVulkanEngine PRIVATE
-        $<$<CONFIG:Debug>:CVULKAN_DEBUG_MODE>
-)
-
-target_compile_definitions(CVulkanEngine PRIVATE
-        $<$<CONFIG:RelWithDebInfo>:CVULKAN_DEBUG_MODE>
-)
-
-target_compile_definitions(CVulkanEngine PRIVATE
         $<$<CONFIG:Release>:CVULKAN_DEBUG_MODE>
+
+        $<$<CONFIG:Debug>:CVULKAN_DEV_MODE>
+        $<$<CONFIG:Debug>:CVULKAN_DEBUG_MODE>
+
+        $<$<CONFIG:RelWithDebInfo>:CVULKAN_DEV_MODE>
+        $<$<CONFIG:RelWithDebInfo>:CVULKAN_DEBUG_MODE>
 )
 
 target_compile_definitions(CVulkanEngine PRIVATE

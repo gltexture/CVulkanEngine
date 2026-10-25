@@ -7,7 +7,7 @@
 #include <fstream>
 
 
-#include "../../../utility/logger.h"
+#include "utility/logger.h"
 #include "utility/io_utils.h"
 #include "utility/sys_utils.h"
 

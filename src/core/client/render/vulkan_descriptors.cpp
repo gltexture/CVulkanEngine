@@ -8,7 +8,7 @@
 #include "vulkan_config.hpp"
 #include "vulkan_render_core.h"
 
-#include "../../utility/logger.h"
+#include "utility/logger.h"
 
 namespace cvulkan::client::render::vk {
     CVulkanDescriptorsPool::CVulkanDescriptorsPool(const CVulkanContext& context, const std::vector<CVulkanDescriptorTypeCount>& descriptorTypeCounts) : _context{context}, _descriptorTypeCounts{descriptorTypeCounts} {
@@ -17,8 +17,7 @@ namespace cvulkan::client::render::vk {
         std::vector<VkDescriptorPoolSize> poolSizes;
         poolSizes.reserve(_descriptorTypeCounts.size());
         uint32_t maxSets = 0;
-        for (uint32_t i = 0; i < _descriptorTypeCounts.size(); ++i) {
-            const auto& [_descType, _descCount] = _descriptorTypeCounts.at(i);
+        for (auto [_descType, _descCount] : _descriptorTypeCounts) {
             maxSets += _descCount;
             poolSizes.push_back({
                 .type = _descType,
@@ -71,7 +70,7 @@ namespace cvulkan::client::render::vk {
             .bindingCount = static_cast<uint32_t>(layoutBindings.size()),
             .pBindings = layoutBindings.data()
         };
-        vk::util::vkCheck(vkCreateDescriptorSetLayout(context.device().vkDevice(), &vkDescriptorSetLayoutCreateInfo, nullptr, &this->_vkDescriptorSetLayout), "Failed to create descriptor set layout");
+        util::vkCheck(vkCreateDescriptorSetLayout(context.device().vkDevice(), &vkDescriptorSetLayoutCreateInfo, nullptr, &this->_vkDescriptorSetLayout), "Failed to create descriptor set layout");
     }
 
     CVulkanDescriptorSetLayout::~CVulkanDescriptorSetLayout() {
@@ -92,7 +91,7 @@ namespace cvulkan::client::render::vk {
             .pSetLayouts = &layout
         };
 
-        vk::util::vkCheck(vkAllocateDescriptorSets(context.device().vkDevice(), &descriptorAllocateInfo, &this->_vkDescriptorSet), "Failed to create descriptor set");
+        util::vkCheck(vkAllocateDescriptorSets(context.device().vkDevice(), &descriptorAllocateInfo, &this->_vkDescriptorSet), "Failed to create descriptor set");
     }
 
     CVulkanDescriptorSet::~CVulkanDescriptorSet() {
@@ -184,7 +183,7 @@ namespace cvulkan::client::render::vk {
     }
 
     CVulkanDescriptorAllocator::~CVulkanDescriptorAllocator() {
-        logging::info("Destroyed Vulkan descriptor allocator");
+        logging::info("Destroyin Vulkan descriptor allocator");
     }
 
     std::vector<CVulkanDescriptorSet>& CVulkanDescriptorAllocator::allocateDescriptorSets(const std::string& id, const uint32_t count, const CVulkanDescriptorSetLayout& layout) {

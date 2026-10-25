@@ -9,20 +9,14 @@
 #include "vulkan_render_cache.h"
 #include "vulkan_scene_objects.h"
 #include "client/render/vulkan_commands.h"
-#include "client/render/vulkan_config.hpp"
 #include "client/render/vulkan_images.h"
 #include "client/render/vulkan_shaders.h"
 #include "client/render/assets/asset_shaders.h"
 #include "client/render/assets/asset_models.h"
-#include "shaderc/shaderc.h"
 
 namespace cvulkan::client::render::scene {
     static constexpr VkClearValue CLEAR_COLOR  {0.5f, 0.7f, 0.9f, 1.0f};
     static constexpr VkClearValue CLEAR_DEPTH  {1.0f, 0.0f};
-
-    static constexpr std::string_view DESC_ID_MAT = "SCN_DESC_ID_MAT";
-    static constexpr std::string_view DESC_ID_PRJ = "SCN_DESC_ID_PRJ";
-    static constexpr std::string_view DESC_ID_TEXT = "SCN_DESC_ID_TEXT";
 
     /*
     *             VkUtils.imageBarrier(stack, cmdHandle, swapChainImage,
@@ -59,7 +53,6 @@ namespace cvulkan::client::render::scene {
         {
             vkCmdBeginRendering(commandBuffer.vkCommandBuffer(), &this->_vkRenderingInfo[imageIndex]);
 
-            vkCmdBindPipeline(commandBuffer.vkCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, this->_defaultRenderPipeline->vkPipeline());
             const VkExtent2D extent = this->_context.swapChain().extent();
             const VkViewport viewport {
                 .x = 0.0F,
@@ -80,35 +73,8 @@ namespace cvulkan::client::render::scene {
             };
             vkCmdSetScissor(commandBuffer.vkCommandBuffer(), 0, 1, &scissor);
 
-            std::vector<VkDescriptorSet> descriptorSets {};
-            descriptorSets.reserve(3);
-            descriptorSets.push_back(this->_descriptorAllocator.getDescriptorSet(std::string {DESC_ID_PRJ}, 0).vkDescriptorSet());
-            descriptorSets.push_back(this->_descriptorAllocator.getDescriptorSet(std::string {DESC_ID_MAT}, 0).vkDescriptorSet());
-            descriptorSets.push_back(this->_descriptorAllocator.getDescriptorSet(std::string {DESC_ID_TEXT}, 0).vkDescriptorSet());
-            vkCmdBindDescriptorSets(commandBuffer.vkCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, this->_defaultRenderPipeline->vkPipelineLayout(), 0, static_cast<uint32_t>(descriptorSets.size()), descriptorSets.data(), 0, nullptr);
-
-            for (const auto& entity : this->_entitiesCollection.entities() | std::views::values) {
-                const auto& model = this->caches().modelCache().getModel(entity.modelId());
-
-                const glm::mat4 modelMat = entity.transform().modelMatrix();
-                vkCmdPushConstants(commandBuffer.vkCommandBuffer(), this->_defaultRenderPipeline->vkPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(modelMat), &modelMat);
-                for (uint32_t j = 0; j < model->meshes().size(); j++) {
-                    const auto& mesh = model->meshes().at(j);
-                    const VkBuffer vertexBuffer = mesh.verticesBuffer().vkBuffer();
-                    constexpr VkDeviceSize offset = 0;
-
-                    const std::string materialId = mesh.materialId();
-                    const structs::CVulkanMaterial* material = this->_caches.materialsCache().getMaterial(materialId);
-                    if (material == nullptr) {
-                        logging::error("Mesh {} in model '{}' has no material", j, model->id());
-                        continue;
-                    }
-                    const uint32_t materialIdx = this->_caches.materialsCache().getPosition(materialId);
-                    vkCmdPushConstants(commandBuffer.vkCommandBuffer(), this->_defaultRenderPipeline->vkPipelineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(modelMat), sizeof(uint32_t), &materialIdx);
-                    vkCmdBindVertexBuffers(commandBuffer.vkCommandBuffer(), 0, 1, &vertexBuffer, &offset);
-                    vkCmdBindIndexBuffer(commandBuffer.vkCommandBuffer(), mesh.indicesBuffer().vkBuffer(), 0, VK_INDEX_TYPE_UINT32);
-                    vkCmdDrawIndexed(commandBuffer.vkCommandBuffer(), mesh.numIndices(), 1, 0, 0, 0);
-                }
+            {
+                this->_sceneContext.renderContext(commandBuffer, this->_descriptorAllocator, this->_entitiesCollection, this->_caches);
             }
 
             vkCmdEndRendering(commandBuffer.vkCommandBuffer());
@@ -127,22 +93,24 @@ namespace cvulkan::client::render::scene {
         );
     }
 
-    void CVulkanSceneRenderer::resize() {
+    void CVulkanSceneRenderer::onResize() {
         this->_vkColorAttachmentsInfo.clear();
         this->_vkDepthAttachmentsInfo.clear();
         this->_depthAttachments.clear();
         this->_vkRenderingInfo.clear();
-        this->createRenderData();
-
+        this->createRenderAttachmentsData();
         {
-            vk::buffutil::copyMatrixToBuffer(*this->_bufferProjMatrix, this->projection().mat4Projection(), 0);
+            this->_sceneContext.onResize();
         }
     }
 
-    void CVulkanSceneRenderer::loadMaterials() {
-        const vk::CVulkanDescriptorSet& mat_descriptorSet = this->_descriptorAllocator.allocateDescriptorSets(std::string {DESC_ID_MAT}, 1, *this->_descFragmentStorageLayout).front();
+    void CVulkanSceneRenderer::setDefaults() {
+    }
+
+    void CVulkanSceneRenderer::createMaterialDescriptors() {
+        const vk::CVulkanDescriptorSet& mat_descriptorSet = this->_descriptorAllocator.allocateDescriptorSets(std::string {DESC_ID_MAT}, 1, *this->_sceneContext.descFragmentStorageLayout()).front();
         const vk::CVulkanBuffer& materials = *this->_caches.materialsCache().materialsBuffer();
-        mat_descriptorSet.setBuffer(materials, materials.vkRequestedSize(), this->_descFragmentStorageLayout->layoutInfoArray().front()._binding, this->_descFragmentStorageLayout->layoutInfoArray().front()._descType);
+        mat_descriptorSet.setBuffer(materials, materials.vkRequestedSize(), this->_sceneContext.descFragmentStorageLayout()->layoutInfoArray().front()._binding, this->_sceneContext.descFragmentStorageLayout()->layoutInfoArray().front()._descType);
 
         const auto& texturesMap = this->_caches.texturesCache().indexedTexturesMap().map();
         std::vector<const vk::CVulkanImage2DView*> imageViews;
@@ -152,11 +120,11 @@ namespace cvulkan::client::render::scene {
                 return t.imageView();
             });
 
-        const vk::CVulkanDescriptorSet& txt_descriptorSet = this->_descriptorAllocator.allocateDescriptorSets(std::string {DESC_ID_TEXT}, 1, *this->_descTextureLayout).front();
-        txt_descriptorSet.setImagesArray(imageViews, *this->_defaultTextureSampler, 0);
+        const vk::CVulkanDescriptorSet& txt_descriptorSet = this->_descriptorAllocator.allocateDescriptorSets(std::string {DESC_ID_TEXT}, 1, *this->_sceneContext.descTextureLayout()).front();
+        txt_descriptorSet.setImagesArray(imageViews, *this->_sceneContext.defaultTextureSampler(), 0);
     }
 
-    void CVulkanSceneRenderer::createRenderData() {
+    void CVulkanSceneRenderer::createRenderAttachmentsData() {
         {
             this->_vkColorAttachmentsInfo.resize(this->_context.swapChain().numImages());
             for (uint32_t i = 0; i < this->_context.swapChain().numImages(); ++i) {
@@ -204,13 +172,7 @@ namespace cvulkan::client::render::scene {
     }
 
     void CVulkanSceneRenderer::initCacheData(const std::vector<asset::modelGen::CVulkanMaterialData>& materials, const std::vector<asset::modelGen::CVulkanModelData>& models) {
-        uint32_t transferQueueFamilyIndex = UINT32_MAX; //TODO
-        for (const auto& t: this->_context.device().queueFamiliesRegistry().registeredData()) {
-            if (t._bitMask & vk::CVulkanQueueFamilyBitMasks::GRAPHICS) {
-                transferQueueFamilyIndex = t._queueFamilyIndex;
-                break;
-            }
-        }
+        const uint32_t transferQueueFamilyIndex = vk::util::findQueueFamilyIndex(this->_context, vk::CVulkanQueueFamilyBitMasks::TRANSFER);
         const vk::CVulkanCommandPool tempPool {this->_context, transferQueueFamilyIndex, true};
         const vk::CVulkanQueue tempQueue {this->_context, transferQueueFamilyIndex, 0};
         logging::info("Loading {} material(s) into cache", materials.size());
@@ -225,79 +187,34 @@ namespace cvulkan::client::render::scene {
         this->_caches.modelCache().loadModels(models, tempPool, tempQueue);
         logging::info("Loaded {} model(s) into cache", models.size());
 
-        this->loadMaterials();
-    }
-
-    void CVulkanSceneRenderer::loadResources() {
-        {
-            this->_descVertexUniformLayout = std::make_unique<vk::CVulkanDescriptorSetLayout>(this->_context, std::initializer_list<vk::CVulkanLayoutInfo>{
-                {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, 1, VK_SHADER_STAGE_VERTEX_BIT}
-            });
-            this->_descFragmentStorageLayout = std::make_unique<vk::CVulkanDescriptorSetLayout>(this->_context, std::initializer_list<vk::CVulkanLayoutInfo>{
-                {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 0, 1, VK_SHADER_STAGE_FRAGMENT_BIT}
-            });
-            this->_descTextureLayout = std::make_unique<vk::CVulkanDescriptorSetLayout>(this->_context, std::initializer_list<vk::CVulkanLayoutInfo>{
-                {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, renderConfig::MAX_TEXTURES_IN_CACHE, VK_SHADER_STAGE_FRAGMENT_BIT}
-            });
-
-            this->_bufferProjMatrix = std::make_unique<vk::CVulkanBuffer>(vk::buffutil::allocateHostVisibleBuffer(this->_context, this->_descriptorAllocator, sizeof(glm::mat4), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, std::string{DESC_ID_PRJ}, *this->_descVertexUniformLayout));
-            vk::buffutil::copyMatrixToBuffer(*this->_bufferProjMatrix, this->projection().mat4Projection(), 0);
-
-            constexpr vk::CVulkanSamplerInfo samplerInfo {VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_BORDER_COLOR_INT_OPAQUE_BLACK, 1, true};
-            this->_defaultTextureSampler = std::make_unique<vk::CVulkanSampler>(this->_context, samplerInfo);
-
-            shader::CVulkanShaderModule shaderV = asset::shaderLoad::compileAndLoadShader(this->_context, io_utils::CVulkanResourcePath{"scene/v.vert"}, shaderc_glsl_vertex_shader, VK_SHADER_STAGE_VERTEX_BIT);
-            shader::CVulkanShaderModule shaderF = asset::shaderLoad::compileAndLoadShader(this->_context, io_utils::CVulkanResourcePath{"scene/f.frag"}, shaderc_glsl_fragment_shader, VK_SHADER_STAGE_FRAGMENT_BIT);
-            std::vector<vk::Ref_CVulkanShaderModule> shaderModules  {};
-            shaderModules.reserve(2);
-            shaderModules.push_back(std::cref(shaderV));
-            shaderModules.push_back(std::cref(shaderF));
-
-            vk::CVulkanPushConstantRange push1 {VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4)};
-            vk::CVulkanPushConstantRange push2 {VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(glm::mat4), sizeof(uint32_t)};
-            std::vector<vk::Ref_CVulkanPushConstantRange> pushConstantRanges {};
-            pushConstantRanges.reserve(2);
-            pushConstantRanges.push_back(std::cref(push1));
-            pushConstantRanges.push_back(std::cref(push2));
-
-            std::vector<vk::Ref_CVulkanDescriptorSetLayout> descriptorSetLayouts {};
-            descriptorSetLayouts.reserve(3);
-            descriptorSetLayouts.push_back(std::cref(*this->_descVertexUniformLayout));
-            descriptorSetLayouts.push_back(std::cref(*this->_descFragmentStorageLayout));
-            descriptorSetLayouts.push_back(std::cref(*this->_descTextureLayout));
-
-            const structs::CVulkanVertexStruct vertexStruct{this->_context};
-            const vk::CVulkanPipelineBuildInfo buildInfo{descriptorSetLayouts, shaderModules, pushConstantRanges, vertexStruct.vkPipelineVertexInputStateCreateInfo(), this->_context.surface().vkFormat(), VK_FORMAT_D16_UNORM};
-
-            this->_defaultRenderPipeline = std::make_unique<vk::CVulkanPipeline>(this->_context, buildInfo);
-        }
+        this->createMaterialDescriptors();
     }
 
     CVulkanSceneRenderer::CVulkanSceneRenderer(const vk::CVulkanContext& context, const loop::CVulkanRenderLoop& renderLoop) :
         _context{context},
+        _sceneContext{context},
         _caches{context},
-        _renderLoop(renderLoop),
-        _projection({glm::radians(60.0f), 0.1f, 1024.0f, {context.swapChain().extent()}}),
+        _renderLoop{renderLoop},
         _descriptorAllocator{context} {
-        this->loadResources();
+        this->createRenderAttachmentsData();
 
-        const asset::modelLoad::CVulkanLoadedModelData loadedModelData = asset::modelLoad::loadModelWithMaterials(io_utils::CVulkanResourcePath {"cube/cube.obj"});
+        auto [_loadedModels] = this->_sceneContext.loadResources(this->_descriptorAllocator, this->_entitiesCollection);
 
-        this->createRenderData();
-        this->initCacheData(loadedModelData._materialsData, {loadedModelData._modelData});
-
-        {
-            entity::CVulkanSceneEntity entity = {"CubeEnt", loadedModelData._modelData._id};
-            entity.transform()._position = {0.0f, 0.0f, -6.0f};
-            entity.transform()._rotation = glm::angleAxis(glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-            this->_entitiesCollection.addEntity(std::move(entity));
+        std::vector<asset::modelGen::CVulkanMaterialData> materials {};
+        std::vector<asset::modelGen::CVulkanModelData> models {};
+        for (const auto& [_modelData, _materialsData] : _loadedModels) {
+            materials.insert(materials.end(), _materialsData.begin(), _materialsData.end());
+            models.push_back(_modelData);
         }
+        this->initCacheData(materials, models);
     }
 
     CVulkanSceneRenderer::~CVulkanSceneRenderer() {
+        logging::info("Destroying scene renderer");
     }
 
     CVulkanSceneEntitiesCollection::CVulkanSceneEntitiesCollection() {
+        logging::info("Destroying scene entities");
     }
 
     void CVulkanSceneEntitiesCollection::addEntity(entity::CVulkanSceneEntity&& entity) {

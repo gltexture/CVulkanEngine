@@ -5,8 +5,8 @@
 #pragma once
 #include <memory>
 
-#include "vulkan_commands.h"
-#include "vulkan_synchronization.h"
+#include "../vulkan_commands.h"
+#include "../vulkan_synchronization.h"
 
 namespace cvulkan::client::render::vk {
     class CVulkanContext;

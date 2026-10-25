@@ -4,29 +4,17 @@
 
 #include "vulkan_render_loop.h"
 
-#include "vulkan_commands.h"
-#include "vulkan_config.hpp"
-#include "scene/vulkan_render_scene.h"
+#include "client/render/vulkan_commands.h"
+#include "client/render/vulkan_config.hpp"
+#include "vulkan_render_scene.h"
 
 namespace cvulkan::client::render::loop {
     std::unique_ptr<scene::CVulkanSceneRenderer> sceneRenderer;
     std::unique_ptr<CVulkanRenderLoop> renderLoop;
 
     CVulkanRenderLoop::CVulkanRenderLoop(vk::CVulkanContext& context) : _context{context} {
-        uint32_t graphicsQueueFamilyIndex = UINT32_MAX;
-        uint32_t presentationQueueFamilyIndex = UINT32_MAX;
-        for (const auto& t: this->_context.device().queueFamiliesRegistry().registeredData()) {
-            if (t._bitMask & vk::CVulkanQueueFamilyBitMasks::GRAPHICS) {
-                graphicsQueueFamilyIndex = t._queueFamilyIndex;
-                break;
-            }
-        }
-        for (const auto& t: this->_context.device().queueFamiliesRegistry().registeredData()) {
-            if (t._bitMask & vk::CVulkanQueueFamilyBitMasks::PRESENT) {
-                presentationQueueFamilyIndex = t._queueFamilyIndex;
-                break;
-            }
-        }
+        const uint32_t graphicsQueueFamilyIndex = vk::util::findQueueFamilyIndex(context, vk::CVulkanQueueFamilyBitMasks::GRAPHICS);
+        const uint32_t presentationQueueFamilyIndex = vk::util::findQueueFamilyIndex(context, vk::CVulkanQueueFamilyBitMasks::PRESENT);
         if (graphicsQueueFamilyIndex == UINT32_MAX) {
             throw std::runtime_error("Graphics queue family index not found in registry");
         }
@@ -140,8 +128,8 @@ namespace cvulkan::client::render::loop {
             this->_renderCompleteSemaphores.emplace_back(this->_context);
         }
 
-        sceneRenderer->projection().resize({static_cast<uint32_t>(windowSize.x), static_cast<uint32_t>(windowSize.y)});
-        sceneRenderer->resize();
+        sceneRenderer->sceneContext().projection().resize({static_cast<uint32_t>(windowSize.x), static_cast<uint32_t>(windowSize.y)});
+        sceneRenderer->onResize();
         this->_shouldBeResized = false;
     }
 
