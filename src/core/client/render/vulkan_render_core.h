@@ -293,7 +293,7 @@ namespace cvulkan::client::render::vk {
 
         inline void vkCheck(const VkResult vkResult, std::string_view errMsg) {
             if (vkResult != VK_SUCCESS) {
-                throw std::runtime_error{std::format("{} -> {}", string_VkResult(vkResult),errMsg)};
+                throw std::runtime_error{std::format("{} (VkResult: {})", errMsg, string_VkResult(vkResult))};
             }
         }
 

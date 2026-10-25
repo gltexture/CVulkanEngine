@@ -100,7 +100,7 @@ namespace cvulkan::client::render::scene {
                     const std::string materialId = mesh.materialId();
                     const structs::CVulkanMaterial* material = this->_caches.materialsCache().getMaterial(materialId);
                     if (material == nullptr) {
-                        logging::error(std::format("Mesh {} in model {} does not have material", j, model->id()));
+                        logging::error("Mesh {} in model '{}' has no material", j, model->id());
                         continue;
                     }
                     const uint32_t materialIdx = this->_caches.materialsCache().getPosition(materialId);
@@ -213,17 +213,17 @@ namespace cvulkan::client::render::scene {
         }
         const vk::CVulkanCommandPool tempPool {this->_context, transferQueueFamilyIndex, true};
         const vk::CVulkanQueue tempQueue {this->_context, transferQueueFamilyIndex, 0};
-        logging::info(std::format("Loading {} material(s)", materials.size()));
+        logging::info("Loading {} material(s) into cache", materials.size());
         this->_caches.materialsCache().loadMaterials(materials, this->_caches.texturesCache(), tempPool, tempQueue);
-        logging::info(std::format("Loaded {} material(s)", materials.size()));
+        logging::info("Loaded {} material(s) into cache", materials.size());
 
-        logging::info("Transitioning textures");
+        logging::info("Transitioning textures into cache");
         this->_caches.texturesCache().transitTextures(tempPool, tempQueue);
-        logging::info("Textures transitioned");
+        logging::info("Textures transitioned into cache");
 
-        logging::info(std::format("Loading {} model(s)", models.size()));
+        logging::info("Loading {} model(s) into cache", models.size());
         this->_caches.modelCache().loadModels(models, tempPool, tempQueue);
-        logging::info(std::format("Loaded {} model(s)", models.size()));
+        logging::info("Loaded {} model(s) into cache", models.size());
 
         this->loadMaterials();
     }

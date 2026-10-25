@@ -101,7 +101,7 @@ namespace cvulkan::client::render::asset {
                     uint64_t pathLength;
                     input.read(reinterpret_cast<char*>(&pathLength), sizeof(pathLength));
                     if (!input) {
-                        throw std::runtime_error("Failed to read path length");
+                        throw std::runtime_error("Failed to read model cache path length");
                     }
                     if (pathLength > 1024 * 1024) {
                         throw std::runtime_error("Model cache path is too long");

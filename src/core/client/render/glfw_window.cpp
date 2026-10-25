@@ -9,15 +9,15 @@ namespace cvulkan::client::window {
 
     CVulkanWindow::CVulkanWindow(const EngineData& engineData) {
         if (!glfwInit()) {
-            throw std::runtime_error("failed to initialize glfw");
+            throw std::runtime_error("Failed to initialize GLFW");
         }
 
         if (!glfwVulkanSupported()) {
-            throw std::runtime_error("Vulkan support not available");
+            throw std::runtime_error("Vulkan is not supported by GLFW on this system");
         }
 
         if (const GLFWvidmode* videoMode = glfwGetVideoMode(glfwGetPrimaryMonitor()); videoMode == nullptr) {
-            throw std::runtime_error("failed to get video mode");
+            throw std::runtime_error("Failed to get GLFW video mode");
         }
 
         glfwDefaultWindowHints();
@@ -26,7 +26,7 @@ namespace cvulkan::client::window {
 
         this->_glfwWindowDescriptor = glfwCreateWindow(engineData.m_default_windowSize.x, engineData.m_default_windowSize.y, engineData.m_appTitle.c_str(), nullptr, nullptr);
         if (this->_glfwWindowDescriptor == nullptr) {
-            throw std::runtime_error("failed to create window");
+            throw std::runtime_error("Failed to create GLFW window");
         }
     }
 

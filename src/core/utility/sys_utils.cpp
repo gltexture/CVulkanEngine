@@ -10,7 +10,7 @@ namespace cvulkan::sys_utils {
     void utilityInitialize() {
         if constexpr (debug_mode) {
             spdlog::set_level(spdlog::level::debug);
-            logging::debug("DEBUG MODE");
+            logging::info("Debug mode enabled");
         }
     }
 }

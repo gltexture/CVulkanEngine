@@ -16,14 +16,14 @@ namespace cvulkan::client::render::vk {
             commandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
         }
         util::vkCheck(vkCreateCommandPool(this->_context.device().vkDevice(), &commandPoolCreateInfo, nullptr, &this->_vkCommandPool), "Failed to create command pool");
-        logging::info("Created vkCommandPool");
+        logging::debug("Created Vulkan command pool");
     }
 
     CVulkanCommandPool::~CVulkanCommandPool() {
         if (this->_vkCommandPool != VK_NULL_HANDLE) {
             vkDestroyCommandPool(this->_context.device().vkDevice(), this->_vkCommandPool, nullptr);
             this->_vkCommandPool = VK_NULL_HANDLE;
-            logging::info("Destroyed vkCommandPool");
+            logging::debug("Destroyed Vulkan command pool");
         }
     }
 
@@ -41,12 +41,12 @@ namespace cvulkan::client::render::vk {
             .commandBufferCount = 1,
         };
         vk::util::vkCheck(vkAllocateCommandBuffers(this->_context.device().vkDevice(), &commandBufferAllocateInfo, &this->_vkCommandBuffer), "Failed to create command buffer");
-        logging::info("Created vkCommandBuffer");
+        logging::debug("Created Vulkan command buffer");
     }
 
     CVulkanCommandBuffer::~CVulkanCommandBuffer() {
         vkFreeCommandBuffers(this->_context.device().vkDevice(), this->_commandPool.vkCommandPool(), 1, &this->_vkCommandBuffer);
-        logging::info("Destroyed vkCommandBuffer");
+        logging::debug("Destroyed Vulkan command buffer");
     }
 
     void CVulkanCommandBuffer::reset() const {
@@ -63,7 +63,7 @@ namespace cvulkan::client::render::vk {
         }
         if (!this->_primary) {
             if (inheritance_info == nullptr) {
-                throw std::invalid_argument("inheritance_info is null");
+                throw std::invalid_argument("Command buffer inheritance info must not be null");
             }
 
             VkCommandBufferInheritanceRenderingInfo inheritanceRenderingInfo  {

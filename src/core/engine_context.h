@@ -19,7 +19,7 @@ namespace cvulkan {
 
         void start() const;
 
-        static void global_cleanUp();
+        static void globalCleanUp();
 
         static void printData(const EngineData& engineData);
     };

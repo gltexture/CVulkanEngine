@@ -68,36 +68,96 @@ namespace cvulkan::client::render::vk {
 
     CVulkanTransferBufferData createVerticesBuffer(const CVulkanContext& context, const asset::modelGen::CVulkanMeshData& rawMeshData, const std::filesystem::path& vtxPath) {
         const VkDeviceSize bufferSize = rawMeshData._vtxSize;
+        logging::debug("Creating vertex transfer buffers from '{}': size={} bytes", vtxPath.string(), bufferSize);
+
+        if (bufferSize == 0) {
+            throw std::runtime_error(std::format("Vertex buffer size is zero for file '{}'", vtxPath.string()));
+        }
+        if (bufferSize > static_cast<VkDeviceSize>(std::numeric_limits<std::streamsize>::max())) {
+            throw std::runtime_error(std::format("Vertex buffer size exceeds stream read limit for file '{}': size={}", vtxPath.string(), bufferSize));
+        }
+        if (!std::filesystem::is_regular_file(vtxPath)) {
+            throw std::runtime_error(std::format("Vertex file does not exist or is not a regular file: '{}'", vtxPath.string()));
+        }
+
+        const std::uintmax_t fileSize = std::filesystem::file_size(vtxPath);
+        if (fileSize != bufferSize) {
+            throw std::runtime_error(std::format("Vertex file size mismatch for '{}': expected {} bytes, actual {} bytes", vtxPath.string(), bufferSize, fileSize));
+        }
 
         CVulkanBuffer src{context, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, bufferSize};
         CVulkanBuffer dst{context, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, bufferSize};
 
-        std::ifstream binFile {vtxPath, std::ios::binary | std::ios::in};
+        std::ifstream binFile{vtxPath, std::ios::binary | std::ios::in};
         if (!binFile) {
-            throw std::runtime_error(std::format("Failed to open {}", vtxPath.string()));
+            throw std::runtime_error(std::format("Failed to open vertex file '{}'", vtxPath.string()));
         }
+
+        logging::debug("Mapping vertex staging buffer: size={} bytes", bufferSize);
         src.mapMem();
-        binFile.read(static_cast<char*>(src.mappedMemory()), bufferSize);
+        void* mappedMemory = src.mappedMemory();
+        if (mappedMemory == nullptr) {
+            src.unMapMem();
+            throw std::runtime_error(std::format("Failed to map vertex staging buffer for file '{}'", vtxPath.string()));
+        }
+
+        binFile.read(static_cast<char*>(mappedMemory), static_cast<std::streamsize>(bufferSize));
+        const std::streamsize bytesRead = binFile.gcount();
         src.unMapMem();
 
-        return {(std::move(src)), (std::move(dst))};
+        if (bytesRead != static_cast<std::streamsize>(bufferSize)) {
+            throw std::runtime_error(std::format("Failed to read vertex file '{}': expected {} bytes, read {} bytes", vtxPath.string(), bufferSize, bytesRead));
+        }
+
+        logging::debug("Vertex staging buffer loaded successfully: file='{}', size={} bytes", vtxPath.string(), bufferSize);
+        return {std::move(src), std::move(dst)};
     }
 
     CVulkanTransferBufferData createIndicesBuffers(const CVulkanContext& context, const asset::modelGen::CVulkanMeshData& rawMeshData, const std::filesystem::path& idxPath) {
         const VkDeviceSize bufferSize = rawMeshData._idxSize;
+        logging::debug("Creating index transfer buffers from '{}': size={} bytes", idxPath.string(), bufferSize);
+
+        if (bufferSize == 0) {
+            throw std::runtime_error(std::format("Index buffer size is zero for file '{}'", idxPath.string()));
+        }
+        if (bufferSize > static_cast<VkDeviceSize>(std::numeric_limits<std::streamsize>::max())) {
+            throw std::runtime_error(std::format("Index buffer size exceeds stream read limit for file '{}': size={}", idxPath.string(), bufferSize));
+        }
+        if (!std::filesystem::is_regular_file(idxPath)) {
+            throw std::runtime_error(std::format("Index file does not exist or is not a regular file: '{}'", idxPath.string()));
+        }
+
+        const std::uintmax_t fileSize = std::filesystem::file_size(idxPath);
+        if (fileSize != bufferSize) {
+            throw std::runtime_error(std::format("Index file size mismatch for '{}': expected {} bytes, actual {} bytes", idxPath.string(), bufferSize, fileSize));
+        }
 
         CVulkanBuffer src{context, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, bufferSize};
         CVulkanBuffer dst{context, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, bufferSize};
 
-        std::ifstream binFile {idxPath, std::ios::binary | std::ios::in};
+        std::ifstream binFile{idxPath, std::ios::binary | std::ios::in};
         if (!binFile) {
-            throw std::runtime_error(std::format("Failed to open {}", idxPath.string()));
+            throw std::runtime_error(std::format("Failed to open index file '{}'", idxPath.string()));
         }
+
+        logging::debug("Mapping index staging buffer: size={} bytes", bufferSize);
         src.mapMem();
-        binFile.read(static_cast<char*>(src.mappedMemory()), bufferSize);
+        void* mappedMemory = src.mappedMemory();
+        if (mappedMemory == nullptr) {
+            src.unMapMem();
+            throw std::runtime_error(std::format("Failed to map index staging buffer for file '{}'", idxPath.string()));
+        }
+
+        binFile.read(static_cast<char*>(mappedMemory), static_cast<std::streamsize>(bufferSize));
+        const std::streamsize bytesRead = binFile.gcount();
         src.unMapMem();
 
-        return {(std::move(src)), (std::move(dst))};
+        if (bytesRead != static_cast<std::streamsize>(bufferSize)) {
+            throw std::runtime_error(std::format("Failed to read index file '{}': expected {} bytes, read {} bytes", idxPath.string(), bufferSize, bytesRead));
+        }
+
+        logging::debug("Index staging buffer loaded successfully: file='{}', size={} bytes", idxPath.string(), bufferSize);
+        return {std::move(src), std::move(dst)};
     }
 
     CVulkanBuffer buffutil::allocateHostVisibleBuffer(const CVulkanContext& context, CVulkanDescriptorAllocator& allocator, const VkDeviceSize size, const VkBufferUsageFlags usage, const std::string& id, const CVulkanDescriptorSetLayout& layout) {

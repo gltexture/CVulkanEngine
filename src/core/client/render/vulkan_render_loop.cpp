@@ -28,10 +28,10 @@ namespace cvulkan::client::render::loop {
             }
         }
         if (graphicsQueueFamilyIndex == UINT32_MAX) {
-            throw std::runtime_error("Couldn't find graphicsQueueFamilyIndex in registry");
+            throw std::runtime_error("Graphics queue family index not found in registry");
         }
         if (presentationQueueFamilyIndex == UINT32_MAX) {
-            throw std::runtime_error("Couldn't find presentationQueueFamilyIndex in registry");
+            throw std::runtime_error("Presentation queue family index not found in registry");
         }
         {
             this->_commandPools.reserve(renderConfig::MAX_IMAGES_IN_FLIGHT);

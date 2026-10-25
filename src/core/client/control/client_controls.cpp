@@ -11,10 +11,10 @@ namespace cvulkan::client::control {
     std::unique_ptr<MouseControl> g_mouseControl;
 
     void setup(const window::CVulkanWindow& window) {
-        logging::info("Init control:Start");
+        logging::info("Initializing controls");
         g_keyboardControl = std::make_unique<KeyboardControl>(window);
         g_mouseControl = std::make_unique<MouseControl>(window);
-        logging::info("Init control:End");
+        logging::info("Controls initialized");
     }
 
     void update_input() {

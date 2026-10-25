@@ -16,13 +16,13 @@ namespace cvulkan::client::render::vk {
             .sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO,
         };
         vk::util::vkCheck(vkCreatePipelineCache(this->_context.device().vkDevice(), &pipelineCacheCreateInfo, nullptr, &this->_vkPipelineCache), "Error creating vkPipeline cache");
-        logging::info("Created vkPipelineCache");
+        logging::info("Created Vulkan pipeline cache");
     }
 
     CVulkanPipelineCache::~CVulkanPipelineCache() {
         if (this->_vkPipelineCache != VK_NULL_HANDLE) {
             vkDestroyPipelineCache(this->_context.device().vkDevice(), this->_vkPipelineCache, nullptr);
-            logging::info("Destroyed vkPipelineCache");
+            logging::info("Destroyed Vulkan pipeline cache");
             this->_vkPipelineCache = VK_NULL_HANDLE;
         }
     }

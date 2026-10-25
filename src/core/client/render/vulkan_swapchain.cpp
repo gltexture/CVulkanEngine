@@ -24,7 +24,7 @@ namespace cvulkan::client::render::vk {
                 imageCount = std::min(requestedImages, maxImages);
             }
             imageCount = std::max(imageCount, minImages);
-            logging::info("Requested {} images", imageCount);
+            logging::debug("Requested {} swapchain images", imageCount);
         }
 
         {
@@ -73,14 +73,14 @@ namespace cvulkan::client::render::vk {
             }
         }
 
-        logging::info("Created vkSwapChain");
+        logging::info("Created Vulkan swapchain");
     }
 
     CVulkanSwapChain::~CVulkanSwapChain() {
         if (this->_vkSwapChain != VK_NULL_HANDLE) {
             vkDestroySwapchainKHR(this->_context.device().vkDevice(), this->_vkSwapChain, nullptr);
             this->_vkSwapChain = VK_NULL_HANDLE;
-            logging::info("Destroyed vkSwapChain");
+            logging::info("Destroyed Vulkan swapchain");
         }
     }
 
@@ -88,14 +88,14 @@ namespace cvulkan::client::render::vk {
         vk::util::vkCheck(glfwCreateWindowSurface(context.instance().vkInstance(), this->_context.glfwWindow().glfwWindowDescriptor(), nullptr, &this->_vkSurface));
         vk::util::vkCheck(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(context.physicalDevice().vkPhysicalDevice(), this->_vkSurface, &this->_vkSurfaceCapabilities));
         calcSurfaceFormat(this->_context.physicalDevice(), this->_vkSurface, this->_vkFormat, this->_vkColorSpace);
-        logging::info("Created vkSurface");
+        logging::debug("Created Vulkan surface");
     }
 
     CVulkanSurface::~CVulkanSurface() {
         if (this->_vkSurface != VK_NULL_HANDLE) {
             vkDestroySurfaceKHR(this->_context.instance().vkInstance(), this->_vkSurface, nullptr);
             this->_vkSurface = VK_NULL_HANDLE;
-            logging::info("Destroyed vkSurface");
+            logging::debug("Destroyed Vulkan surface");
         }
     }
 
@@ -103,7 +103,7 @@ namespace cvulkan::client::render::vk {
         uint32_t surfaceFormatCount = 0;
         vk::util::vkCheck(vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device_data.vkPhysicalDevice(), vkSurface, &surfaceFormatCount, nullptr));
         if (surfaceFormatCount == 0) {
-            throw std::runtime_error("Failed to get surface format count");
+            throw std::runtime_error("Failed to query surface format count");
         }
         std::vector<VkSurfaceFormatKHR> surfaceFormats(surfaceFormatCount);
         vk::util::vkCheck(vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device_data.vkPhysicalDevice(), vkSurface, &surfaceFormatCount, surfaceFormats.data()));
@@ -113,7 +113,7 @@ namespace cvulkan::client::render::vk {
             if (f == VK_FORMAT_B8G8R8A8_SRGB && c == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
                 vkFormat = f;
                 vkColorSpace = c;
-                logging::info("Setting up format {}, color space {}", static_cast<int>(f), static_cast<int>(c));
+                logging::debug("Using surface format {}, color space {}", static_cast<int>(f), static_cast<int>(c));
                 break;
             }
         }
@@ -129,7 +129,7 @@ namespace cvulkan::client::render::vk {
             case VK_SUCCESS:
                 break;
             default:
-                throw std::runtime_error("Failed to acquire next swap chain image");
+                throw std::runtime_error("Failed to acquire next swapchain image");
         }
         return imageIndex;
     }
@@ -151,7 +151,7 @@ namespace cvulkan::client::render::vk {
             case VK_SUCCESS:
                 break;
             default:
-                throw std::runtime_error("Failed to present KHRe");
+                throw std::runtime_error("Failed to present swapchain image");
         }
         return false;
     }

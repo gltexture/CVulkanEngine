@@ -105,13 +105,13 @@ namespace cvulkan::client::render::asset {
         std::filesystem::remove_all(outputFullPathDir);
         std::filesystem::create_directories(outputFullPathDir);
 
-        logging::info("Processing model {}", rawModelFullPath.string());
+        logging::info("Processing model '{}'", rawModelFullPath.string());
 
         Assimp::Importer importer{};
 
         const aiScene* assimpScene = importer.ReadFile(rawModelFullPath.string(), IMPORT_FLAGS);
         if (assimpScene == nullptr) {
-            throw std::runtime_error(std::format("Failed to open scene {}: {}", rawModelFullPath.string(), importer.GetErrorString()));
+            throw std::runtime_error(std::format("Failed to open scene '{}': {}", rawModelFullPath.string(), importer.GetErrorString()));
         }
 
         const std::string modelId = normalizedRelativePath.generic_string();
@@ -137,7 +137,6 @@ namespace cvulkan::client::render::asset {
         };
 
         const uint32_t numMaterials = assimpScene->mNumMaterials;
-        logging::debug("Num Materials: {}", numMaterials);
         std::vector<CVulkanMaterialData> materials{};
         materials.reserve(numMaterials);
         for (uint32_t i = 0; i < numMaterials; ++i) {
@@ -164,40 +163,40 @@ namespace cvulkan::client::render::asset {
             };
             std::ofstream writer{outModelFile, std::ios::out | std::ios::trunc};
             if (!writer) {
-                throw std::runtime_error(std::format("Failed to open model file {}", outModelFile.string()));
+                throw std::runtime_error(std::format("Failed to open output model file '{}'", outModelFile.string()));
             }
             const nlohmann::json json = modelData;
             writer << json.dump(4);
             if (!writer) {
-                throw std::runtime_error(std::format("Failed to write model file {}", outModelFile.string()));
+                throw std::runtime_error(std::format("Failed to write output model file '{}'", outModelFile.string()));
             }
-            logging::info("Generated model file [{}]", outModelFile.string());
+            logging::debug("Generated model file '{}'", outModelFile.string());
         }
 
         {
             std::ofstream writer{outMaterialFile, std::ios::out | std::ios::trunc};
             if (!writer) {
-                throw std::runtime_error(std::format("Failed to open materials file {}", outMaterialFile.string()));
+                throw std::runtime_error(std::format("Failed to open output materials file '{}'", outMaterialFile.string()));
             }
             const nlohmann::json json = materials;
             writer << json.dump(4);
             if (!writer) {
-                throw std::runtime_error(std::format("Failed to write materials file {}", outMaterialFile.string()));
+                throw std::runtime_error(std::format("Failed to write output materials file '{}'", outMaterialFile.string()));
             }
-            logging::info("Generated materials file [{}]", outMaterialFile.string());
+            logging::debug("Generated materials file '{}'", outMaterialFile.string());
         }
 
-        logging::info("Generated vtx file {}", outVtxPath.string());
-        logging::info("Generated idx file {}", outIdxPath.string());
+        logging::debug("Generated vertex file '{}'", outVtxPath.string());
+        logging::debug("Generated index file '{}'", outIdxPath.string());
 
         {
             const CVulkanModelCache vulkanModelCache = genModelCache(io_utils::CVulkanResourcePath{normalizedRelativePath.parent_path()});
             std::ofstream writer{outCacheFile, std::ios::out | std::ios::trunc};
             if (!writer) {
-                throw std::runtime_error(std::format("Failed to open cache file {}", outCacheFile.string()));
+                throw std::runtime_error(std::format("Failed to open output cache file '{}'", outCacheFile.string()));
             }
             vulkanModelCache.write(writer);
-            logging::info("Generated cache file {}", outCacheFile.string());
+            logging::debug("Generated cache file '{}'", outCacheFile.string());
         }
 
         return {
@@ -388,7 +387,7 @@ namespace cvulkan::client::render::asset {
     }
 
     modelGen::CVulkanMaterialData modelGen::processMaterial(const aiScene& assimpScene, const aiMaterial& assimpMaterial, const std::filesystem::path& currentPath, const std::filesystem::path& directoryToCopyTextures, const std::string& modelId, uint32_t pos) {
-        logging::debug("Processing material {}", modelId);
+        logging::info("Processing material (model id: '{}'), (material pos: '{}')", modelId, pos);
         aiColor4D color{};
         glm::vec4 colorVec{};
         const aiReturn result = aiGetMaterialColor(&assimpMaterial, AI_MATKEY_COLOR_DIFFUSE, &color);
@@ -432,13 +431,13 @@ namespace cvulkan::client::render::asset {
                 std::ofstream outTexture{textureFullPath,std::ios::out | std::ios::binary | std::ios::trunc};
 
                 if (!outTexture) {
-                    throw std::runtime_error(std::format("Failed to open texture file {}", textureFullPath.string()));
+                    throw std::runtime_error(std::format("Failed to open output texture file '{}'", textureFullPath.string()));
                 }
 
                 outTexture.write(reinterpret_cast<const char*>(embeddedTexture->pcData), embeddedTexture->mWidth);
 
                 if (!outTexture) {
-                    throw std::runtime_error(std::format("Failed to write texture file {}", textureFullPath.string()));
+                    throw std::runtime_error(std::format("Failed to write output texture file '{}'", textureFullPath.string()));
                 }
             } else {
                 constexpr int channels = 4;
@@ -447,10 +446,10 @@ namespace cvulkan::client::render::asset {
                 const int stride = width * channels;
 
                 if (stbi_write_png(textureFullPath.string().c_str(), width, height, channels, embeddedTexture->pcData, stride) == 0) {
-                    throw std::runtime_error(std::format("Failed to encode texture to PNG: {}", textureFullPath.string()));
+                    throw std::runtime_error(std::format("Failed to encode texture '{}' as PNG", textureFullPath.string()));
                 }
             }
-            logging::info("Dumped texture: {}", textureFullPath.string());
+            logging::debug("Dumped texture '{}'", textureFullPath.string());
 
             return io_utils::CVulkanResourcePath{io_utils::TEXTURES / unpackedTexturePath};
         }
@@ -458,7 +457,7 @@ namespace cvulkan::client::render::asset {
         const std::filesystem::path source = currentPath / texturePath;
 
         if (!std::filesystem::is_regular_file(source)) {
-            throw std::runtime_error(std::format("Texture file does not exist: {}", source.string()));
+            throw std::runtime_error(std::format("Texture file '{}' does not exist", source.string()));
         }
 
         const std::filesystem::path destination =directoryToCopyTextures / texturePath;
@@ -470,10 +469,9 @@ namespace cvulkan::client::render::asset {
 
     std::vector<modelGen::CVulkanMaterialData> modelLoad::loadMaterialsJSON(const io_utils::CVulkanResourcePath& materialsFile) {
         const auto fullPath = io_utils::RES_RESOLVER / materialsFile;
-        logging::info("Loading materials from {}", fullPath.string());
         std::ifstream reader{fullPath, std::ios::in | std::ios::binary};
         if (!reader) {
-            throw std::runtime_error(std::format("Failed to open materials file {}", fullPath.string()));
+            throw std::runtime_error(std::format("Failed to open materials file '{}'", fullPath.string()));
         }
         nlohmann::json json;
         reader >> json;
@@ -484,17 +482,16 @@ namespace cvulkan::client::render::asset {
         return materialData;
     }
 
-    modelGen::CVulkanModelData modelLoad::loadModelJSON(const io_utils::CVulkanResourcePath& pathToModel) {
-        const auto fullPath = io_utils::RES_RESOLVER / pathToModel;
-        logging::info("Loading model from {}", fullPath.string());
+    modelGen::CVulkanModelData modelLoad::loadModelJSON(const io_utils::CVulkanResourcePath& modelFile) {
+        const auto fullPath = io_utils::RES_RESOLVER / modelFile;
         std::ifstream reader{fullPath, std::ios::in | std::ios::binary};
         if (!reader) {
-            throw std::runtime_error(std::format("Failed to open model file {}", fullPath.string()));
+            throw std::runtime_error(std::format("Failed to open model file '{}'", fullPath.string()));
         }
         nlohmann::json json;
         reader >> json;
         auto modelData = json.get<modelGen::CVulkanModelData>();
-        const auto parentPath = pathToModel.path().parent_path();
+        const auto parentPath = modelFile.path().parent_path();
         modelData._idxPath = io_utils::CVulkanResourcePath{parentPath / modelData._idxPath.path()};
         modelData._vtxPath = io_utils::CVulkanResourcePath{parentPath / modelData._vtxPath.path()};
         modelData._cachePath = io_utils::CVulkanResourcePath{parentPath / modelData._cachePath.path()};
@@ -524,7 +521,7 @@ namespace cvulkan::client::render::asset {
             }
 
             if (gen) {
-                logging::info("Invalidated {}, recompiling", relativePath.string() );
+                logging::info("Asset '{}' is outdated, recompiling", relativePath.string());
                 const auto [outputModelJSONPath, outputMaterialsJSONPath] = modelGen::processRawModelAndGetOutputJSON(modelFile);
                 pathToModelJSON = outputModelJSONPath;
             }
@@ -533,7 +530,7 @@ namespace cvulkan::client::render::asset {
         auto modelData = loadModelJSON(pathToModelJSON);
         const auto& pathToMaterialJSON = modelData._materialsPath;
 
-        logging::info("Loading {}, materials {}", pathToModelJSON.path().string(), pathToMaterialJSON.path().string() );
+        logging::debug("Loading model '{}' with materials '{}'", pathToModelJSON.path().string(), pathToMaterialJSON.path().string());
 
         auto materialsData = loadMaterialsJSON(pathToMaterialJSON);
         return {std::move(modelData), std::move(materialsData)};

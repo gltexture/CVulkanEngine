@@ -11,7 +11,7 @@
 namespace cvulkan::client::render::asset {
     CVulkanImageSrc::~CVulkanImageSrc() {
         if (this->_data != nullptr) {
-            logging::debug("stbi_image_free, addr={:p}, size={}", static_cast<void*>(_data), _dataSize);
+            logging::trace("Freeing stbi image data: addr={:p}, size={}", static_cast<void*>(_data), _dataSize);
             stbi_image_free(this->_data);
             this->_data = nullptr;
         }
@@ -23,7 +23,7 @@ namespace cvulkan::client::render::asset {
         int channels;
         unsigned char* bytes = stbi_load(imagePath.string().c_str(), &x, &y, &channels, 4);
         if (bytes == nullptr) {
-            throw std::runtime_error(std::format("Failed to load image {}", imagePath.string()));
+            throw std::runtime_error(std::format("Failed to load image '{}'", imagePath.string()));
         }
         return {
             bytes,
@@ -37,9 +37,9 @@ namespace cvulkan::client::render::asset {
         assert(imageSrc._data != nullptr);
         assert(imageSrc._dataSize > 0);
 
-        logging::debug("Creating texture '{}': data = {:p}, size = {}", id, static_cast<const void*>(imageSrc._data), imageSrc._dataSize);
+        logging::debug("Creating texture '{}': data={:p}, size={}", id, static_cast<const void*>(imageSrc._data), imageSrc._dataSize);
         if (imageSrc._data == nullptr || imageSrc._dataSize <= 0) {
-            throw std::runtime_error(std::format("Invalid image data for texture {}", id));
+            throw std::runtime_error(std::format("Invalid image data for texture '{}'", id));
         }
 
         this->createStgBuffer(context, imageSrc._data, imageSrc._dataSize);
@@ -137,11 +137,11 @@ namespace cvulkan::client::render::asset {
         assert(_dataSize > 0);
 
         if (_data == nullptr || _dataSize == 0) {
-            logging::error("Invalid texture data for '{}'", this->_id);
-            throw std::runtime_error("Invalid texture data");
+            logging::error("Texture '{}' has invalid image data", this->_id);
+            throw std::runtime_error(std::format("Texture '{}' has invalid image data", this->_id));
         }
 
-        logging::debug("Creating staging buffer for '{}': {} bytes", this->_id, _dataSize);
+        logging::debug("Creating staging buffer for texture '{}': {} bytes", this->_id, _dataSize);
 
         this->_stgBuffer = std::make_unique<vk::CVulkanBuffer>(context, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, static_cast<VkDeviceSize>(_dataSize));
         this->_stgBuffer->mapMem();
@@ -150,12 +150,12 @@ namespace cvulkan::client::render::asset {
 
         assert(mapped != nullptr);
         if (mapped == nullptr) {
-            logging::error("Mapped memory is null for texture '{}'", this->_id);
-            throw std::runtime_error("Failed to map staging buffer");
+            logging::error("Failed to map staging buffer memory for texture '{}'", this->_id);
+            throw std::runtime_error(std::format("Failed to map staging buffer memory for texture '{}'", this->_id));
         }
 
         std::memcpy(mapped, _data, _dataSize);
-        logging::debug("Copied {} bytes to staging buffer for '{}'", _dataSize, this->_id);
+        logging::trace("Copied {} bytes to staging buffer for texture '{}'", _dataSize, this->_id);
         this->_stgBuffer->unMapMem();
     }
 }
