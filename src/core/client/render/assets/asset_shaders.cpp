@@ -79,10 +79,10 @@ namespace cvulkan::client::render::asset {
         }
     }
 
-    shader::CVulkanShaderModule shaderLoad::compileAndLoadShader(const vk::CVulkanContext& context, const io_utils::CVulkanResourcePath& shaderSourceFile, const uint32_t shaderType, const VkShaderStageFlagBits vkStage) {
-        shaderCompile::compileShaderIfOutOfDate(shaderSourceFile, shaderType);
+    shader::CVulkanShaderModule shaderLoad::compileAndLoadShader(const vk::CVulkanContext &context, const io_utils::CVulkanResourcePath &shaderSourceFile, VkShaderStageFlagBits vkStage) {
+        shaderCompile::compileShaderIfOutOfDate(shaderSourceFile, toShadercKind(vkStage));
 
-        const std::filesystem::path relativePath = shaderSourceFile.path();
+        const std::filesystem::path& relativePath = shaderSourceFile.path();
         std::filesystem::path spvRelativePath = relativePath;
         spvRelativePath += ".spv";
         return {context, io_utils::CVulkanResourcePath{spvRelativePath}, vkStage};

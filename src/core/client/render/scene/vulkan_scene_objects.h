@@ -22,7 +22,7 @@ namespace cvulkan::client::render::entity {
 
     class CVulkanSceneEntity {
     public:
-        CVulkanSceneEntity(const std::string& id, const std::string& modelId);
+        CVulkanSceneEntity(std::string_view id, std::string_view modelId);
         ~CVulkanSceneEntity();
 
         CLASS_NO_COPY(CVulkanSceneEntity);

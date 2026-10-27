@@ -138,7 +138,7 @@ namespace cvulkan::client::render::asset {
 
         CVulkanMeshData processMesh(const aiScene& assimpScene, const aiMesh& assimpMesh, const std::vector<CVulkanMaterialData>& materials, CVulkanModelBinData& modelBinData, uint32_t pos);
 
-        CVulkanModelCache genModelCache(const io_utils::CVulkanResourcePath& modelRootDirectory);
+        CVulkanModelCache genModelCache(const io_utils::CVulkanResourcePath& rawModelRootDirectory);
         bool isInvalidCache(const io_utils::CVulkanResourcePath& cacheFile, const io_utils::CVulkanResourcePath& modelRootDirectory);
 
         std::vector<float> processUV(const aiMesh& aiMesh);

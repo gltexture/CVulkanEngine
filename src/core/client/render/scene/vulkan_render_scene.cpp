@@ -198,15 +198,18 @@ namespace cvulkan::client::render::scene {
         _descriptorAllocator{context} {
         this->createRenderAttachmentsData();
 
-        auto [_loadedModels] = this->_sceneContext.loadResources(this->_descriptorAllocator, this->_entitiesCollection);
+        context::CVulkanSceneResourcesInitializer resourcesInitializer {};
+        this->_sceneContext.loadResources(this->_descriptorAllocator, resourcesInitializer);
 
         std::vector<asset::modelGen::CVulkanMaterialData> materials {};
         std::vector<asset::modelGen::CVulkanModelData> models {};
-        for (const auto& [_modelData, _materialsData] : _loadedModels) {
+        for (const auto& [_modelData, _materialsData] : resourcesInitializer.loadedResourcesData()._loadedModels) {
             materials.insert(materials.end(), _materialsData.begin(), _materialsData.end());
             models.push_back(_modelData);
         }
         this->initCacheData(materials, models);
+
+        this->_sceneContext.initializeObjects(this->_entitiesCollection);
     }
 
     CVulkanSceneRenderer::~CVulkanSceneRenderer() {

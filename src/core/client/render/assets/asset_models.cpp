@@ -256,12 +256,12 @@ namespace cvulkan::client::render::asset {
         return meshData;
     }
 
-    modelGen::CVulkanModelCache modelGen::genModelCache(const io_utils::CVulkanResourcePath& modelRootDirectory) {
+    modelGen::CVulkanModelCache modelGen::genModelCache(const io_utils::CVulkanResourcePath& rawModelRootDirectory) {
         CVulkanModelCache cache {};
         cache._version = _GEN_VER;
 
-        const io_utils::CVulkanResourcePath compiledModelResourcePath = io_utils::CVulkanResourcePath{io_utils::MODELS_COMPILED} / modelRootDirectory;
-        const std::filesystem::path modelRootFullPath = io_utils::RES_RESOLVER / compiledModelResourcePath;
+        const io_utils::CVulkanResourcePath rawModelResourcePath = io_utils::CVulkanResourcePath{io_utils::MODELS_SOURCE} / rawModelRootDirectory;
+        const std::filesystem::path modelRootFullPath = io_utils::RES_RESOLVER / rawModelResourcePath;
 
         for (const auto& entry : std::filesystem::recursive_directory_iterator(modelRootFullPath)) {
             if (!entry.is_regular_file()) {
@@ -283,11 +283,11 @@ namespace cvulkan::client::render::asset {
     }
 
     bool modelGen::isInvalidCache(const io_utils::CVulkanResourcePath& cacheFile, const io_utils::CVulkanResourcePath& modelRootDirectory) {
-        const io_utils::CVulkanResourcePath compiledCacheResourcePath = io_utils::CVulkanResourcePath{io_utils::MODELS_COMPILED} / cacheFile;
-        const io_utils::CVulkanResourcePath compiledModelResourcePath = io_utils::CVulkanResourcePath{io_utils::MODELS_COMPILED} / modelRootDirectory;
 
-        const std::filesystem::path cacheFullPath = io_utils::RES_RESOLVER / compiledCacheResourcePath;
-        const std::filesystem::path modelRootFullPath = io_utils::RES_RESOLVER / compiledModelResourcePath;
+        const std::filesystem::path cacheFullPath = io_utils::RES_RESOLVER / cacheFile;
+        const std::filesystem::path modelRootFullPath = io_utils::RES_RESOLVER / modelRootDirectory;
+
+        logging::debug("Checking model cache: '{}', 'model root: '{}'", cacheFullPath.string(), modelRootFullPath.string());
 
         if (!std::filesystem::is_regular_file(cacheFullPath)) {
             return INVALID;
@@ -295,18 +295,19 @@ namespace cvulkan::client::render::asset {
         CVulkanModelCache cache{};
         {
             std::ifstream reader{cacheFullPath, std::ios::binary};
-            if (!reader) {
+            if (!reader) {;
                 return INVALID;
             }
 
             try {
                 cache.read(reader);
-            } catch (const std::exception&) {
+            } catch (const std::exception& e) {
+                logging::warn("Failed to read model cache '{}', : '{}'", cacheFullPath.string(), e.what());
                 return INVALID;
             }
         }
 
-        if (cache._version != _GEN_VER) {
+        if (cache._version != _GEN_VER) {;
             return INVALID;
         }
 
@@ -513,8 +514,7 @@ namespace cvulkan::client::render::asset {
             bool gen = true;
 
             if (std::filesystem::is_regular_file(modelJSONFullPath)) {
-                const auto modelData = loadModelJSON(pathToModelJSON);
-                if (!modelData._cachePath.path().empty()) {
+                if (const auto modelData = loadModelJSON(pathToModelJSON); !modelData._cachePath.path().empty()) {
                     const io_utils::CVulkanResourcePath rawModelRoot {io_utils::MODELS_SOURCE / relativePath.parent_path()};
                     gen = modelGen::isInvalidCache(modelData._cachePath, rawModelRoot);
                 }

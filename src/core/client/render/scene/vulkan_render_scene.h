@@ -59,8 +59,25 @@ namespace cvulkan::client::render::scene {
     };
 
     namespace context {
+        using ModelId = std::string;
+
         struct CVulkanLoadedResourcesData {
             std::vector<asset::modelLoad::CVulkanLoadedModelData> _loadedModels {};
+        };
+
+        class CVulkanSceneResourcesInitializer {
+        public:
+            CVulkanSceneResourcesInitializer() = default;
+            ~CVulkanSceneResourcesInitializer() = default;
+
+            ModelId loadModelWithMaterials(const io_utils::CVulkanResourcePath& resourcePath);
+
+            [[nodiscard]] const CVulkanLoadedResourcesData& loadedResourcesData() const {
+                return _loadedResourcesData;
+            }
+
+        private:
+            CVulkanLoadedResourcesData _loadedResourcesData;
         };
 
         class CVulkanSceneContext {
@@ -70,10 +87,13 @@ namespace cvulkan::client::render::scene {
 
             CLASS_NO_COPY_NO_MOVE(CVulkanSceneContext)
 
-            CVulkanLoadedResourcesData loadResources(vk::CVulkanDescriptorAllocator& descriptorAllocator, CVulkanSceneEntitiesCollection& entitiesCollection);
+            void loadResources(vk::CVulkanDescriptorAllocator& descriptorAllocator, CVulkanSceneResourcesInitializer& sceneResourcesInitializer);
+            void initializeObjects(CVulkanSceneEntitiesCollection& entitiesCollection);
+
             void renderContext(const vk::CVulkanCommandBuffer &commandBuffer, const vk::CVulkanDescriptorAllocator &descriptorAllocator, const
                                CVulkanSceneEntitiesCollection
                                &entitiesCollection, const cache::CVulkanCacheCollection &caches) const;
+
             void onResize();
 
             [[nodiscard]] transform::CVulkanSceneProjection& projection() {

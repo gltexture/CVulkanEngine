@@ -6,10 +6,18 @@
 #include "utility/io_utils.h"
 
 namespace cvulkan::client::render::scene::context {
+    ModelId CVulkanSceneResourcesInitializer::loadModelWithMaterials(const io_utils::CVulkanResourcePath& resourcePath) {
+        asset::modelLoad::CVulkanLoadedModelData cubeModel = asset::modelLoad::loadModelWithMaterials(resourcePath);
+        this->_loadedResourcesData._loadedModels.push_back(std::move(cubeModel));
+        return this->_loadedResourcesData._loadedModels.back()._modelData._id;
+    }
+
     CVulkanSceneContext::CVulkanSceneContext(const vk::CVulkanContext &context) : _context{context}, _projection({glm::radians(60.0f), 0.1f, 1024.0f, {context.swapChain().extent()}}) {
     }
 
-    CVulkanLoadedResourcesData CVulkanSceneContext::loadResources(vk::CVulkanDescriptorAllocator& descriptorAllocator, CVulkanSceneEntitiesCollection& entitiesCollection) {
+    static ModelId SCENE_MODEL_ID {};
+
+    void CVulkanSceneContext::loadResources(vk::CVulkanDescriptorAllocator& descriptorAllocator, CVulkanSceneResourcesInitializer& sceneResourcesInitializer) {
         this->_descVertexUniformLayout = std::make_unique<vk::CVulkanDescriptorSetLayout>(this->_context, std::initializer_list<vk::CVulkanLayoutInfo>{
                 {
                     ._descType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
@@ -46,8 +54,8 @@ namespace cvulkan::client::render::scene::context {
         };
         this->_defaultTextureSampler = std::make_unique<vk::CVulkanSampler>(this->_context, samplerInfo);
 
-        const shader::CVulkanShaderModule shaderV = asset::shaderLoad::compileAndLoadShader(this->_context, io_utils::CVulkanResourcePath{"scene/v.vert"}, shaderc_glsl_vertex_shader, VK_SHADER_STAGE_VERTEX_BIT);
-        const shader::CVulkanShaderModule shaderF = asset::shaderLoad::compileAndLoadShader(this->_context, io_utils::CVulkanResourcePath{"scene/f.frag"}, shaderc_glsl_fragment_shader, VK_SHADER_STAGE_FRAGMENT_BIT);
+        const shader::CVulkanShaderModule shaderV = asset::shaderLoad::compileAndLoadShader(this->_context, io_utils::CVulkanResourcePath{"scene/v.vert"}, VK_SHADER_STAGE_VERTEX_BIT);
+        const shader::CVulkanShaderModule shaderF = asset::shaderLoad::compileAndLoadShader(this->_context, io_utils::CVulkanResourcePath{"scene/f.frag"}, VK_SHADER_STAGE_FRAGMENT_BIT);
         std::vector<vk::Ref_CVulkanShaderModule> shaderModules  {};
         shaderModules.reserve(2);
         shaderModules.push_back(std::cref(shaderV));
@@ -80,17 +88,14 @@ namespace cvulkan::client::render::scene::context {
         this->_defaultRenderPipeline = std::make_unique<vk::CVulkanPipeline>(this->_context, buildInfo);
 
 
-        asset::modelLoad::CVulkanLoadedModelData cubeModel = asset::modelLoad::loadModelWithMaterials(io_utils::CVulkanResourcePath {"cube/cube.obj"});
-        std::vector<asset::modelLoad::CVulkanLoadedModelData> loadedResourcesData {};
+        SCENE_MODEL_ID = sceneResourcesInitializer.loadModelWithMaterials(io_utils::CVulkanResourcePath {"cube/cube.obj"});
+    }
 
-        entity::CVulkanSceneEntity entity = {"CubeEnt", cubeModel._modelData._id};
+    void CVulkanSceneContext::initializeObjects(CVulkanSceneEntitiesCollection& entitiesCollection) {
+        entity::CVulkanSceneEntity entity = {"CubeEnt", SCENE_MODEL_ID};
         entity.transform()._position = {0.0f, 0.0f, -6.0f};
         entity.transform()._rotation = glm::angleAxis(glm::radians(45.0f), glm::vec3(1.0f, 1.0f, 1.0f));
         entitiesCollection.addEntity(std::move(entity));
-
-        loadedResourcesData.push_back(std::move(cubeModel));
-
-        return {loadedResourcesData};
     }
 
     void CVulkanSceneContext::renderContext(const vk::CVulkanCommandBuffer& commandBuffer, const vk::CVulkanDescriptorAllocator& descriptorAllocator, const CVulkanSceneEntitiesCollection& entitiesCollection, const cache::CVulkanCacheCollection& caches) const {
