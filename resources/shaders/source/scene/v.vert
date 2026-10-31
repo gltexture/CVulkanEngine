@@ -8,6 +8,10 @@ layout(location = 0) out vec2 outTextCoords;
 layout(set = 0, binding = 0) uniform ProjUniform {
     mat4 matrix;
 } projUniform;
+layout(set = 1, binding = 0) uniform ViewUniform {
+    mat4 matrix;
+} viewUniform;
+
 
 layout(push_constant) uniform pc {
     mat4 modelMatrix;
@@ -15,6 +19,6 @@ layout(push_constant) uniform pc {
 
 void main()
 {
-    gl_Position = projUniform.matrix * push_constants.modelMatrix * vec4(inPos, 1);
+    gl_Position = projUniform.matrix * viewUniform.matrix * push_constants.modelMatrix * vec4(inPos, 1);
     outTextCoords = inTextCoords;
 }

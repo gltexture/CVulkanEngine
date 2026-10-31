@@ -161,16 +161,16 @@ namespace cvulkan::client::render::cache {
         return it->second;
     }
 
-    const asset::CVulkanTexture2D* CVulkanTexturesCache::loadTexture(const std::string& id, const std::filesystem::path& texturePath, const VkFormat& format) {
+    const asset::CVulkanTexture2D& CVulkanTexturesCache::loadTexture(const std::string& id, const std::filesystem::path& texturePath, const VkFormat& format) {
         if (const auto it = this->_indexedTexturesMap.map().find(id); it != this->_indexedTexturesMap.map().end()) {
             logging::debug("Texture '{}' already exists in cache, reusing it", id);
-            return &it->second;
+            return it->second;
         }
 
         logging::debug("Loading texture '{}' from '{}': format={}", id, texturePath.string(), static_cast<uint32_t>(format));
         const asset::CVulkanImageSrc srcImage = asset::imageLoad::loadImage(texturePath);
         const asset::CVulkanTexture2D& texture = this->loadTexture(id, srcImage, format);
-        return &texture;
+        return texture;
     }
 
     [[nodiscard]] int32_t CVulkanTexturesCache::getPosition(const std::string& id) const {
@@ -188,7 +188,7 @@ namespace cvulkan::client::render::cache {
         logging::debug("Cleaned up materials cache");
     }
 
-    void CVulkanMaterialsCache::loadMaterials(const std::vector<asset::modelGen::CVulkanMaterialData>& materials, CVulkanTexturesCache& texturesCache, const vk::CVulkanCommandPool& commandPool, const vk::CVulkanQueue& queue) {
+    void CVulkanMaterialsCache::loadMaterials(std::vector<asset::modelGen::CVulkanMaterialData>& materials, CVulkanTexturesCache& texturesCache, const vk::CVulkanCommandPool& commandPool, const vk::CVulkanQueue& queue) {
         const std::size_t numMaterials = materials.size();
         logging::debug("Loading {} materials into Vulkan", numMaterials);
 
@@ -198,7 +198,7 @@ namespace cvulkan::client::render::cache {
         }
 
         constexpr VkDeviceSize materialDataSize = sizeof(glm::vec4) + 4 * sizeof(int32_t);
-        if (MAT_BUFFER_SIZE != materialDataSize) {
+        if constexpr (MAT_BUFFER_SIZE != materialDataSize) {
             throw std::runtime_error(std::format("Material buffer size mismatch: MAT_BUFFER_SIZE={}, expected={}", MAT_BUFFER_SIZE, materialDataSize));
         }
 
@@ -229,7 +229,7 @@ namespace cvulkan::client::render::cache {
         std::size_t texturedMaterials = 0;
 
         for (std::size_t i = 0; i < numMaterials; i++) {
-            const auto& [_id, _texturePath, _diffuseColor] = materials.at(i);
+            auto& [_id, _texturePath, _diffuseColor, _hasTransparency] = materials.at(i);
             logging::debug("Processing material '{}': index={}, texturePath='{}'", _id, i, _texturePath.path().string());
 
             if (offset + MAT_BUFFER_SIZE > bufferSize) {
@@ -240,10 +240,11 @@ namespace cvulkan::client::render::cache {
             int32_t texturePos = -1;
             int32_t hasTextureValue32 = 0;
 
-            if (! _texturePath.isEmpty()) {
+            if (!_texturePath.isEmpty()) {
                 const std::filesystem::path texturePath = io_utils::RES_RESOLVER / _texturePath;
                 if (std::filesystem::is_regular_file(texturePath)) {
-                    texturesCache.loadTexture(texturePath.string(), texturePath, VK_FORMAT_R8G8B8A8_SRGB);
+                    const asset::CVulkanTexture2D& texture2D = texturesCache.loadTexture(texturePath.string(), texturePath, VK_FORMAT_R8G8B8A8_SRGB);
+                    _hasTransparency = texture2D.hasTransparency();
                     texturePos = texturesCache.getPosition(texturePath.string());
                     if (texturePos < 0) {
                         transferBufferData._src.unMapMem();
@@ -256,10 +257,15 @@ namespace cvulkan::client::render::cache {
                 }
             }
 
-            const structs::CVulkanMaterial material{_id};
+            if (hasTextureValue32 == 0) {
+                _hasTransparency = _diffuseColor.w < 1.0f;
+            }
+
+            const structs::CVulkanMaterial material{_id, _hasTransparency};
             if (this->_indexedMaterialsMap.map().contains(material._id)) {
                 logging::warn("Material '{}' already exists in cache and will be replaced", material._id);
             }
+
             this->_indexedMaterialsMap.emplace(material._id, material);
 
             std::memcpy(mappedMemory + offset, &_diffuseColor, sizeof(glm::vec4)); offset += sizeof(glm::vec4);

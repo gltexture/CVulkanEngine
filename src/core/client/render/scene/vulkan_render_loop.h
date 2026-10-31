@@ -8,6 +8,10 @@
 #include "../vulkan_commands.h"
 #include "../vulkan_synchronization.h"
 
+namespace cvulkan::client::render::scene {
+    class CVulkanSceneRenderer;
+}
+
 namespace cvulkan::client::render::vk {
     class CVulkanContext;
 }
@@ -81,7 +85,8 @@ namespace cvulkan::client::render::loop {
         bool _shouldBeResized {false};
     };
 
-    extern std::unique_ptr<CVulkanRenderLoop> renderLoop;
+    extern std::unique_ptr<scene::CVulkanSceneRenderer> _sceneRenderer;
+    extern std::unique_ptr<CVulkanRenderLoop> _renderLoop;
 
     void createRendering(vk::CVulkanContext& context);
 

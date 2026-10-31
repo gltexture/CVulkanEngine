@@ -26,7 +26,7 @@ namespace cvulkan::client::render::scene {
                     VK_IMAGE_ASPECT_COLOR_BIT);
      */
 
-    void CVulkanSceneRenderer::renderScene(const vk::CVulkanCommandBuffer& commandBuffer, const uint32_t& imageIndex) const {
+    void CVulkanSceneRenderer::renderScene(const vk::CVulkanCommandBuffer& commandBuffer, const uint32_t imageIndex, const uint32_t currentFrame) const {
         vk::img_util::imageBarrier(
             commandBuffer.vkCommandBuffer(),
             this->_context.swapChain().imageViews()[imageIndex].vkImage(),
@@ -74,7 +74,7 @@ namespace cvulkan::client::render::scene {
             vkCmdSetScissor(commandBuffer.vkCommandBuffer(), 0, 1, &scissor);
 
             {
-                this->_sceneContext.renderContext(commandBuffer, this->_descriptorAllocator, this->_entitiesCollection, this->_caches);
+                this->_sceneContext.renderContext(commandBuffer, this->_descriptorAllocator, this->_entitiesCollection, this->_caches, currentFrame);
             }
 
             vkCmdEndRendering(commandBuffer.vkCommandBuffer());
@@ -112,13 +112,12 @@ namespace cvulkan::client::render::scene {
         const vk::CVulkanBuffer& materials = *this->_caches.materialsCache().materialsBuffer();
         mat_descriptorSet.setBuffer(materials, materials.vkRequestedSize(), this->_sceneContext.descFragmentStorageLayout()->layoutInfoArray().front()._binding, this->_sceneContext.descFragmentStorageLayout()->layoutInfoArray().front()._descType);
 
-        const auto& texturesMap = this->_caches.texturesCache().indexedTexturesMap().map();
+        const auto& texturesMap = this->_caches.texturesCache().indexedTexturesMap();
         std::vector<const vk::CVulkanImage2DView*> imageViews;
-        imageViews.reserve(texturesMap.size());
-        std::ranges::transform(texturesMap | std::views::values, std::back_inserter(imageViews),
-            [](const auto& t) {
-                return t.imageView();
-            });
+        imageViews.reserve(texturesMap.keys().size());
+        for (const auto& key : texturesMap.keys()) {
+            imageViews.push_back(texturesMap.getValue(key).imageView());
+        }
 
         const vk::CVulkanDescriptorSet& txt_descriptorSet = this->_descriptorAllocator.allocateDescriptorSets(std::string {DESC_ID_TEXT}, 1, *this->_sceneContext.descTextureLayout()).front();
         txt_descriptorSet.setImagesArray(imageViews, *this->_sceneContext.defaultTextureSampler(), 0);
@@ -171,7 +170,7 @@ namespace cvulkan::client::render::scene {
         }
     }
 
-    void CVulkanSceneRenderer::initCacheData(const std::vector<asset::modelGen::CVulkanMaterialData>& materials, const std::vector<asset::modelGen::CVulkanModelData>& models) {
+    void CVulkanSceneRenderer::initCacheData(std::vector<asset::modelGen::CVulkanMaterialData>& materials, const std::vector<asset::modelGen::CVulkanModelData>& models) {
         const uint32_t transferQueueFamilyIndex = vk::util::findQueueFamilyIndex(this->_context, vk::CVulkanQueueFamilyBitMasks::TRANSFER);
         const vk::CVulkanCommandPool tempPool {this->_context, transferQueueFamilyIndex, true};
         const vk::CVulkanQueue tempQueue {this->_context, transferQueueFamilyIndex, 0};

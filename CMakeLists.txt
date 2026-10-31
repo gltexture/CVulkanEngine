@@ -78,9 +78,7 @@ add_executable(CVulkanEngine
         src/main.cpp
         src/core/client/client_runtime.cpp
         src/core/client/render/glfw_window.cpp
-        src/core/client/control/client_mouse_control.cpp
-        src/core/client/control/client_keyboard_control.cpp
-        src/core/client/control/client_controls.cpp
+        src/core/client/control/client_input.cpp
         src/core/client/render/vulkan_render_core.cpp
         src/core/client/render/vulkan_ext.cpp
         src/core/client/render/vulkan_commands.cpp
@@ -116,6 +114,10 @@ add_executable(CVulkanEngine
         src/core/utility/io_utils.cpp
         src/core/utility/io_utils.h
         src/core/client/render/scene/vulkan_render_scene__context.cpp
+        src/core/client/render/scene/camera/view_camera.cpp
+        src/core/client/render/scene/camera/view_camera.h
+        src/core/test_logic/test_logic.cpp
+        src/core/test_logic/test_logic.h
 )
 
 add_link_options("-fuse-ld=lld")

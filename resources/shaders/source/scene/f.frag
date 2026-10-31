@@ -12,11 +12,11 @@ struct Material {
     uint padding[2];
 };
 
-layout(set = 1, binding = 0) readonly buffer MaterialUniform {
+layout(set = 2, binding = 0) readonly buffer MaterialUniform {
     Material materials[];
 } matUniform;
 
-layout(set = 2, binding = 0) uniform sampler2D textSampler[MAX_TEXTURES];
+layout(set = 3, binding = 0) uniform sampler2D textSampler[MAX_TEXTURES];
 
 layout(push_constant) uniform pc {
     layout(offset = 64) uint materialIdx;

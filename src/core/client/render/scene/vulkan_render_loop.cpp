@@ -7,10 +7,11 @@
 #include "client/render/vulkan_commands.h"
 #include "client/render/vulkan_config.hpp"
 #include "vulkan_render_scene.h"
+#include "test_logic/test_logic.h"
 
 namespace cvulkan::client::render::loop {
-    std::unique_ptr<scene::CVulkanSceneRenderer> sceneRenderer;
-    std::unique_ptr<CVulkanRenderLoop> renderLoop;
+    std::unique_ptr<scene::CVulkanSceneRenderer> _sceneRenderer;
+    std::unique_ptr<CVulkanRenderLoop> _renderLoop;
 
     CVulkanRenderLoop::CVulkanRenderLoop(vk::CVulkanContext& context) : _context{context} {
         const uint32_t graphicsQueueFamilyIndex = vk::util::findQueueFamilyIndex(context, vk::CVulkanQueueFamilyBitMasks::GRAPHICS);
@@ -86,6 +87,11 @@ namespace cvulkan::client::render::loop {
     }
 
     void CVulkanRenderLoop::runRenderLoop() {
+        static double LastTime = glfwGetTime();
+        const double Time = glfwGetTime();
+        const double DeltaTime = Time - LastTime;
+        LastTime = Time;
+
         const vk::CVulkanCommandPool& commandPool = this->_commandPools[this->_currentFrame];
         const vk::CVulkanCommandBuffer& commandBuffer = this->_commandBuffers[this->_currentFrame];
 
@@ -98,8 +104,11 @@ namespace cvulkan::client::render::loop {
             this->resize();
             return;
         }
-        if (sceneRenderer != nullptr) {
-            sceneRenderer->renderScene(commandBuffer, imageIndex);
+        if (_sceneRenderer != nullptr) {
+            {
+                test_logic::updateInput(DeltaTime);
+            }
+            _sceneRenderer->renderScene(commandBuffer, imageIndex, this->_currentFrame);
         }
 
         this->recordingStop(commandBuffer);
@@ -128,28 +137,28 @@ namespace cvulkan::client::render::loop {
             this->_renderCompleteSemaphores.emplace_back(this->_context);
         }
 
-        sceneRenderer->sceneContext().projection().resize({static_cast<uint32_t>(windowSize.x), static_cast<uint32_t>(windowSize.y)});
-        sceneRenderer->onResize();
+        _sceneRenderer->sceneContext().projection().resize({static_cast<uint32_t>(windowSize.x), static_cast<uint32_t>(windowSize.y)});
+        _sceneRenderer->onResize();
         this->_shouldBeResized = false;
     }
 
     void createRendering(vk::CVulkanContext& context) {
-        renderLoop = std::make_unique<CVulkanRenderLoop>(context);
-        sceneRenderer = std::make_unique<scene::CVulkanSceneRenderer>(context, *renderLoop);
+        _renderLoop = std::make_unique<CVulkanRenderLoop>(context);
+        _sceneRenderer = std::make_unique<scene::CVulkanSceneRenderer>(context, *_renderLoop);
     }
 
     void destroyRendering() {
-        if (sceneRenderer != nullptr) {
-            sceneRenderer.reset();
+        if (_sceneRenderer != nullptr) {
+            _sceneRenderer.reset();
         }
-        if (renderLoop != nullptr) {
-            renderLoop.reset();
+        if (_renderLoop != nullptr) {
+            _renderLoop.reset();
         }
     }
 
     void runRendering() {
-        if (renderLoop != nullptr) {
-            renderLoop->runRenderLoop();
+        if (_renderLoop != nullptr) {
+            _renderLoop->runRenderLoop();
         }
     }
 }

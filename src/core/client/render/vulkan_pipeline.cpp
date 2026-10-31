@@ -27,8 +27,8 @@ namespace cvulkan::client::render::vk {
         }
     }
 
-    CVulkanPipelineBuildInfo::CVulkanPipelineBuildInfo(const std::vector<Ref_CVulkanDescriptorSetLayout>& descriptorSetLayouts, const std::vector<Ref_CVulkanShaderModule>& shaderModules, const std::vector<Ref_CVulkanPushConstantRange>& pushConstantRanges, const VkPipelineVertexInputStateCreateInfo& vertexInputInfo, const VkFormat& colorFormat, const VkFormat& depthFormat)
-        : _colorFormat(colorFormat), _depthFormat(depthFormat), _pushConstantRanges(pushConstantRanges), _shaderModules(shaderModules), _descriptorSetLayouts(descriptorSetLayouts), _vertexInputInfo(vertexInputInfo) {
+    CVulkanPipelineBuildInfo::CVulkanPipelineBuildInfo(const std::vector<Ref_CVulkanDescriptorSetLayout>& descriptorSetLayouts, const std::vector<Ref_CVulkanShaderModule>& shaderModules, const std::vector<Ref_CVulkanPushConstantRange>& pushConstantRanges, const VkPipelineVertexInputStateCreateInfo& vertexInputInfo, const VkFormat& colorFormat, const VkFormat& depthFormat, bool useBlend)
+        : _colorFormat(colorFormat), _depthFormat(depthFormat), _pushConstantRanges(pushConstantRanges), _shaderModules(shaderModules), _descriptorSetLayouts(descriptorSetLayouts), _vertexInputInfo(vertexInputInfo), _useBlend(useBlend) {
     }
 
     CVulkanPipeline::CVulkanPipeline(const CVulkanContext& context, const CVulkanPipelineBuildInfo& buildInfo) : _context{context} {
@@ -72,7 +72,7 @@ namespace cvulkan::client::render::vk {
             .dynamicStateCount = static_cast<uint32_t>(dynamicStates.size()),
             .pDynamicStates = dynamicStates.data()
         };
-        const VkPipelineColorBlendAttachmentState blendAttachmentState{
+        VkPipelineColorBlendAttachmentState blendAttachmentState{
             .blendEnable = VK_FALSE,
             .colorWriteMask =
             VK_COLOR_COMPONENT_R_BIT |
@@ -80,6 +80,13 @@ namespace cvulkan::client::render::vk {
             VK_COLOR_COMPONENT_B_BIT |
             VK_COLOR_COMPONENT_A_BIT
         };
+        if (buildInfo.isUseBlend()) {
+            blendAttachmentState.colorBlendOp = VK_BLEND_OP_ADD;
+            blendAttachmentState.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+            blendAttachmentState.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+            blendAttachmentState.srcAlphaBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+            blendAttachmentState.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+        }
         const VkPipelineColorBlendStateCreateInfo colorBlendState{
             .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
             .attachmentCount = 1,
@@ -110,9 +117,9 @@ namespace cvulkan::client::render::vk {
         pushConstantRanges.reserve(buildInfo.pushConstantRanges().size());
         for (const auto& t : buildInfo.pushConstantRanges()) {
             const VkPushConstantRange pushConstantRange {
-                .stageFlags = t.get().stage,
-                .offset = t.get().offset,
-                .size = t.get().size
+                .stageFlags = t.get()._stage,
+                .offset = t.get()._offset,
+                .size = t.get()._size
             };
             pushConstantRanges.push_back(pushConstantRange);
         }

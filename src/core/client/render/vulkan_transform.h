@@ -12,14 +12,14 @@ namespace cvulkan::client::render::transform {
 
         void resize(const VkExtent2D& extent);
 
-        [[nodiscard]] const glm::mat4& mat4Projection() const {
+        [[nodiscard]] glm::mat4 mat4Projection() const {
             return _projection;
         }
 
     private:
         glm::mat4 _projection {};
         float _fov;
-         float _zNear;
+        float _zNear;
         float _zFar;
     };
 }

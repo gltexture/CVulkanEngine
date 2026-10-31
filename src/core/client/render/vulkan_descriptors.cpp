@@ -183,7 +183,7 @@ namespace cvulkan::client::render::vk {
     }
 
     CVulkanDescriptorAllocator::~CVulkanDescriptorAllocator() {
-        logging::info("Destroyin Vulkan descriptor allocator");
+        logging::info("Destroying Vulkan descriptor allocator");
     }
 
     std::vector<CVulkanDescriptorSet>& CVulkanDescriptorAllocator::allocateDescriptorSets(const std::string& id, const uint32_t count, const CVulkanDescriptorSetLayout& layout) {

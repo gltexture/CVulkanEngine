@@ -63,7 +63,7 @@ namespace cvulkan::client::render::cache {
 
         const asset::CVulkanTexture2D& loadTexture(const std::string &id, const asset::CVulkanImageSrc &srcImage, const VkFormat &format);
 
-        const asset::CVulkanTexture2D* loadTexture(const std::string& id, const std::filesystem::path& texturePath, const VkFormat& format);
+        const asset::CVulkanTexture2D& loadTexture(const std::string& id, const std::filesystem::path& texturePath, const VkFormat& format);
 
         [[nodiscard]] const collection::IndexedMap<std::string, asset::CVulkanTexture2D>& indexedTexturesMap() const {
             return _indexedTexturesMap;
@@ -85,7 +85,7 @@ namespace cvulkan::client::render::cache {
 
         CLASS_NO_COPY_NO_ASSIGN_MOVE(CVulkanMaterialsCache)
 
-        void loadMaterials(const std::vector<asset::modelGen::CVulkanMaterialData>& materials, CVulkanTexturesCache& texturesCache, const vk::CVulkanCommandPool& commandPool, const vk::CVulkanQueue& queue);
+        void loadMaterials(std::vector<asset::modelGen::CVulkanMaterialData>& materials, CVulkanTexturesCache& texturesCache, const vk::CVulkanCommandPool& commandPool, const vk::CVulkanQueue& queue);
 
         [[nodiscard]] const structs::CVulkanMaterial* getMaterial(const std::string& id) const;
 

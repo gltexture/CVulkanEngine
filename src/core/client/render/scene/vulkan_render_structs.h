@@ -24,6 +24,7 @@ namespace cvulkan::client::render::structs {
 
     struct CVulkanMaterial {
         std::string _id;
+        bool _hasTransparency;
     };
 
     class CVulkanVertexStruct {

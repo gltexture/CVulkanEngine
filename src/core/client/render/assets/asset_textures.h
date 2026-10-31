@@ -68,8 +68,14 @@ namespace cvulkan::client::render::asset {
             return _stgBuffer.get();
         }
 
+        [[nodiscard]] bool hasTransparency() const {
+            return _hasTransparency;
+        }
+
     protected:
         void createStgBuffer(const vk::CVulkanContext &context, const unsigned char *_data, const size_t &_dataSize);
+        void transparencyCheck(const CVulkanImageSrc& imageSrc);
+        void recordMipMapGeneration(const vk::CVulkanCommandBuffer& commandBuffer) const;
 
     private:
         std::string _id;
@@ -78,6 +84,7 @@ namespace cvulkan::client::render::asset {
         std::unique_ptr<vk::CVulkanImage2D> _image;
         std::unique_ptr<vk::CVulkanImage2DView> _imageView;
         std::unique_ptr<vk::CVulkanBuffer> _stgBuffer;
+        bool _hasTransparency {false};
     };
 
 

@@ -1,0 +1,265 @@
+{
+    "cache_path": "limbo.cache.bin",
+    "id": "limbo_final/limbo.gltf",
+    "idx_path": "limbo.idx.bin",
+    "materials_path": "limbo.material.json",
+    "meshes": [
+        {
+            "id": "entity0_brush99_0",
+            "index_offset": 0,
+            "index_size": 94464,
+            "material_id": "limbo_final/limbo.gltf-mat-0",
+            "vertex_offset": 0,
+            "vertex_size": 279760
+        },
+        {
+            "id": "entity0_brush781_1",
+            "index_offset": 94464,
+            "index_size": 576,
+            "material_id": "limbo_final/limbo.gltf-mat-1",
+            "vertex_offset": 279760,
+            "vertex_size": 1840
+        },
+        {
+            "id": "entity0_brush858_2",
+            "index_offset": 95040,
+            "index_size": 24384,
+            "material_id": "limbo_final/limbo.gltf-mat-2",
+            "vertex_offset": 281600,
+            "vertex_size": 68780
+        },
+        {
+            "id": "entity0_brush687_3",
+            "index_offset": 119424,
+            "index_size": 2016,
+            "material_id": "limbo_final/limbo.gltf-mat-3",
+            "vertex_offset": 350380,
+            "vertex_size": 5760
+        },
+        {
+            "id": "entity0_brush88_4",
+            "index_offset": 121440,
+            "index_size": 1680,
+            "material_id": "limbo_final/limbo.gltf-mat-4",
+            "vertex_offset": 356140,
+            "vertex_size": 4360
+        },
+        {
+            "id": "entity0_brush93_5",
+            "index_offset": 123120,
+            "index_size": 672,
+            "material_id": "limbo_final/limbo.gltf-mat-5",
+            "vertex_offset": 360500,
+            "vertex_size": 2520
+        },
+        {
+            "id": "entity0_brush95_6",
+            "index_offset": 123792,
+            "index_size": 3936,
+            "material_id": "limbo_final/limbo.gltf-mat-6",
+            "vertex_offset": 363020,
+            "vertex_size": 12880
+        },
+        {
+            "id": "entity0_brush851_7",
+            "index_offset": 127728,
+            "index_size": 13392,
+            "material_id": "limbo_final/limbo.gltf-mat-7",
+            "vertex_offset": 375900,
+            "vertex_size": 32480
+        },
+        {
+            "id": "entity0_brush783_8",
+            "index_offset": 141120,
+            "index_size": 1296,
+            "material_id": "limbo_final/limbo.gltf-mat-8",
+            "vertex_offset": 408380,
+            "vertex_size": 3520
+        },
+        {
+            "id": "entity0_brush850_9",
+            "index_offset": 142416,
+            "index_size": 432,
+            "material_id": "limbo_final/limbo.gltf-mat-9",
+            "vertex_offset": 411900,
+            "vertex_size": 1120
+        },
+        {
+            "id": "entity0_brush589_10",
+            "index_offset": 142848,
+            "index_size": 18432,
+            "material_id": "limbo_final/limbo.gltf-mat-10",
+            "vertex_offset": 413020,
+            "vertex_size": 57600
+        },
+        {
+            "id": "entity0_brush543_11",
+            "index_offset": 161280,
+            "index_size": 2304,
+            "material_id": "limbo_final/limbo.gltf-mat-11",
+            "vertex_offset": 470620,
+            "vertex_size": 7040
+        },
+        {
+            "id": "entity0_brush92_12",
+            "index_offset": 163584,
+            "index_size": 3600,
+            "material_id": "limbo_final/limbo.gltf-mat-12",
+            "vertex_offset": 477660,
+            "vertex_size": 9600
+        },
+        {
+            "id": "entity0_brush852_13",
+            "index_offset": 167184,
+            "index_size": 144,
+            "material_id": "limbo_final/limbo.gltf-mat-13",
+            "vertex_offset": 487260,
+            "vertex_size": 480
+        },
+        {
+            "id": "entity0_brush853_14",
+            "index_offset": 167328,
+            "index_size": 144,
+            "material_id": "limbo_final/limbo.gltf-mat-14",
+            "vertex_offset": 487740,
+            "vertex_size": 480
+        },
+        {
+            "id": "entity0_brush876_15",
+            "index_offset": 167472,
+            "index_size": 864,
+            "material_id": "limbo_final/limbo.gltf-mat-15",
+            "vertex_offset": 488220,
+            "vertex_size": 2880
+        },
+        {
+            "id": "Sphere.021_16",
+            "index_offset": 168336,
+            "index_size": 264,
+            "material_id": "limbo_final/limbo.gltf-mat-16",
+            "vertex_offset": 491100,
+            "vertex_size": 920
+        },
+        {
+            "id": "Sphere.021_17",
+            "index_offset": 168600,
+            "index_size": 264,
+            "material_id": "limbo_final/limbo.gltf-mat-17",
+            "vertex_offset": 492020,
+            "vertex_size": 920
+        },
+        {
+            "id": "Sphere.021_18",
+            "index_offset": 168864,
+            "index_size": 264,
+            "material_id": "limbo_final/limbo.gltf-mat-18",
+            "vertex_offset": 492940,
+            "vertex_size": 920
+        },
+        {
+            "id": "Sphere.021_19",
+            "index_offset": 169128,
+            "index_size": 264,
+            "material_id": "limbo_final/limbo.gltf-mat-19",
+            "vertex_offset": 493860,
+            "vertex_size": 920
+        },
+        {
+            "id": "Sphere.021_20",
+            "index_offset": 169392,
+            "index_size": 264,
+            "material_id": "limbo_final/limbo.gltf-mat-20",
+            "vertex_offset": 494780,
+            "vertex_size": 920
+        },
+        {
+            "id": "Sphere.021_21",
+            "index_offset": 169656,
+            "index_size": 264,
+            "material_id": "limbo_final/limbo.gltf-mat-21",
+            "vertex_offset": 495700,
+            "vertex_size": 920
+        },
+        {
+            "id": "Arm.004_22",
+            "index_offset": 169920,
+            "index_size": 8208,
+            "material_id": "limbo_final/limbo.gltf-mat-22",
+            "vertex_offset": 496620,
+            "vertex_size": 27920
+        },
+        {
+            "id": "Arm.004_23",
+            "index_offset": 178128,
+            "index_size": 8208,
+            "material_id": "limbo_final/limbo.gltf-mat-23",
+            "vertex_offset": 524540,
+            "vertex_size": 27920
+        },
+        {
+            "id": "Arm.004_24",
+            "index_offset": 186336,
+            "index_size": 8208,
+            "material_id": "limbo_final/limbo.gltf-mat-24",
+            "vertex_offset": 552460,
+            "vertex_size": 27920
+        },
+        {
+            "id": "Arm.004_25",
+            "index_offset": 194544,
+            "index_size": 8208,
+            "material_id": "limbo_final/limbo.gltf-mat-25",
+            "vertex_offset": 580380,
+            "vertex_size": 27920
+        },
+        {
+            "id": "Sphere.021_26",
+            "index_offset": 202752,
+            "index_size": 264,
+            "material_id": "limbo_final/limbo.gltf-mat-26",
+            "vertex_offset": 608300,
+            "vertex_size": 920
+        },
+        {
+            "id": "Sphere.021_27",
+            "index_offset": 203016,
+            "index_size": 264,
+            "material_id": "limbo_final/limbo.gltf-mat-27",
+            "vertex_offset": 609220,
+            "vertex_size": 920
+        },
+        {
+            "id": "Sphere.021_28",
+            "index_offset": 203280,
+            "index_size": 264,
+            "material_id": "limbo_final/limbo.gltf-mat-28",
+            "vertex_offset": 610140,
+            "vertex_size": 920
+        },
+        {
+            "id": "Sphere.021_29",
+            "index_offset": 203544,
+            "index_size": 264,
+            "material_id": "limbo_final/limbo.gltf-mat-29",
+            "vertex_offset": 611060,
+            "vertex_size": 920
+        },
+        {
+            "id": "Sphere.021_30",
+            "index_offset": 203808,
+            "index_size": 264,
+            "material_id": "limbo_final/limbo.gltf-mat-30",
+            "vertex_offset": 611980,
+            "vertex_size": 920
+        },
+        {
+            "id": "Sphere.021_31",
+            "index_offset": 204072,
+            "index_size": 264,
+            "material_id": "limbo_final/limbo.gltf-mat-31",
+            "vertex_offset": 612900,
+            "vertex_size": 920
+        }
+    ],
+    "vtx_path": "limbo.vtx.bin"
+}

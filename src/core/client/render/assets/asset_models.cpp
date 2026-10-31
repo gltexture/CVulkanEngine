@@ -66,9 +66,9 @@ namespace cvulkan::client::render::asset {
         json = nlohmann::json{
             {"id", mesh._id},
             {"material_id", mesh._materialId},
-            {"vertex_offset", mesh._vertexOffset},
+            {"vertex_offset", mesh._vtxOffset},
             {"vertex_size", mesh._vtxSize},
-            {"index_offset", mesh._indexOffset},
+            {"index_offset", mesh._idxOffset},
             {"index_size", mesh._idxSize}
         };
     }
@@ -76,9 +76,9 @@ namespace cvulkan::client::render::asset {
     void modelGen::from_json(const nlohmann::json& json, CVulkanMeshData& mesh) {
         json.at("id").get_to(mesh._id);
         json.at("material_id").get_to(mesh._materialId);
-        json.at("vertex_offset").get_to(mesh._vertexOffset);
+        json.at("vertex_offset").get_to(mesh._vtxOffset);
         json.at("vertex_size").get_to(mesh._vtxSize);
-        json.at("index_offset").get_to(mesh._indexOffset);
+        json.at("index_offset").get_to(mesh._idxOffset);
         json.at("index_size").get_to(mesh._idxSize);
     }
 
@@ -244,9 +244,9 @@ namespace cvulkan::client::render::asset {
         CVulkanMeshData meshData {
             ._id = id,
             ._materialId = materialId,
-            ._indexOffset = modelBinData._idxOffset,
+            ._idxOffset = modelBinData._idxOffset,
             ._idxSize = idxInc,
-            ._vertexOffset = modelBinData._vtxOffset,
+            ._vtxOffset = modelBinData._vtxOffset,
             ._vtxSize = vtxInc,
         };
 
@@ -331,16 +331,16 @@ namespace cvulkan::client::render::asset {
                 return INVALID;
             }
 
-            const auto& info = it->second;
+            const auto& [_size, _modifiedTime] = it->second;
 
-            if (std::filesystem::file_size(path) != info._size) {
+            if (std::filesystem::file_size(path) != _size) {
                 return INVALID;
             }
 
             const auto modifiedTime = std::filesystem::last_write_time(path);
             const auto modifiedTimeMs = std::chrono::duration_cast<std::chrono::milliseconds>(modifiedTime.time_since_epoch()).count();
 
-            if (modifiedTimeMs != info._modifiedTime) {
+            if (modifiedTimeMs != _modifiedTime) {
                 return INVALID;
             }
 
@@ -423,7 +423,7 @@ namespace cvulkan::client::render::asset {
             }
 
             const aiTexture* embeddedTexture = assimpScene.mTextures[embeddedTextureIndex];
-            const std::filesystem::path unpackedTexturePath = std::filesystem::path{"unpacked"} / (std::string(embeddedTexture->mFilename.C_Str()) + ".png");
+            const std::filesystem::path unpackedTexturePath = std::filesystem::path{"unpacked"} / (std::string(embeddedTexture->mFilename.C_Str()) + ".unp_img");
             const std::filesystem::path textureFullPath = directoryToCopyTextures / unpackedTexturePath;
 
             std::filesystem::create_directories(textureFullPath.parent_path());

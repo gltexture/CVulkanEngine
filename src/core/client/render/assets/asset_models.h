@@ -24,9 +24,9 @@ namespace cvulkan::client::render::asset {
         struct CVulkanMeshData {
             std::string _id;
             std::string _materialId;
-            uint32_t _indexOffset;
+            uint32_t _idxOffset;
             uint32_t _idxSize;
-            uint32_t _vertexOffset;
+            uint32_t _vtxOffset;
             uint32_t _vtxSize;
         };
 
@@ -43,6 +43,7 @@ namespace cvulkan::client::render::asset {
             std::string _id;
             io_utils::CVulkanResourcePath _texturePath;
             glm::vec4 _diffuseColor;
+            bool _hasTransparency;
         };
 
         struct CVulkanModelBinData {

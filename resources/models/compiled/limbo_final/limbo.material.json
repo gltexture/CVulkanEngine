@@ -1,0 +1,332 @@
+[
+    {
+        "diffuseColor": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+        ],
+        "id": "limbo_final/limbo.gltf-mat-0",
+        "texturePath": "textures\\05af2fa7aae1bdbe2cd590e075462790-dithered.png"
+    },
+    {
+        "diffuseColor": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+        ],
+        "id": "limbo_final/limbo.gltf-mat-1",
+        "texturePath": "textures\\__TB_empty.png"
+    },
+    {
+        "diffuseColor": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+        ],
+        "id": "limbo_final/limbo.gltf-mat-2",
+        "texturePath": "textures\\str_stonebrk1.png"
+    },
+    {
+        "diffuseColor": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+        ],
+        "id": "limbo_final/limbo.gltf-mat-3",
+        "texturePath": "textures\\1499b6ffc2ee3ca2c24bcebe7e358a88-dithered.png"
+    },
+    {
+        "diffuseColor": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+        ],
+        "id": "limbo_final/limbo.gltf-mat-4",
+        "texturePath": "textures\\f52772acabfbe902f190ddda0c43a9bd-dithered.png"
+    },
+    {
+        "diffuseColor": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+        ],
+        "id": "limbo_final/limbo.gltf-mat-5",
+        "texturePath": "textures\\Bricks_03-512x512.png"
+    },
+    {
+        "diffuseColor": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+        ],
+        "id": "limbo_final/limbo.gltf-mat-6",
+        "texturePath": "textures\\Roofs_04-512x512.png"
+    },
+    {
+        "diffuseColor": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+        ],
+        "id": "limbo_final/limbo.gltf-mat-7",
+        "texturePath": "textures\\str_stonebrk2.png"
+    },
+    {
+        "diffuseColor": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+        ],
+        "id": "limbo_final/limbo.gltf-mat-8",
+        "texturePath": "textures\\#bmk_water01b.png"
+    },
+    {
+        "diffuseColor": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+        ],
+        "id": "limbo_final/limbo.gltf-mat-9",
+        "texturePath": "textures\\str_stoneflr2.png"
+    },
+    {
+        "diffuseColor": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+        ],
+        "id": "limbo_final/limbo.gltf-mat-10",
+        "texturePath": "textures\\c6e552989719f3c03de55324950a5064-dithered.png"
+    },
+    {
+        "diffuseColor": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+        ],
+        "id": "limbo_final/limbo.gltf-mat-11",
+        "texturePath": "textures\\{kjwintex_ad.png"
+    },
+    {
+        "diffuseColor": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+        ],
+        "id": "limbo_final/limbo.gltf-mat-12",
+        "texturePath": "textures\\9ca1a7ee3ec5868872e3211ae31e91c3-dithered.png"
+    },
+    {
+        "diffuseColor": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+        ],
+        "id": "limbo_final/limbo.gltf-mat-13",
+        "texturePath": "textures\\{win01_2brk2.png"
+    },
+    {
+        "diffuseColor": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+        ],
+        "id": "limbo_final/limbo.gltf-mat-14",
+        "texturePath": "textures\\{win01_3brk1.png"
+    },
+    {
+        "diffuseColor": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+        ],
+        "id": "limbo_final/limbo.gltf-mat-15",
+        "texturePath": "textures\\{rtex158_.png"
+    },
+    {
+        "diffuseColor": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+        ],
+        "id": "limbo_final/limbo.gltf-mat-16",
+        "texturePath": "textures\\hedge_open_bottom.png.png"
+    },
+    {
+        "diffuseColor": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+        ],
+        "id": "limbo_final/limbo.gltf-mat-17",
+        "texturePath": "textures\\hedge_open_bottom.png.png"
+    },
+    {
+        "diffuseColor": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+        ],
+        "id": "limbo_final/limbo.gltf-mat-18",
+        "texturePath": "textures\\hedge_open_bottom.png.png"
+    },
+    {
+        "diffuseColor": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+        ],
+        "id": "limbo_final/limbo.gltf-mat-19",
+        "texturePath": "textures\\hedge_open_bottom.png.png"
+    },
+    {
+        "diffuseColor": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+        ],
+        "id": "limbo_final/limbo.gltf-mat-20",
+        "texturePath": "textures\\hedge_open_bottom.png.png"
+    },
+    {
+        "diffuseColor": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+        ],
+        "id": "limbo_final/limbo.gltf-mat-21",
+        "texturePath": "textures\\hedge_open_bottom.png.png"
+    },
+    {
+        "diffuseColor": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+        ],
+        "id": "limbo_final/limbo.gltf-mat-22",
+        "texturePath": "textures\\churchpewTexture1.png"
+    },
+    {
+        "diffuseColor": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+        ],
+        "id": "limbo_final/limbo.gltf-mat-23",
+        "texturePath": "textures\\churchpewTexture1.png.png"
+    },
+    {
+        "diffuseColor": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+        ],
+        "id": "limbo_final/limbo.gltf-mat-24",
+        "texturePath": "textures\\churchpewTexture1.png.png"
+    },
+    {
+        "diffuseColor": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+        ],
+        "id": "limbo_final/limbo.gltf-mat-25",
+        "texturePath": "textures\\churchpewTexture1.png.png"
+    },
+    {
+        "diffuseColor": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+        ],
+        "id": "limbo_final/limbo.gltf-mat-26",
+        "texturePath": "textures\\hedge_open_bottom.png.png"
+    },
+    {
+        "diffuseColor": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+        ],
+        "id": "limbo_final/limbo.gltf-mat-27",
+        "texturePath": "textures\\hedge_open_bottom.png.png"
+    },
+    {
+        "diffuseColor": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+        ],
+        "id": "limbo_final/limbo.gltf-mat-28",
+        "texturePath": "textures\\hedge_open_bottom.png.png"
+    },
+    {
+        "diffuseColor": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+        ],
+        "id": "limbo_final/limbo.gltf-mat-29",
+        "texturePath": "textures\\hedge_open_bottom.png.png"
+    },
+    {
+        "diffuseColor": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+        ],
+        "id": "limbo_final/limbo.gltf-mat-30",
+        "texturePath": "textures\\hedge_open_bottom.png.png"
+    },
+    {
+        "diffuseColor": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+        ],
+        "id": "limbo_final/limbo.gltf-mat-31",
+        "texturePath": "textures\\hedge_open_bottom.png.png"
+    },
+    {
+        "diffuseColor": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+        ],
+        "id": "limbo_final/limbo.gltf-mat-32",
+        "texturePath": ""
+    }
+]

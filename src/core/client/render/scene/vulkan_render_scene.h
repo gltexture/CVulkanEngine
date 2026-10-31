@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "vulkan_render_cache.h"
+#include "camera/view_camera.h"
 #include "client/render/vulkan_pipeline.h"
 #include "client/render/vulkan_transform.h"
 #include "client/render/assets/asset_models.h"
@@ -34,6 +35,7 @@ struct CVulkanPushConstants {
 namespace cvulkan::client::render::scene {
     constexpr std::string_view DESC_ID_MAT = "SCN_DESC_ID_MAT";
     constexpr std::string_view DESC_ID_PRJ = "SCN_DESC_ID_PRJ";
+    constexpr std::string_view DESC_ID_VIEW = "SCN_DESC_ID_VIEW";
     constexpr std::string_view DESC_ID_TEXT = "SCN_DESC_ID_TEXT";
 
     namespace context {
@@ -90,9 +92,9 @@ namespace cvulkan::client::render::scene {
             void loadResources(vk::CVulkanDescriptorAllocator& descriptorAllocator, CVulkanSceneResourcesInitializer& sceneResourcesInitializer);
             void initializeObjects(CVulkanSceneEntitiesCollection& entitiesCollection);
 
-            void renderContext(const vk::CVulkanCommandBuffer &commandBuffer, const vk::CVulkanDescriptorAllocator &descriptorAllocator, const
-                               CVulkanSceneEntitiesCollection
-                               &entitiesCollection, const cache::CVulkanCacheCollection &caches) const;
+            void renderContext(const vk::CVulkanCommandBuffer& commandBuffer, const vk::CVulkanDescriptorAllocator& descriptorAllocator, const CVulkanSceneEntitiesCollection& entitiesCollection, const cache::CVulkanCacheCollection& caches, uint32_t currentFrame) const;
+
+            void renderEntities(const vk::CVulkanCommandBuffer& commandBuffer, const CVulkanSceneEntitiesCollection& entitiesCollection, const cache::CVulkanCacheCollection& caches, bool transparent) const;
 
             void onResize();
 
@@ -124,6 +126,10 @@ namespace cvulkan::client::render::scene {
                 return _defaultRenderPipeline.get();
             }
 
+            [[nodiscard]] camera::CVulkanCamera* currentCamera() const {
+                return _currentCamera.get();
+            }
+
         private:
             const vk::CVulkanContext& _context;
 
@@ -136,7 +142,11 @@ namespace cvulkan::client::render::scene {
             std::unique_ptr<vk::CVulkanSampler> _defaultTextureSampler {};
 
             std::unique_ptr<vk::CVulkanBuffer> _bufferProjMatrix {};
+            std::unique_ptr<std::vector<vk::CVulkanBuffer>> _bufferViewMatrices {};
+
             std::unique_ptr<vk::CVulkanPipeline> _defaultRenderPipeline {};
+
+            std::unique_ptr<camera::CVulkanCamera> _currentCamera {};
         };
     }
 
@@ -147,7 +157,7 @@ namespace cvulkan::client::render::scene {
 
         CLASS_NO_COPY(CVulkanSceneRenderer);
 
-        void renderScene(const vk::CVulkanCommandBuffer& commandBuffer, const uint32_t& imageIndex) const;
+        void renderScene(const vk::CVulkanCommandBuffer& commandBuffer, uint32_t imageIndex, uint32_t currentFrame) const;
 
         void onResize();
 
@@ -179,7 +189,7 @@ namespace cvulkan::client::render::scene {
         void setDefaults();
         void createMaterialDescriptors();
         void createRenderAttachmentsData();
-        void initCacheData(const std::vector<asset::modelGen::CVulkanMaterialData>& materials, const std::vector<asset::modelGen::CVulkanModelData>& models);
+        void initCacheData(std::vector<asset::modelGen::CVulkanMaterialData>& materials, const std::vector<asset::modelGen::CVulkanModelData>& models);
 
     private:
         const vk::CVulkanContext& _context;

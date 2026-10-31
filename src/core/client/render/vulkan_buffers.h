@@ -17,7 +17,7 @@ namespace cvulkan::client::render::vk {
 
     class CVulkanBuffer {
     public:
-        explicit CVulkanBuffer(const CVulkanContext& context, const VkBufferUsageFlags& usage, const uint32_t& reqMask, const VkDeviceSize& size);
+        CVulkanBuffer(const CVulkanContext& context, const VkBufferUsageFlags& usage, const uint32_t& reqMask, const VkDeviceSize& size);
         ~CVulkanBuffer();
 
         CLASS_NO_COPY_NO_ASSIGN_MOVE(CVulkanBuffer);
@@ -78,6 +78,8 @@ namespace cvulkan::client::render::vk {
 
     namespace buffutil {
         CVulkanBuffer allocateHostVisibleBuffer(const CVulkanContext& context, CVulkanDescriptorAllocator& allocator, VkDeviceSize size, VkBufferUsageFlags usage, const std::string& id, const CVulkanDescriptorSetLayout& layout);
+        std::vector<CVulkanBuffer> allocateHostVisibleBuffers(const CVulkanContext& context, CVulkanDescriptorAllocator& allocator, VkDeviceSize size, VkBufferUsageFlags usage, uint32_t buffersCount, const std::string& id, const CVulkanDescriptorSetLayout& layout);
+
         void copyMatrixToBuffer(CVulkanBuffer& buffer, const glm::mat4& matrix, uint32_t offset);
     }
 }

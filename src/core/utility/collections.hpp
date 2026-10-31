@@ -38,7 +38,7 @@ namespace cvulkan::collection {
             return this->_map.at(this->_keys.at(i));
         }
 
-        [[nodiscard]] const V& getValue(const K& key) {
+        [[nodiscard]] const V& getValue(const K& key) const {
             return _map.at(key);
         }
 
