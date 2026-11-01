@@ -15,20 +15,19 @@ namespace cvulkan::client::render::sync {
 }
 
 namespace cvulkan::client::render::vk {
+    class CVulkanPhysicalDevice;
     class CVulkanQueue;
     class CVulkanContext;
-    struct CVulkanPhysicalDevice;
-    struct CVulkanDevice;
-    struct CVulkanInstance;
 
     class CVulkanSwapChain {
     public:
         CVulkanSwapChain(const CVulkanContext& context, const VkSurfaceKHR& vkSurface, const VkSurfaceCapabilitiesKHR& vkSurfaceCapabilities, const VkFormat& vkFormat, const VkColorSpaceKHR& vkColorSpace);
+
         ~CVulkanSwapChain();
 
         CLASS_NO_COPY_NO_MOVE(CVulkanSwapChain);
 
-        uint32_t acquireSwapChainNextImage(const sync::CVulkanSemaphore& semaphore) const;
+        [[nodiscard]] uint32_t acquireSwapChainNextImage(const sync::CVulkanSemaphore& semaphore) const;
 
         [[nodiscard]] VkSwapchainKHR vkSwapChain() const {
             return _vkSwapChain;
@@ -46,11 +45,11 @@ namespace cvulkan::client::render::vk {
             return _swapChainExtent;
         }
 
-        bool presentImage(const CVulkanQueue& queue, const sync::CVulkanSemaphore& renderCompleteSemaphore, const uint32_t& imageIndex) const;
+        [[nodiscard]] bool presentImage(const CVulkanQueue& queue, const sync::CVulkanSemaphore& renderCompleteSemaphore, const uint32_t& imageIndex) const;
 
     private:
         const CVulkanContext& _context;
-        VkExtent2D _swapChainExtent  {};
+        VkExtent2D _swapChainExtent{};
         uint32_t _numImages = UINT32_MAX;
         VkSwapchainKHR _vkSwapChain{};
         std::vector<CVulkanImage2DView> _imageViews{};
@@ -59,6 +58,7 @@ namespace cvulkan::client::render::vk {
     class CVulkanSurface {
     public:
         explicit CVulkanSurface(const CVulkanContext& context);
+
         ~CVulkanSurface();
 
         CLASS_NO_COPY_NO_MOVE(CVulkanSurface);

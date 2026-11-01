@@ -63,6 +63,7 @@ namespace cvulkan::client::input {
     class CVulkanKeyboardInput {
     public:
         explicit CVulkanKeyboardInput(const window::CVulkanWindow& window);
+
         ~CVulkanKeyboardInput() = default;
 
         CLASS_NO_COPY_NO_MOVE(CVulkanKeyboardInput)
@@ -87,17 +88,22 @@ namespace cvulkan::client::input {
         void updateInput();
 
         [[nodiscard]] bool isKeyDown(int key) const;
+
         [[nodiscard]] bool isKeyJustPressed(int key) const;
+
         [[nodiscard]] bool isKeyJustReleased(int key) const;
 
         [[nodiscard]] bool isMouseButtonDown(int button) const;
+
         [[nodiscard]] bool isMouseButtonJustPressed(int button) const;
+
         [[nodiscard]] bool isMouseButtonJustReleased(int button) const;
 
         [[nodiscard]] glm::ivec2 getMouseDelta() const;
 
     protected:
         void onKeyboardEvent(int key, int action);
+
         void onMouseButtonEvent(int button, int action);
 
     private:
@@ -106,16 +112,18 @@ namespace cvulkan::client::input {
         CVulkanKeyboardInput _keyboardControl;
         CVulkanMouseInput _mouseControl;
 
-        std::array<CVulkanInputState, GLFW_KEY_LAST + 1> _keyStates {};
-        std::array<CVulkanInputState, GLFW_MOUSE_BUTTON_LAST + 1> _mouseButtonStates {};
+        std::array<CVulkanInputState, GLFW_KEY_LAST + 1> _keyStates{};
+        std::array<CVulkanInputState, GLFW_MOUSE_BUTTON_LAST + 1> _mouseButtonStates{};
 
-        std::queue<CVulkanEventPress> _key_eventQueue {};
-        std::queue<CVulkanEventPress> _mouse_eventQueue {};
+        std::queue<CVulkanEventPress> _key_eventQueue{};
+        std::queue<CVulkanEventPress> _mouse_eventQueue{};
     };
 
     extern std::unique_ptr<CVulkanClientInput> _clientInput;
 
     void setupInput(const window::CVulkanWindow& window);
+
     void updateInput();
+
     void destroyInput();
 }

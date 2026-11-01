@@ -13,6 +13,7 @@ namespace cvulkan::client::render::sync {
     class CVulkanSemaphore {
     public:
         explicit CVulkanSemaphore(const vk::CVulkanContext& context);
+
         ~CVulkanSemaphore();
 
         CLASS_NO_COPY(CVulkanSemaphore);
@@ -34,6 +35,7 @@ namespace cvulkan::client::render::sync {
     class CVulkanFence {
     public:
         explicit CVulkanFence(const vk::CVulkanContext& context, bool signaled);
+
         ~CVulkanFence();
 
         CLASS_NO_COPY(CVulkanFence);

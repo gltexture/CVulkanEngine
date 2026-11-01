@@ -33,6 +33,7 @@ namespace cvulkan::client::render::asset {
 
     namespace shaderCompile {
         std::vector<char> compileShader(const std::string& shaderName, const std::string& shaderCode, uint32_t shaderType);
+
         void compileShaderIfOutOfDate(const io_utils::CVulkanResourcePath& shaderSourceFile, uint32_t shaderType);
     }
 

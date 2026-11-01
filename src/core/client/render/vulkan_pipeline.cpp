@@ -12,7 +12,7 @@
 
 namespace cvulkan::client::render::vk {
     CVulkanPipelineCache::CVulkanPipelineCache(const CVulkanContext& context) : _context{context} {
-        constexpr VkPipelineCacheCreateInfo pipelineCacheCreateInfo  {
+        constexpr VkPipelineCacheCreateInfo pipelineCacheCreateInfo{
             .sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO,
         };
         vk::util::vkCheck(vkCreatePipelineCache(this->_context.device().vkDevice(), &pipelineCacheCreateInfo, nullptr, &this->_vkPipelineCache), "Error creating vkPipeline cache");
@@ -27,7 +27,9 @@ namespace cvulkan::client::render::vk {
         }
     }
 
-    CVulkanPipelineBuildInfo::CVulkanPipelineBuildInfo(const std::vector<Ref_CVulkanDescriptorSetLayout>& descriptorSetLayouts, const std::vector<Ref_CVulkanShaderModule>& shaderModules, const std::vector<Ref_CVulkanPushConstantRange>& pushConstantRanges, const VkPipelineVertexInputStateCreateInfo& vertexInputInfo, const VkFormat& colorFormat, const VkFormat& depthFormat, bool useBlend)
+    CVulkanPipelineBuildInfo::CVulkanPipelineBuildInfo(const std::vector<Ref_CVulkanDescriptorSetLayout>& descriptorSetLayouts, const std::vector<Ref_CVulkanShaderModule>& shaderModules,
+                                                       const std::vector<Ref_CVulkanPushConstantRange>& pushConstantRanges, const VkPipelineVertexInputStateCreateInfo& vertexInputInfo, const VkFormat& colorFormat,
+                                                       const VkFormat& depthFormat, bool useBlend)
         : _colorFormat(colorFormat), _depthFormat(depthFormat), _pushConstantRanges(pushConstantRanges), _shaderModules(shaderModules), _descriptorSetLayouts(descriptorSetLayouts), _vertexInputInfo(vertexInputInfo), _useBlend(useBlend) {
     }
 
@@ -35,7 +37,7 @@ namespace cvulkan::client::render::vk {
         std::vector<VkPipelineShaderStageCreateInfo> shaderStages{};
         shaderStages.reserve(buildInfo.shaderModules().size());
         for (const auto& t: buildInfo.shaderModules()) {
-            const VkPipelineShaderStageCreateInfo shaderStageCreateInfo  {
+            const VkPipelineShaderStageCreateInfo shaderStageCreateInfo{
                 .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
                 .stage = t.get().stage(),
                 .module = t.get().vkShaderModule(),
@@ -43,11 +45,11 @@ namespace cvulkan::client::render::vk {
             };
             shaderStages.emplace_back(shaderStageCreateInfo);
         }
-        const VkPipelineInputAssemblyStateCreateInfo inputAssemblyState  {
+        const VkPipelineInputAssemblyStateCreateInfo inputAssemblyState{
             .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
             .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST
         };
-        const VkPipelineViewportStateCreateInfo viewportState  {
+        const VkPipelineViewportStateCreateInfo viewportState{
             .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
             .viewportCount = 1,
             .scissorCount = 1
@@ -96,7 +98,7 @@ namespace cvulkan::client::render::vk {
         const VkFormat depthFormat = buildInfo.depthFormat();
         std::optional<VkPipelineDepthStencilStateCreateInfo> depthStencilStateCreateInfoOptional{};
         if (buildInfo.depthFormat() != VK_FORMAT_UNDEFINED) {
-            constexpr VkPipelineDepthStencilStateCreateInfo depthStencilStateCreateInfo  {
+            constexpr VkPipelineDepthStencilStateCreateInfo depthStencilStateCreateInfo{
                 .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
                 .depthTestEnable = VK_TRUE,
                 .depthWriteEnable = VK_TRUE,
@@ -113,10 +115,10 @@ namespace cvulkan::client::render::vk {
             .depthAttachmentFormat = depthFormat
         };
 
-        std::vector<VkPushConstantRange> pushConstantRanges {};
+        std::vector<VkPushConstantRange> pushConstantRanges{};
         pushConstantRanges.reserve(buildInfo.pushConstantRanges().size());
-        for (const auto& t : buildInfo.pushConstantRanges()) {
-            const VkPushConstantRange pushConstantRange {
+        for (const auto& t: buildInfo.pushConstantRanges()) {
+            const VkPushConstantRange pushConstantRange{
                 .stageFlags = t.get()._stage,
                 .offset = t.get()._offset,
                 .size = t.get()._size
@@ -127,9 +129,9 @@ namespace cvulkan::client::render::vk {
         const auto layouts = buildInfo.descriptorSetLayouts() | std::views::transform([](const auto& t) {
             return t.get().vkDescriptorSetLayout();
         });
-        const std::vector descriptorSetLayouts (layouts.begin(), layouts.end());
+        const std::vector descriptorSetLayouts(layouts.begin(), layouts.end());
 
-        const VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo {
+        const VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo{
             .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
             .setLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size()),
             .pSetLayouts = descriptorSetLayouts.data(),

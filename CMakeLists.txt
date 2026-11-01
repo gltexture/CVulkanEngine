@@ -61,6 +61,12 @@ FetchContent_Declare(
         GIT_TAG v3.12.0
 )
 
+FetchContent_Declare(
+        vma
+        GIT_REPOSITORY https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
+        GIT_TAG v3.5.0
+)
+
 FetchContent_MakeAvailable(
         spdlog
         SPIRV-Headers
@@ -71,6 +77,7 @@ FetchContent_MakeAvailable(
         glm
         assimp
         json
+        vma
 )
 
 find_package(Vulkan REQUIRED)
@@ -118,6 +125,9 @@ add_executable(CVulkanEngine
         src/core/client/render/scene/camera/view_camera.h
         src/core/test_logic/test_logic.cpp
         src/core/test_logic/test_logic.h
+        src/core/client/render/_impl/vma_impl.cpp
+        src/core/client/render/vulkan_mem_alloc.cpp
+        src/core/client/render/vulkan_mem_alloc.h
 )
 
 add_link_options("-fuse-ld=lld")
@@ -162,6 +172,7 @@ target_link_libraries(
         PRIVATE shaderc_combined
         PRIVATE assimp
         PRIVATE nlohmann_json::nlohmann_json
+        PRIVATE GPUOpen::VulkanMemoryAllocator
 )
 
 target_include_directories(CVulkanEngine

@@ -3,6 +3,8 @@
 //
 
 #pragma once
+#include <vk_mem_alloc.h>
+
 #include "utility/sys_utils.h"
 
 namespace cvulkan::client::render::vk {
@@ -15,8 +17,9 @@ namespace cvulkan::client::render::vk {
         VkFormat _format = VK_FORMAT_R8G8B8A8_SRGB;
         uint32_t _mipLevels = 1;
         VkSampleCountFlagBits _sampleCount = VK_SAMPLE_COUNT_1_BIT;
-        VkImageUsageFlags _usage;
-        VkExtent3D _extent;
+        VmaAllocationCreateFlags _memFlags{};
+        VkImageUsageFlags _memUsage{};
+        VkExtent3D _extent{};
     };
 
     struct CVulkanImage2DViewData {
@@ -38,13 +41,15 @@ namespace cvulkan::client::render::vk {
     class CVulkanImage2D {
     public:
         CVulkanImage2D(const CVulkanContext& context, const CVulkanImage2DData& imageData);
+
         ~CVulkanImage2D();
 
         CLASS_NO_COPY(CVulkanImage2D)
+
         CVulkanImage2D(CVulkanImage2D&& other) noexcept
-            : _context(other._context), _vkImage(other._vkImage), _format(other._format), _mipLevels(other._mipLevels), _memory(other._memory) {
+            : _context(other._context), _vkImage(other._vkImage), _format(other._format), _mipLevels(other._mipLevels), _allocation(other._allocation) {
             other._vkImage = VK_NULL_HANDLE;
-            other._memory = VK_NULL_HANDLE;
+            other._allocation = VK_NULL_HANDLE;
         }
 
         [[nodiscard]] VkImage vkImage() const {
@@ -59,21 +64,18 @@ namespace cvulkan::client::render::vk {
             return _mipLevels;
         }
 
-        [[nodiscard]] VkDeviceMemory memory() const {
-            return _memory;
-        }
-
     private:
         const CVulkanContext& _context;
         VkImage _vkImage{};
         VkFormat _format{};
-        uint32_t _mipLevels = -1;
-        VkDeviceMemory _memory{};
+        uint32_t _mipLevels{};
+        VmaAllocation _allocation{};
     };
 
     class CVulkanImage2DView {
     public:
         CVulkanImage2DView(const CVulkanContext& context, const CVulkanImage2DViewData& view_data, const VkImage& vk_image, bool depthImage);
+
         ~CVulkanImage2DView();
 
         CLASS_NO_COPY_NO_ASSIGN_MOVE(CVulkanImage2DView);
@@ -105,9 +107,11 @@ namespace cvulkan::client::render::vk {
     class CVulkanAttachment2D {
     public:
         CVulkanAttachment2D(const CVulkanContext& context, CVulkanImage2D&& image, CVulkanImage2DView&& view, bool depthAttachment);
+
         ~CVulkanAttachment2D();
 
         CLASS_NO_COPY(CVulkanAttachment2D)
+
         CVulkanAttachment2D(CVulkanAttachment2D&& other) noexcept = default;
 
         [[nodiscard]] const CVulkanImage2D& image() const {
@@ -134,9 +138,11 @@ namespace cvulkan::client::render::vk {
     class CVulkanSampler {
     public:
         CVulkanSampler(const CVulkanContext& context, const CVulkanSamplerInfo& samplerInfo);
+
         ~CVulkanSampler();
 
         CLASS_NO_COPY(CVulkanSampler)
+
         CVulkanSampler(CVulkanSampler&& other) noexcept : _context(other._context), _sampler(other._sampler) {
             other._sampler = VK_NULL_HANDLE;
         }
@@ -147,7 +153,7 @@ namespace cvulkan::client::render::vk {
 
     private:
         const CVulkanContext& _context;
-        VkSampler _sampler;
+        VkSampler _sampler{};
     };
 
     namespace img_util {
@@ -161,6 +167,6 @@ namespace cvulkan::client::render::vk {
             VkAccessFlags2 srcAccessMask,
             VkAccessFlags2 dstAccessMask,
             VkImageAspectFlags aspectMask
-            );
+        );
     }
 }

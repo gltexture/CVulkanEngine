@@ -23,9 +23,11 @@ namespace cvulkan::client::render::entity {
     class CVulkanSceneEntity {
     public:
         CVulkanSceneEntity(std::string_view id, std::string_view modelId);
+
         ~CVulkanSceneEntity();
 
         CLASS_NO_COPY(CVulkanSceneEntity);
+
         CVulkanSceneEntity(CVulkanSceneEntity&& other) = default;
 
         [[nodiscard]] const std::string& id() const {

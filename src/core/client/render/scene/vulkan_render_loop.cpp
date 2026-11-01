@@ -66,16 +66,16 @@ namespace cvulkan::client::render::loop {
     void CVulkanRenderLoop::submit(const vk::CVulkanCommandBuffer& commandBuffer, const uint32_t& imageIndex) const {
         const sync::CVulkanFence& fence = this->_fences[this->_currentFrame];
         fence.reset();
-        const VkCommandBufferSubmitInfo commands  {
+        const VkCommandBufferSubmitInfo commands{
             .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
             .commandBuffer = commandBuffer.vkCommandBuffer()
         };
-        const VkSemaphoreSubmitInfo waitSemaphores  {
+        const VkSemaphoreSubmitInfo waitSemaphores{
             .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
             .semaphore = this->_presentationCompleteSemaphores[this->_currentFrame].vkSemaphore(),
             .stageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT
         };
-        const VkSemaphoreSubmitInfo signalSemaphores  {
+        const VkSemaphoreSubmitInfo signalSemaphores{
             .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
             .semaphore = this->_renderCompleteSemaphores[imageIndex].vkSemaphore(),
             .stageMask = VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT
@@ -99,7 +99,7 @@ namespace cvulkan::client::render::loop {
         this->recordingStart(commandPool, commandBuffer);
 
         const uint32_t imageIndex = this->_context.swapChain().acquireSwapChainNextImage(this->_presentationCompleteSemaphores[this->_currentFrame]);
-        if (this ->_shouldBeResized || imageIndex == UINT32_MAX) {
+        if (this->_shouldBeResized || imageIndex == UINT32_MAX) {
             this->recordingStop(commandBuffer);
             this->resize();
             return;
@@ -143,7 +143,7 @@ namespace cvulkan::client::render::loop {
     }
 
     void createRendering(vk::CVulkanContext& context) {
-        _renderLoop = std::make_unique<CVulkanRenderLoop>(context);
+        _renderLoop = std::make_unique < CVulkanRenderLoop > (context);
         _sceneRenderer = std::make_unique<scene::CVulkanSceneRenderer>(context, *_renderLoop);
     }
 

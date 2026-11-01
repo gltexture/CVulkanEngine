@@ -13,8 +13,14 @@
 #include "../../utility/logger.inl"
 
 namespace cvulkan::client::render::vk {
+    namespace memalloc {
+        class CVulkan_VkMemoryAllocator;
+    }
+
     class CVulkanDescriptorAllocator;
     using QueueFamilyBitMask = uint32_t;
+
+    constexpr static uint32_t CVULKAN_VK_API_VER = VK_API_VERSION_1_3;
 
     struct CVulkanQueueFamilyBitMasks {
         static constexpr QueueFamilyBitMask GRAPHICS = 1u << 0;
@@ -56,6 +62,7 @@ namespace cvulkan::client::render::vk {
     class CVulkanQueueFamiliesRegistry {
     public:
         CVulkanQueueFamiliesRegistry() = default;
+
         ~CVulkanQueueFamiliesRegistry() = default;
 
         void registerQueueFamily(QueueFamilyBitMask bitMask, uint32_t queueCount, uint32_t queueFamilyIndex);
@@ -86,6 +93,7 @@ namespace cvulkan::client::render::vk {
         CVulkanInstance(
             const CVulkanContextBuildData& contextBuildData,
             const CVulkanInstanceBuildData& instanceBuildData);
+
         ~CVulkanInstance();
 
         [[nodiscard]] VkInstance vkInstance() const {
@@ -102,6 +110,7 @@ namespace cvulkan::client::render::vk {
 
     protected:
         void tryIncludeInstanceLayer(const std::unordered_set<std::string>& available, const std::string& layer);
+
         void tryIncludeInstanceExtension(const std::unordered_set<std::string>& available, const std::string& ext);
 
     private:
@@ -153,6 +162,7 @@ namespace cvulkan::client::render::vk {
 
     protected:
         void tryIncludeDeviceLayer(const std::unordered_set<std::string>& available, const std::string& layer);
+
         void tryIncludeDeviceExtension(const std::unordered_set<std::string>& available, const std::string& ext);
 
     private:
@@ -161,7 +171,7 @@ namespace cvulkan::client::render::vk {
         VkPhysicalDeviceMemoryProperties _vkMemoryProperties{};
         VkPhysicalDeviceFeatures _vkPhysicalDeviceFeatures{};
         VkPhysicalDeviceProperties _vkPhysicalDeviceProperties{};
-        VkPhysicalDeviceProperties2 _vkPhysicalDeviceProperties2 {
+        VkPhysicalDeviceProperties2 _vkPhysicalDeviceProperties2{
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2
         };
         std::vector<VkQueueFamilyProperties> _vkQueueFamilyProps{};
@@ -171,10 +181,12 @@ namespace cvulkan::client::render::vk {
     class CVulkanDevice {
     public:
         CVulkanDevice(
+            const CVulkanInstance& instance,
             const CVulkanContextBuildData& contextBuildData,
             const CVulkanPhysicalDevice& physicalDevice,
             VkSurfaceKHR surface,
             const CVulkanLogicalDeviceBuildData& logicalDeviceBuildData);
+
         ~CVulkanDevice();
 
         [[nodiscard]] VkDevice vkDevice() const {
@@ -193,10 +205,15 @@ namespace cvulkan::client::render::vk {
             vkDeviceWaitIdle(this->_vkDevice);
         }
 
+        [[nodiscard]] const memalloc::CVulkan_VkMemoryAllocator& vkMemoryAllocator() const {
+            return *_vkMemoryAllocator;
+        }
+
     private:
         VkDevice _vkDevice{};
         CVulkanQueueFamiliesRegistry _queueFamiliesRegistry{};
-        bool _supportedSamplerAnisotropy {false};
+        bool _supportedSamplerAnisotropy{false};
+        std::unique_ptr<memalloc::CVulkan_VkMemoryAllocator> _vkMemoryAllocator;
     };
 
     class CVulkanContext {
@@ -207,6 +224,7 @@ namespace cvulkan::client::render::vk {
             const CVulkanInstanceBuildData& instanceBuildData,
             const CVulkanPhysicalDeviceBuildData& physicalDeviceBuildData,
             const CVulkanLogicalDeviceBuildData& logicalDeviceBuildData);
+
         ~CVulkanContext() = default;
 
         CLASS_NO_COPY(CVulkanContext)
@@ -245,7 +263,7 @@ namespace cvulkan::client::render::vk {
         const window::CVulkanWindow& _glfwWindow;
         CVulkanInstance _instance;
         CVulkanPhysicalDevice _physicalDevice;
-        std::unique_ptr<CVulkanSurface> _surface {};
+        std::unique_ptr<CVulkanSurface> _surface{};
         CVulkanDevice _device;
         std::unique_ptr<CVulkanSwapChain> _swapChain;
         CVulkanPipelineCache _pipelineCache;
@@ -278,18 +296,26 @@ namespace cvulkan::client::render::vk {
     extern std::unique_ptr<CVulkanContext> vulkanContext;
 
     std::unordered_set<std::string> availableInstanceExtensions();
+
     std::unordered_set<std::string> availableInstanceLayers();
+
     std::unordered_set<std::string> availableDeviceExtensions(const VkPhysicalDevice& device);
+
     std::unordered_set<std::string> availableDeviceLayers(const VkPhysicalDevice& device);
+
     std::unordered_set<std::string> getGLFWExtensions();
+
     uint32_t findVulkanQueueFamily(QueueFamilyBitMask bitmask, const CVulkanPhysicalDevice& device, VkSurfaceKHR surface);
 
     void createRenderCore(const window::CVulkanWindow& window);
+
     void runRender();
+
     void cleanRenderCore();
 
     namespace util {
         [[nodiscard]] uint32_t getMemoryTypeIndexFromProperties(const VkPhysicalDeviceMemoryProperties& memoryProperties, uint32_t typeBits, const uint32_t& reqMask);
+
         [[nodiscard]] uint32_t findQueueFamilyIndex(const CVulkanContext& context, QueueFamilyBitMask bitMask);
 
         inline void vkCheck(const VkResult vkResult, std::string_view errMsg) {

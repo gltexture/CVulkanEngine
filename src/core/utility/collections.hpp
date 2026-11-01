@@ -50,10 +50,10 @@ namespace cvulkan::collection {
             return _map;
         }
 
-        [[nodiscard]] std::vector<std::reference_wrapper<const V>> values() const {
-            std::vector<std::reference_wrapper<const V>> result;
+        [[nodiscard]] std::vector<std::reference_wrapper<const V> > values() const {
+            std::vector<std::reference_wrapper<const V> > result;
             result.reserve(_map.size());
-            for (const auto& value : _map | std::views::values) {
+            for (const auto& value: _map | std::views::values) {
                 result.emplace_back(std::cref(value));
             }
             return result;

@@ -4,6 +4,7 @@
 
 #include "vulkan_images.h"
 
+#include "vulkan_mem_alloc.h"
 #include "vulkan_render_core.h"
 
 namespace cvulkan::client::render::vk {
@@ -11,7 +12,7 @@ namespace cvulkan::client::render::vk {
         this->_format = imageData._format;
         this->_mipLevels = imageData._mipLevels;
 
-        const VkImageCreateInfo vkImageCreateInfo  {
+        const VkImageCreateInfo vkImageCreateInfo{
             .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
             .imageType = VK_IMAGE_TYPE_2D,
             .format = imageData._format,
@@ -20,44 +21,34 @@ namespace cvulkan::client::render::vk {
             .arrayLayers = imageData._arrayLayers,
             .samples = imageData._sampleCount,
             .tiling = VK_IMAGE_TILING_OPTIMAL,
-            .usage = imageData._usage,
+            .usage = imageData._memUsage,
             .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
             .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
         };
 
-        vk::util::vkCheck(vkCreateImage(context.device().vkDevice(), &vkImageCreateInfo, nullptr, &this->_vkImage), "Failed to create image");
-
-        VkMemoryRequirements vkMemoryRequirements{};
-        vkGetImageMemoryRequirements(context.device().vkDevice(), this->_vkImage, &vkMemoryRequirements);
-
-        VkMemoryAllocateInfo vkMemoryAllocateInfo  {
-            .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-            .allocationSize = vkMemoryRequirements.size,
-            .memoryTypeIndex = vk::util::getMemoryTypeIndexFromProperties(context.physicalDevice().vkMemoryProperties(), vkMemoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT),
+        const VmaAllocationCreateInfo vmaAllocationCreateInfo {
+            .flags = imageData._memFlags,
+            .usage = VMA_MEMORY_USAGE_AUTO,
+            .priority = 1.0f
         };
-
-        vk::util::vkCheck(vkAllocateMemory(context.device().vkDevice(), &vkMemoryAllocateInfo, nullptr, &this->_memory),  "Failed to allocate memory");
-        vk::util::vkCheck(vkBindImageMemory(context.device().vkDevice(), this->_vkImage, this->_memory, 0), "Failed to bind image memory");
+        util::vkCheck(vmaCreateImage(context.device().vkMemoryAllocator().vmaAllocator(), &vkImageCreateInfo, &vmaAllocationCreateInfo, &this->_vkImage, &this->_allocation, nullptr), "Failed to create image");
     }
 
     CVulkanImage2D::~CVulkanImage2D() {
         if (this->_vkImage != VK_NULL_HANDLE) {
-            vkDestroyImage(this->_context.device().vkDevice(), this->_vkImage, nullptr);
+            vmaDestroyImage(this->_context.device().vkMemoryAllocator().vmaAllocator(), this->_vkImage, this->_allocation);
             this->_vkImage = VK_NULL_HANDLE;
-        }
-        if (this->_memory != VK_NULL_HANDLE) {
-            vkFreeMemory(this->_context.device().vkDevice(), this->_memory, nullptr);
-            this->_memory = VK_NULL_HANDLE;
+            this->_allocation = VK_NULL_HANDLE;
         }
     }
 
-    CVulkanImage2DView::CVulkanImage2DView(const CVulkanContext& context, const CVulkanImage2DViewData& view_data, const VkImage& vk_image, bool depthImage) : _context{context}, _depthImage{depthImage} {
-        const VkImageViewCreateInfo image_view_create_info  {
+    CVulkanImage2DView::CVulkanImage2DView(const CVulkanContext& context, const CVulkanImage2DViewData& view_data, const VkImage& vk_image, const bool depthImage) : _context{context}, _depthImage{depthImage} {
+        const VkImageViewCreateInfo image_view_create_info{
             .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
             .image = vk_image,
             .viewType = view_data._viewType,
             .format = view_data._format,
-            .subresourceRange  {
+            .subresourceRange{
                 .aspectMask = view_data._aspectMask,
                 .baseMipLevel = 0,
                 .levelCount = view_data._mipLevels,
@@ -65,7 +56,7 @@ namespace cvulkan::client::render::vk {
                 .layerCount = view_data._layerCount
             }
         };
-        vk::util::vkCheck(vkCreateImageView(this->_context.device().vkDevice(), &image_view_create_info, nullptr, &this->_vkImageView), "Failed to createImageView image view");
+        util::vkCheck(vkCreateImageView(this->_context.device().vkDevice(), &image_view_create_info, nullptr, &this->_vkImageView), "Failed to createImageView image view");
         this->_vkImage = vk_image;
     }
 
@@ -77,16 +68,16 @@ namespace cvulkan::client::render::vk {
     }
 
     CVulkanAttachment2D::CVulkanAttachment2D(const CVulkanContext& context, CVulkanImage2D&& image, CVulkanImage2DView&& view, const bool depthAttachment)
-    : _context{context}, _image(std::move(image)), _view(std::move(view)), depthAttachment(depthAttachment) {
+        : _context{context}, _image(std::move(image)), _view(std::move(view)), depthAttachment(depthAttachment) {
     }
 
-    CVulkanAttachment2D::~CVulkanAttachment2D() {
-    }
+    CVulkanAttachment2D::~CVulkanAttachment2D() = default;
 
     CVulkanAttachment2D CVulkanAttachment2D::createSimpleAttachment(const CVulkanContext& context, const VkExtent3D& extent, const VkFormat format, const VkImageUsageFlags usage) {
-        const CVulkanImage2DData imageData{
+        const CVulkanImage2DData imageData {
             ._format = format,
-            ._usage = usage | VK_IMAGE_USAGE_SAMPLED_BIT,
+            ._memFlags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT,
+            ._memUsage = usage | VK_IMAGE_USAGE_SAMPLED_BIT,
             ._extent = extent
         };
 
@@ -116,7 +107,7 @@ namespace cvulkan::client::render::vk {
     }
 
     CVulkanSampler::CVulkanSampler(const CVulkanContext& context, const CVulkanSamplerInfo& samplerInfo) : _context{context} {
-        VkSamplerCreateInfo createInfo {
+        VkSamplerCreateInfo createInfo{
             .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
             .magFilter = VK_FILTER_NEAREST,
             .minFilter = VK_FILTER_NEAREST,
@@ -137,7 +128,7 @@ namespace cvulkan::client::render::vk {
             createInfo.maxAnisotropy = MAX_ANISOTROPY;
         }
 
-        vk::util::vkCheck(vkCreateSampler(context.device().vkDevice(), &createInfo, nullptr, &this->_sampler), "Failed to create sampler");
+        util::vkCheck(vkCreateSampler(context.device().vkDevice(), &createInfo, nullptr, &this->_sampler), "Failed to create sampler");
     }
 
     CVulkanSampler::~CVulkanSampler() {
@@ -148,8 +139,8 @@ namespace cvulkan::client::render::vk {
     }
 
     void img_util::imageBarrier(const VkCommandBuffer commandBuffer, const VkImage image, const VkImageLayout oldLayout, const VkImageLayout newLayout, const VkPipelineStageFlags2 srcStageMask, const VkPipelineStageFlags2 dstStageMask,
-                      const VkAccessFlags2 srcAccessMask, const VkAccessFlags2 dstAccessMask, const VkImageAspectFlags aspectMask) {
-        const VkImageMemoryBarrier2 barrier  {
+                                const VkAccessFlags2 srcAccessMask, const VkAccessFlags2 dstAccessMask, const VkImageAspectFlags aspectMask) {
+        const VkImageMemoryBarrier2 barrier{
             .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
             .srcStageMask = srcStageMask,
             .srcAccessMask = srcAccessMask,
@@ -160,7 +151,7 @@ namespace cvulkan::client::render::vk {
             .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
             .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
             .image = image,
-            .subresourceRange  {
+            .subresourceRange{
                 .aspectMask = aspectMask,
                 .baseMipLevel = 0,
                 .levelCount = VK_REMAINING_MIP_LEVELS,
@@ -169,7 +160,7 @@ namespace cvulkan::client::render::vk {
             },
         };
 
-        const VkDependencyInfo dependencyInfo  {
+        const VkDependencyInfo dependencyInfo{
             .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
             .imageMemoryBarrierCount = 1,
             .pImageMemoryBarriers = &barrier,

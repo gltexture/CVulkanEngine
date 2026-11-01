@@ -11,17 +11,27 @@ namespace cvulkan::client::render::vk {
 namespace cvulkan::client::render::camera {
     class CVulkanCamera {
     public:
-        explicit CVulkanCamera(const vk::CVulkanContext& context) : _context(context) { }
+        explicit CVulkanCamera(const vk::CVulkanContext& context) : _context(context) {
+        }
+
         ~CVulkanCamera() = default;
 
         void addRotation(float x, float y);
+
         void moveBackwards(float inc);
+
         void moveDown(float inc);
+
         void moveForward(float inc);
+
         void moveLeft(float inc);
+
         void moveRight(float inc);
+
         void moveUp(float inc);
+
         void setPosition(float x, float y, float z);
+
         void setRotation(float x, float y);
 
         [[nodiscard]] glm::vec3 direction() const {
@@ -58,6 +68,6 @@ namespace cvulkan::client::render::camera {
         glm::vec3 _right;
         glm::vec2 _rotation;
         glm::vec3 _up;
-        glm::mat4 _viewMatrix {1.0f};
+        glm::mat4 _viewMatrix{1.0f};
     };
 }

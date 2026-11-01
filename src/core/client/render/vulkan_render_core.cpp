@@ -4,11 +4,14 @@
 
 #include "GLFW/glfw3.h"
 
+#include "vulkan_mem_alloc.h"
 #include "vulkan_ext.h"
 #include "scene/vulkan_render_loop.h"
 
 namespace cvulkan::client::render::vk {
-    std::unique_ptr<CVulkanContext> vulkanContext;
+    void CVulkanQueueFamiliesRegistry::registerQueueFamily(const QueueFamilyBitMask bitMask, const uint32_t queueCount, const uint32_t queueFamilyIndex) {
+        this->_registeredData.emplace_back(bitMask, queueCount, queueFamilyIndex);
+    }
 
     CVulkanInstance::CVulkanInstance(const CVulkanContextBuildData& contextBuildData, const CVulkanInstanceBuildData& instanceBuildData) {
         bool USE_PORTABILITY_MODE = false;
@@ -41,18 +44,21 @@ namespace cvulkan::client::render::vk {
             std::vector<const char *> enabledLayerNames{};
             std::vector<const char *> enabledExtNames{};
 
+            enabledLayerNames.reserve(this->_vkInstanceLrExtData._enabledLayers.size());
             for (const auto& layer: this->_vkInstanceLrExtData._enabledLayers) {
                 enabledLayerNames.emplace_back(layer.c_str());
             }
+
+            enabledExtNames.reserve(this->_vkInstanceLrExtData._enabledExtensions.size());
             for (const auto& layer: this->_vkInstanceLrExtData._enabledExtensions) {
                 enabledExtNames.emplace_back(layer.c_str());
             }
 
-            VkApplicationInfo appInfo  {};
-            VkInstanceCreateInfo instanceCreateInfo  {};
+            VkApplicationInfo appInfo{};
+            VkInstanceCreateInfo instanceCreateInfo{};
             appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
             appInfo.pApplicationName = "CVulkan";
-            appInfo.apiVersion = VK_API_VERSION_1_3;
+            appInfo.apiVersion = CVULKAN_VK_API_VER;
             appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
             instanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
             instanceCreateInfo.pApplicationInfo = &appInfo;
@@ -125,7 +131,6 @@ namespace cvulkan::client::render::vk {
         const CVulkanContextBuildData& contextBuildData,
         const CVulkanInstance& instance,
         const CVulkanPhysicalDeviceBuildData& physicalDeviceBuildData) {
-
         uint32_t physicalDeviceCount = 0;
         vk::util::vkCheck(vkEnumeratePhysicalDevices(instance.vkInstance(), &physicalDeviceCount, nullptr), "Failed to get physical devices");
         if (physicalDeviceCount > 0) {
@@ -256,6 +261,7 @@ namespace cvulkan::client::render::vk {
     }
 
     CVulkanDevice::CVulkanDevice(
+        const CVulkanInstance& instance,
         const CVulkanContextBuildData& contextBuildData,
         const CVulkanPhysicalDevice& physicalDevice,
         VkSurfaceKHR surface,
@@ -272,7 +278,7 @@ namespace cvulkan::client::render::vk {
         }
         queueCreateInfos.reserve(queueFamilies.size());
         for (const auto& [fst, snd]: queueFamilies) {
-            const VkDeviceQueueCreateInfo queueCreateInfo  {
+            const VkDeviceQueueCreateInfo queueCreateInfo{
                 .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
                 .queueFamilyIndex = fst,
                 .queueCount = snd._queueCount,
@@ -281,16 +287,16 @@ namespace cvulkan::client::render::vk {
             queueCreateInfos.emplace_back(queueCreateInfo);
         }
 
-        VkDeviceCreateInfo vkDeviceCreateInfo  {.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO};
+        VkDeviceCreateInfo vkDeviceCreateInfo{.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO};
         vkDeviceCreateInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
         vkDeviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();
 
-        VkPhysicalDeviceVulkan13Features features13  {
+        VkPhysicalDeviceVulkan13Features features13{
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES,
             .synchronization2 = VK_TRUE,
             .dynamicRendering = VK_TRUE
         };
-        VkPhysicalDeviceFeatures2 features2  {
+        VkPhysicalDeviceFeatures2 features2{
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
             .pNext = &features13
         };
@@ -305,8 +311,8 @@ namespace cvulkan::client::render::vk {
         vkDeviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(physicalDevice.vkDeviceLayersExtensionsData()._enabledExtensions.size());
         vkDeviceCreateInfo.enabledLayerCount = static_cast<uint32_t>(physicalDevice.vkDeviceLayersExtensionsData()._enabledLayers.size());
 
-        std::vector<const char*> enabledLayerNames{};
-        std::vector<const char*> enabledExtNames{};
+        std::vector<const char *> enabledLayerNames{};
+        std::vector<const char *> enabledExtNames{};
 
         for (const auto& layer: physicalDevice.vkDeviceLayersExtensionsData()._enabledLayers) {
             enabledLayerNames.emplace_back(layer.c_str());
@@ -318,17 +324,22 @@ namespace cvulkan::client::render::vk {
         vkDeviceCreateInfo.ppEnabledExtensionNames = enabledExtNames.data();
         vkDeviceCreateInfo.ppEnabledLayerNames = enabledLayerNames.data();
 
-        vk::util::vkCheck(vkCreateDevice(physicalDevice.vkPhysicalDevice(), &vkDeviceCreateInfo, nullptr, &this->_vkDevice));
+        util::vkCheck(vkCreateDevice(physicalDevice.vkPhysicalDevice(), &vkDeviceCreateInfo, nullptr, &this->_vkDevice));
 
         for (const auto& t: this->_queueFamiliesRegistry.registeredData()) {
             logging::info("Available queue family {}: {} queue(s), flags {}", t._queueFamilyIndex, t._queueCount, t._bitMask);
         }
         logging::info("Created Vulkan device");
+
+        {
+            this->_vkMemoryAllocator = std::make_unique<memalloc::CVulkan_VkMemoryAllocator>(instance.vkInstance(), this->_vkDevice, physicalDevice.vkPhysicalDevice());
+        }
     }
 
     CVulkanDevice::~CVulkanDevice() {
         if (this->_vkDevice != VK_NULL_HANDLE) {
             this->deviceWaitIdle();
+            this->_vkMemoryAllocator.reset();
             vkDestroyDevice(this->_vkDevice, nullptr);
             this->_vkDevice = VK_NULL_HANDLE;
             logging::info("Destroyed Vulkan device");
@@ -336,21 +347,22 @@ namespace cvulkan::client::render::vk {
     }
 
 
-
-
     CVulkanContext::CVulkanContext(
         const window::CVulkanWindow& window,
         const CVulkanContextBuildData& contextBuildData,
         const CVulkanInstanceBuildData& instanceBuildData,
         const CVulkanPhysicalDeviceBuildData& physicalDeviceBuildData,
-        const CVulkanLogicalDeviceBuildData& logicalDeviceBuildData) :
-            _glfwWindow{window},
-            _instance{contextBuildData, instanceBuildData},
-            _physicalDevice(contextBuildData, this->_instance, physicalDeviceBuildData),
-            _surface{std::make_unique<CVulkanSurface>(*this)},
-            _device{contextBuildData, this->_physicalDevice, this->_surface->vkSurface(), logicalDeviceBuildData},
-            _swapChain{std::make_unique<CVulkanSwapChain>(*this, this->_surface->vkSurface(), this->_surface->vkSurfaceCapabilities(), this->_surface->vkFormat(), this->_surface->vkColorSpace())},
-            _pipelineCache{*this} {}
+        const CVulkanLogicalDeviceBuildData& logicalDeviceBuildData) : _glfwWindow{window},
+                                                                       _instance{contextBuildData, instanceBuildData},
+                                                                       _physicalDevice(contextBuildData, this->_instance, physicalDeviceBuildData),
+                                                                       _surface{std::make_unique<CVulkanSurface>(*this)},
+                                                                       _device{this->_instance, contextBuildData, this->_physicalDevice, this->_surface->vkSurface(), logicalDeviceBuildData},
+                                                                       _swapChain{
+                                                                           std::make_unique<CVulkanSwapChain>(*this, this->_surface->vkSurface(), this->_surface->vkSurfaceCapabilities(), this->_surface->vkFormat(),
+                                                                                                              this->_surface->vkColorSpace())
+                                                                       },
+                                                                       _pipelineCache{*this} {
+    }
 
     void CVulkanContext::resize() {
         {
@@ -362,6 +374,8 @@ namespace cvulkan::client::render::vk {
             this->_swapChain = std::make_unique<CVulkanSwapChain>(*this, this->_surface->vkSurface(), this->_surface->vkSurfaceCapabilities(), this->_surface->vkFormat(), this->_surface->vkColorSpace());
         }
     }
+
+    std::unique_ptr<CVulkanContext> vulkanContext;
 
     std::unordered_set<std::string> availableInstanceExtensions() {
         std::unordered_set<std::string> set{};
@@ -407,7 +421,7 @@ namespace cvulkan::client::render::vk {
         std::unordered_set<std::string> set{};
         uint32_t extensionsCount = 0;
         std::vector<VkExtensionProperties> extensionProperties{};
-        VkPhysicalDeviceProperties properties {};
+        VkPhysicalDeviceProperties properties{};
         vkGetPhysicalDeviceProperties(device, &properties);
         vk::util::vkCheck(vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionsCount, nullptr), std::format("Failed to get device extensions for '{}'", properties.deviceName));
         if (extensionsCount == 0) {
@@ -428,7 +442,7 @@ namespace cvulkan::client::render::vk {
         std::unordered_set<std::string> set{};
         uint32_t layerCount = 0;
         std::vector<VkLayerProperties> layerProperties{};
-        VkPhysicalDeviceProperties properties {};
+        VkPhysicalDeviceProperties properties{};
         vkGetPhysicalDeviceProperties(device, &properties);
         util::vkCheck(vkEnumerateDeviceLayerProperties(device, &layerCount, nullptr), std::format("Failed to get device layers for '{}'", properties.deviceName));
         if (layerCount == 0) {
@@ -457,10 +471,6 @@ namespace cvulkan::client::render::vk {
             set.emplace(extensions[i]);
         }
         return set;
-    }
-
-    void CVulkanQueueFamiliesRegistry::registerQueueFamily(const QueueFamilyBitMask bitMask, const uint32_t queueCount, const uint32_t queueFamilyIndex) {
-        this->_registeredData.emplace_back(bitMask, queueCount, queueFamilyIndex);
     }
 
     uint32_t findVulkanQueueFamily(QueueFamilyBitMask bitmask, const CVulkanPhysicalDevice& device, const VkSurfaceKHR surface) {
@@ -492,43 +502,39 @@ namespace cvulkan::client::render::vk {
         return UINT32_MAX;
     }
 
-    void runRender() {
-        loop::runRendering();
-    }
-
     void createRenderCore(const window::CVulkanWindow& window) {
-        const CVulkanContextBuildData contextBuildData {
+        const CVulkanContextBuildData contextBuildData{
             sys_utils::debug_mode
         };
 
-        const CVulkanInstanceBuildData instanceBuildData {
+        const CVulkanInstanceBuildData instanceBuildData{
             {},
             {}
         };
 
-        const CVulkanPhysicalDeviceBuildData physicalDeviceBuildData {
+        const CVulkanPhysicalDeviceBuildData physicalDeviceBuildData{
             {},
             {EXT_VK_KHR_SWAPCHAIN_EXTENSION_NAME()}
         };
 
-        const CVulkanLogicalDeviceBuildData logicalDeviceBuildData {
+        const CVulkanLogicalDeviceBuildData logicalDeviceBuildData{
             std::vector<CVulkanQueueFamilyCreationRequest>{
-                            {
-                                ._bitMask = CVulkanQueueFamilyBitMasks::GRAPHICS,
-                                ._queueCount = 1,
-                                ._priorities = {1.0f}
-                            },
-                            {
-                                ._bitMask = CVulkanQueueFamilyBitMasks::PRESENT,
-                                ._queueCount = 1,
-                                ._priorities = {1.0f}
-                            },
-                            {
-                                ._bitMask = CVulkanQueueFamilyBitMasks::TRANSFER,
-                                ._queueCount = 1,
-                                ._priorities = {1.0f}
-                            },
-                    }
+                {
+                    ._bitMask = CVulkanQueueFamilyBitMasks::GRAPHICS,
+                    ._queueCount = 1,
+                    ._priorities = {1.0f}
+                },
+                {
+                    ._bitMask = CVulkanQueueFamilyBitMasks::PRESENT,
+                    ._queueCount = 1,
+                    ._priorities = {1.0f}
+                },
+                {
+                    ._bitMask = CVulkanQueueFamilyBitMasks::TRANSFER,
+                    ._queueCount = 1,
+                    ._priorities = {1.0f}
+                },
+            }
         };
 
         vulkanContext = std::make_unique<CVulkanContext>(
@@ -539,6 +545,10 @@ namespace cvulkan::client::render::vk {
             logicalDeviceBuildData
         );
         loop::createRendering(*vulkanContext);
+    }
+
+    void runRender() {
+        loop::runRendering();
     }
 
     void cleanRenderCore() {
@@ -565,8 +575,8 @@ namespace cvulkan::client::render::vk {
         return result;
     }
 
-    uint32_t util::findQueueFamilyIndex(const CVulkanContext &context, QueueFamilyBitMask bitMask) {
-        for (const auto& queue : context.device().queueFamiliesRegistry().registeredData()) {
+    uint32_t util::findQueueFamilyIndex(const CVulkanContext& context, QueueFamilyBitMask bitMask) {
+        for (const auto& queue: context.device().queueFamiliesRegistry().registeredData()) {
             if (queue._bitMask & bitMask) {
                 return queue._queueFamilyIndex;
             }

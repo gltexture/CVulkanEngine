@@ -31,7 +31,7 @@ namespace cvulkan::client::render::cache {
         uint64_t totalMeshes = 0;
         uint64_t totalStagingBytes = 0;
 
-        for (const auto& [id, meshes, _materialsPath_Relative, _cachePath_Relative, _idxPath_Relative, _vtxPath_Relative] : models) {
+        for (const auto& [id, meshes, _materialsPath_Relative, _cachePath_Relative, _idxPath_Relative, _vtxPath_Relative]: models) {
             logging::debug("Loading model '{}': meshes={}", id, meshes.size());
 
             const auto [modelIt, inserted] = this->_modelsMap.emplace(id, structs::CVulkanModel{id});
@@ -39,7 +39,7 @@ namespace cvulkan::client::render::cache {
                 throw std::runtime_error(std::format("Model '{}' is already loaded in Vulkan models cache", id));
             }
 
-            for (const auto& mesh : meshes) {
+            for (const auto& mesh: meshes) {
                 logging::debug("Loading mesh '{}' for model '{}': vertexSize={} bytes, indexSize={} bytes, materialId={}", mesh._id, id, mesh._vtxSize, mesh._idxSize, mesh._materialId);
 
                 if (mesh._idxSize == 0 || mesh._idxSize % sizeof(uint32_t) != 0) {
@@ -118,7 +118,7 @@ namespace cvulkan::client::render::cache {
         commandBuffer.beginRecording();
 
         std::size_t transitionCount = 0;
-        for (auto& v : this->_indexedTexturesMap.map() | std::views::values) {
+        for (auto& v: this->_indexedTexturesMap.map() | std::views::values) {
             v.recordTextureTransition(commandBuffer);
             ++transitionCount;
         }
@@ -130,7 +130,7 @@ namespace cvulkan::client::render::cache {
         commandBuffer.submitAndWait(queue);
 
         logging::debug("Destroying staging buffers for {} textures", transitionCount);
-        for (auto& v : this->_indexedTexturesMap.map() | std::views::values) {
+        for (auto& v: this->_indexedTexturesMap.map() | std::views::values) {
             v.destroyStgBuffer();
         }
 
@@ -205,8 +205,9 @@ namespace cvulkan::client::render::cache {
         const VkDeviceSize bufferSize = static_cast<VkDeviceSize>(MAT_BUFFER_SIZE) * numMaterials;
         logging::debug("Allocating materials storage buffer: materials={}, bufferSize={} bytes, materialSize={} bytes", numMaterials, bufferSize, MAT_BUFFER_SIZE);
 
-        vk::CVulkanBuffer srcBuffer{this->_context, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, bufferSize};
-        vk::CVulkanBuffer matBuffer{this->_context, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, bufferSize};
+        vk::CVulkanBuffer srcBuffer{this->_context, bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_AUTO,
+            VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT};
+        vk::CVulkanBuffer matBuffer{this->_context, bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_AUTO, 0, 0};
 
         const vk::CVulkanCommandBuffer commandBuffer{this->_context, commandPool, true, true};
         commandBuffer.beginRecording();
@@ -219,7 +220,7 @@ namespace cvulkan::client::render::cache {
         logging::debug("Mapping materials staging buffer: size={} bytes", bufferSize);
         transferBufferData._src.mapMem();
 
-        auto* mappedMemory = static_cast<char*>(transferBufferData._src.mappedMemory());
+        auto* mappedMemory = static_cast<char *>(transferBufferData._src.mappedMemory());
         if (mappedMemory == nullptr) {
             transferBufferData._src.unMapMem();
             throw std::runtime_error("Failed to map materials staging buffer");
@@ -268,14 +269,19 @@ namespace cvulkan::client::render::cache {
 
             this->_indexedMaterialsMap.emplace(material._id, material);
 
-            std::memcpy(mappedMemory + offset, &_diffuseColor, sizeof(glm::vec4)); offset += sizeof(glm::vec4);
-            std::memcpy(mappedMemory + offset, &hasTextureValue32, sizeof(hasTextureValue32)); offset += sizeof(hasTextureValue32);
-            std::memcpy(mappedMemory + offset, &texturePos, sizeof(texturePos)); offset += sizeof(texturePos);
+            std::memcpy(mappedMemory + offset, &_diffuseColor, sizeof(glm::vec4));
+            offset += sizeof(glm::vec4);
+            std::memcpy(mappedMemory + offset, &hasTextureValue32, sizeof(hasTextureValue32));
+            offset += sizeof(hasTextureValue32);
+            std::memcpy(mappedMemory + offset, &texturePos, sizeof(texturePos));
+            offset += sizeof(texturePos);
 
             {
                 constexpr int32_t padding = 0;
-                std::memcpy(mappedMemory + offset, &padding, sizeof(padding)); offset += sizeof(padding);
-                std::memcpy(mappedMemory + offset, &padding, sizeof(padding)); offset += sizeof(padding);
+                std::memcpy(mappedMemory + offset, &padding, sizeof(padding));
+                offset += sizeof(padding);
+                std::memcpy(mappedMemory + offset, &padding, sizeof(padding));
+                offset += sizeof(padding);
             }
 
             logging::debug("Material '{}' serialized: textureEnabled={}, texturePosition={}, bytesWritten={}", _id, hasTextureValue32, texturePos, offset);

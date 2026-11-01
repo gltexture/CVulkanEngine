@@ -39,14 +39,16 @@ namespace cvulkan::client::render::asset {
 
     void modelGen::to_json(nlohmann::json& json, const CVulkanMaterialData& material) {
         json = nlohmann::json{
-                                    {"id", material._id},
-                                    {"texturePath", material._texturePath.path()},
-                                    {"diffuseColor", {
-                                        material._diffuseColor.x,
-                                        material._diffuseColor.y,
-                                        material._diffuseColor.z,
-                                        material._diffuseColor.w
-                                       }}
+            {"id", material._id},
+            {"texturePath", material._texturePath.path()},
+            {
+                "diffuseColor", {
+                    material._diffuseColor.x,
+                    material._diffuseColor.y,
+                    material._diffuseColor.z,
+                    material._diffuseColor.w
+                }
+            }
         };
     }
 
@@ -92,14 +94,14 @@ namespace cvulkan::client::render::asset {
         if (normalizedRelativePath.empty() || normalizedRelativePath.is_absolute()) {
             throw std::runtime_error("Invalid source model path");
         }
-        for (const auto& component : normalizedRelativePath) {
+        for (const auto& component: normalizedRelativePath) {
             if (component == "..") {
                 throw std::runtime_error("Model path is outside the source models directory");
             }
         }
 
         const auto rawModelFullPathDir = io_utils::RES_RESOLVER / (io_utils::CVulkanResourcePath{io_utils::MODELS_SOURCE / normalizedRelativePath.parent_path()});
-        const io_utils::CVulkanResourcePath outputResourceDir {io_utils::MODELS_COMPILED / normalizedRelativePath.parent_path()};
+        const io_utils::CVulkanResourcePath outputResourceDir{io_utils::MODELS_COMPILED / normalizedRelativePath.parent_path()};
         const auto outputFullPathDir = io_utils::RES_RESOLVER / (outputResourceDir);
 
         std::filesystem::remove_all(outputFullPathDir);
@@ -241,7 +243,7 @@ namespace cvulkan::client::render::asset {
             materialId = materials[materialIdx]._id;
         }
 
-        CVulkanMeshData meshData {
+        CVulkanMeshData meshData{
             ._id = id,
             ._materialId = materialId,
             ._idxOffset = modelBinData._idxOffset,
@@ -257,13 +259,13 @@ namespace cvulkan::client::render::asset {
     }
 
     modelGen::CVulkanModelCache modelGen::genModelCache(const io_utils::CVulkanResourcePath& rawModelRootDirectory) {
-        CVulkanModelCache cache {};
+        CVulkanModelCache cache{};
         cache._version = _GEN_VER;
 
         const io_utils::CVulkanResourcePath rawModelResourcePath = io_utils::CVulkanResourcePath{io_utils::MODELS_SOURCE} / rawModelRootDirectory;
         const std::filesystem::path modelRootFullPath = io_utils::RES_RESOLVER / rawModelResourcePath;
 
-        for (const auto& entry : std::filesystem::recursive_directory_iterator(modelRootFullPath)) {
+        for (const auto& entry: std::filesystem::recursive_directory_iterator(modelRootFullPath)) {
             if (!entry.is_regular_file()) {
                 continue;
             }
@@ -283,7 +285,6 @@ namespace cvulkan::client::render::asset {
     }
 
     bool modelGen::isInvalidCache(const io_utils::CVulkanResourcePath& cacheFile, const io_utils::CVulkanResourcePath& modelRootDirectory) {
-
         const std::filesystem::path cacheFullPath = io_utils::RES_RESOLVER / cacheFile;
         const std::filesystem::path modelRootFullPath = io_utils::RES_RESOLVER / modelRootDirectory;
 
@@ -295,7 +296,8 @@ namespace cvulkan::client::render::asset {
         CVulkanModelCache cache{};
         {
             std::ifstream reader{cacheFullPath, std::ios::binary};
-            if (!reader) {;
+            if (!reader) {
+                ;
                 return INVALID;
             }
 
@@ -307,13 +309,14 @@ namespace cvulkan::client::render::asset {
             }
         }
 
-        if (cache._version != _GEN_VER) {;
+        if (cache._version != _GEN_VER) {
+            ;
             return INVALID;
         }
 
         std::size_t foundFiles = 0;
 
-        for (const auto& entry : std::filesystem::recursive_directory_iterator(modelRootFullPath)) {
+        for (const auto& entry: std::filesystem::recursive_directory_iterator(modelRootFullPath)) {
             if (!entry.is_regular_file()) {
                 continue;
             }
@@ -387,7 +390,8 @@ namespace cvulkan::client::render::asset {
         return vertices;
     }
 
-    modelGen::CVulkanMaterialData modelGen::processMaterial(const aiScene& assimpScene, const aiMaterial& assimpMaterial, const std::filesystem::path& currentPath, const std::filesystem::path& directoryToCopyTextures, const std::string& modelId, uint32_t pos) {
+    modelGen::CVulkanMaterialData modelGen::processMaterial(const aiScene& assimpScene, const aiMaterial& assimpMaterial, const std::filesystem::path& currentPath, const std::filesystem::path& directoryToCopyTextures,
+                                                            const std::string& modelId, uint32_t pos) {
         logging::info("Processing material (model id: '{}'), (material pos: '{}')", modelId, pos);
         aiColor4D color{};
         glm::vec4 colorVec{};
@@ -404,14 +408,15 @@ namespace cvulkan::client::render::asset {
         return {std::format("{}-mat-{}", modelId, pos), texturePath, colorVec};
     }
 
-    io_utils::CVulkanResourcePath modelGen::processTextureAndGetRelativePath(const aiScene& assimpScene, const aiMaterial& assimpMaterial, const std::filesystem::path& currentPath, const std::filesystem::path& directoryToCopyTextures, const aiTextureType textureType) {
+    io_utils::CVulkanResourcePath modelGen::processTextureAndGetRelativePath(const aiScene& assimpScene, const aiMaterial& assimpMaterial, const std::filesystem::path& currentPath, const std::filesystem::path& directoryToCopyTextures,
+                                                                             const aiTextureType textureType) {
         const uint32_t numEmbedded = assimpScene.mNumTextures;
 
         aiString assimpTexturePath{};
         const aiReturn result = aiGetMaterialTexture(&assimpMaterial, textureType, 0, &assimpTexturePath);
 
         if (result != aiReturn_SUCCESS || assimpTexturePath.Empty()) {
-            return io_utils::CVulkanResourcePath {};
+            return io_utils::CVulkanResourcePath{};
         }
 
         const std::string texturePath = assimpTexturePath.C_Str();
@@ -429,13 +434,13 @@ namespace cvulkan::client::render::asset {
             std::filesystem::create_directories(textureFullPath.parent_path());
 
             if (embeddedTexture->mHeight == 0) {
-                std::ofstream outTexture{textureFullPath,std::ios::out | std::ios::binary | std::ios::trunc};
+                std::ofstream outTexture{textureFullPath, std::ios::out | std::ios::binary | std::ios::trunc};
 
                 if (!outTexture) {
                     throw std::runtime_error(std::format("Failed to open output texture file '{}'", textureFullPath.string()));
                 }
 
-                outTexture.write(reinterpret_cast<const char*>(embeddedTexture->pcData), embeddedTexture->mWidth);
+                outTexture.write(reinterpret_cast<const char *>(embeddedTexture->pcData), embeddedTexture->mWidth);
 
                 if (!outTexture) {
                     throw std::runtime_error(std::format("Failed to write output texture file '{}'", textureFullPath.string()));
@@ -461,9 +466,9 @@ namespace cvulkan::client::render::asset {
             throw std::runtime_error(std::format("Texture file '{}' does not exist", source.string()));
         }
 
-        const std::filesystem::path destination =directoryToCopyTextures / texturePath;
+        const std::filesystem::path destination = directoryToCopyTextures / texturePath;
         std::filesystem::create_directories(destination.parent_path());
-        std::filesystem::copy_file(source,destination,std::filesystem::copy_options::overwrite_existing);
+        std::filesystem::copy_file(source, destination, std::filesystem::copy_options::overwrite_existing);
         return io_utils::CVulkanResourcePath{io_utils::TEXTURES / texturePath};
     }
 
@@ -476,8 +481,8 @@ namespace cvulkan::client::render::asset {
         }
         nlohmann::json json;
         reader >> json;
-        auto materialData = json.get<std::vector<modelGen::CVulkanMaterialData>>();
-        for (auto& material : materialData) {
+        auto materialData = json.get<std::vector<modelGen::CVulkanMaterialData> >();
+        for (auto& material: materialData) {
             material._texturePath = material._texturePath.isEmpty() ? io_utils::CVulkanResourcePath{} : io_utils::CVulkanResourcePath{materialsFile.path().parent_path()} / material._texturePath;
         }
         return materialData;
@@ -508,14 +513,14 @@ namespace cvulkan::client::render::asset {
         if (!isModelJSON) {
             auto modelJSONRelativePath = relativePath;
             modelJSONRelativePath.replace_extension(io_utils::MODEL_JSON);
-            pathToModelJSON = io_utils::CVulkanResourcePath {io_utils::MODELS_COMPILED / modelJSONRelativePath};
+            pathToModelJSON = io_utils::CVulkanResourcePath{io_utils::MODELS_COMPILED / modelJSONRelativePath};
 
             const auto modelJSONFullPath = io_utils::RES_RESOLVER / (pathToModelJSON);
             bool gen = true;
 
             if (std::filesystem::is_regular_file(modelJSONFullPath)) {
                 if (const auto modelData = loadModelJSON(pathToModelJSON); !modelData._cachePath.path().empty()) {
-                    const io_utils::CVulkanResourcePath rawModelRoot {io_utils::MODELS_SOURCE / relativePath.parent_path()};
+                    const io_utils::CVulkanResourcePath rawModelRoot{io_utils::MODELS_SOURCE / relativePath.parent_path()};
                     gen = modelGen::isInvalidCache(modelData._cachePath, rawModelRoot);
                 }
             }

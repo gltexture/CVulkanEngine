@@ -46,7 +46,7 @@ namespace cvulkan::client::render::shader {
             throw std::runtime_error(std::format("Failed to read shader file '{}': expected {} bytes, read {} bytes", spvFile.string(), fileSize, spv.gcount()));
         }
 
-        const auto* spvCode = reinterpret_cast<const uint32_t*>(spvFileContents.data());
+        const auto* spvCode = reinterpret_cast<const uint32_t *>(spvFileContents.data());
         if (spvCode[0] != 0x07230203) {
             throw std::runtime_error(std::format("Shader file '{}' has an invalid SPIR-V magic number", spvFile.string()));
         }

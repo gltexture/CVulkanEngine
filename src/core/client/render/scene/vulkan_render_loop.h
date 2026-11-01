@@ -20,6 +20,7 @@ namespace cvulkan::client::render::loop {
     class CVulkanRenderLoop {
     public:
         explicit CVulkanRenderLoop(vk::CVulkanContext& context);
+
         ~CVulkanRenderLoop();
 
         CLASS_NO_COPY(CVulkanRenderLoop)
@@ -72,6 +73,7 @@ namespace cvulkan::client::render::loop {
         void waitForFence() const;
 
         void submit(const vk::CVulkanCommandBuffer& commandBuffer, const uint32_t& imageIndex) const;
+
     private:
         vk::CVulkanContext& _context;
         std::vector<vk::CVulkanCommandPool> _commandPools{};
@@ -79,10 +81,10 @@ namespace cvulkan::client::render::loop {
         std::vector<sync::CVulkanFence> _fences{};
         std::vector<sync::CVulkanSemaphore> _presentationCompleteSemaphores{};
         std::vector<sync::CVulkanSemaphore> _renderCompleteSemaphores{};
-        uint32_t _currentFrame {0};
+        uint32_t _currentFrame{0};
         std::unique_ptr<vk::CVulkanQueue> _graphicsQueue;
         std::unique_ptr<vk::CVulkanQueue> _presentQueue;
-        bool _shouldBeResized {false};
+        bool _shouldBeResized{false};
     };
 
     extern std::unique_ptr<scene::CVulkanSceneRenderer> _sceneRenderer;

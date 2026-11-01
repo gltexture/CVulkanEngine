@@ -13,6 +13,7 @@ namespace cvulkan::client::window {
     class CVulkanWindow {
     public:
         explicit CVulkanWindow(const EngineData& engineData);
+
         ~CVulkanWindow();
 
         CLASS_NO_COPY_NO_ASSIGN_MOVE(CVulkanWindow);
@@ -24,6 +25,7 @@ namespace cvulkan::client::window {
         [[nodiscard]] GLFWwindow* glfwWindowDescriptor() const {
             return _glfwWindowDescriptor;
         }
+
         [[nodiscard]] glm::uvec2 size() const {
             int width = 0;
             int height = 0;
@@ -39,5 +41,6 @@ namespace cvulkan::client::window {
     extern std::unique_ptr<CVulkanWindow> glfwWindow;
 
     void createWindow(const EngineData& engineData);
+
     void destroyWindow();
 }

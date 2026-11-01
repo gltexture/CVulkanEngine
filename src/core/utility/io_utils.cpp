@@ -30,7 +30,7 @@ namespace cvulkan::io_utils {
         if (relativePath.empty() || relativePath.is_absolute()) {
             throw std::invalid_argument("Invalid resource path");
         }
-        for (const auto& component : relativePath) {
+        for (const auto& component: relativePath) {
             if (component == "..") {
                 throw std::invalid_argument("Resource path escapes the root");
             }

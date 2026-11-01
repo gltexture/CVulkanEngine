@@ -28,6 +28,7 @@ namespace cvulkan::client::render::vk {
     class CVulkanPipelineCache {
     public:
         explicit CVulkanPipelineCache(const CVulkanContext& context);
+
         ~CVulkanPipelineCache();
 
         CLASS_NO_COPY(CVulkanPipelineCache);
@@ -43,9 +44,14 @@ namespace cvulkan::client::render::vk {
 
     class CVulkanPipelineBuildInfo {
     public:
-        CVulkanPipelineBuildInfo(const std::vector<Ref_CVulkanDescriptorSetLayout>& descriptorSetLayouts, const std::vector<Ref_CVulkanShaderModule>& shaderModules, const std::vector<Ref_CVulkanPushConstantRange>& pushConstantRanges, const VkPipelineVertexInputStateCreateInfo& vertexInputInfo, const VkFormat& colorFormat, const VkFormat& depthFormat, bool useBlend);
-        CVulkanPipelineBuildInfo(const std::vector<Ref_CVulkanDescriptorSetLayout>& descriptorSetLayouts, const std::vector<Ref_CVulkanShaderModule>& shaderModules, const std::vector<Ref_CVulkanPushConstantRange>& pushConstantRanges, const VkPipelineVertexInputStateCreateInfo& vertexInputInfo, const VkFormat& colorFormat, bool useBlend)
-            : CVulkanPipelineBuildInfo((descriptorSetLayouts), (shaderModules), (pushConstantRanges), vertexInputInfo, colorFormat, VK_FORMAT_UNDEFINED, useBlend) {};
+        CVulkanPipelineBuildInfo(const std::vector<Ref_CVulkanDescriptorSetLayout>& descriptorSetLayouts, const std::vector<Ref_CVulkanShaderModule>& shaderModules, const std::vector<Ref_CVulkanPushConstantRange>& pushConstantRanges,
+                                 const VkPipelineVertexInputStateCreateInfo& vertexInputInfo, const VkFormat& colorFormat, const VkFormat& depthFormat, bool useBlend);
+
+        CVulkanPipelineBuildInfo(const std::vector<Ref_CVulkanDescriptorSetLayout>& descriptorSetLayouts, const std::vector<Ref_CVulkanShaderModule>& shaderModules, const std::vector<Ref_CVulkanPushConstantRange>& pushConstantRanges,
+                                 const VkPipelineVertexInputStateCreateInfo& vertexInputInfo, const VkFormat& colorFormat, bool useBlend)
+            : CVulkanPipelineBuildInfo((descriptorSetLayouts), (shaderModules), (pushConstantRanges), vertexInputInfo, colorFormat, VK_FORMAT_UNDEFINED, useBlend) {
+        };
+
         ~CVulkanPipelineBuildInfo() = default;
 
         CLASS_NO_COPY(CVulkanPipelineBuildInfo);
@@ -91,6 +97,7 @@ namespace cvulkan::client::render::vk {
     class CVulkanPipeline {
     public:
         CVulkanPipeline(const CVulkanContext& context, const CVulkanPipelineBuildInfo& buildInfo);
+
         ~CVulkanPipeline();
 
         CLASS_NO_COPY(CVulkanPipeline);

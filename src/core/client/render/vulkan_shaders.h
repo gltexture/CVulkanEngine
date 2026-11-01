@@ -19,6 +19,7 @@ namespace cvulkan::client::render::shader {
     class CVulkanShaderModule {
     public:
         CVulkanShaderModule(const vk::CVulkanContext& context, const io_utils::CVulkanResourcePath& shaderSpvFileName, VkShaderStageFlagBits stage);
+
         ~CVulkanShaderModule();
 
         CLASS_NO_COPY_NO_ASSIGN_MOVE(CVulkanShaderModule);

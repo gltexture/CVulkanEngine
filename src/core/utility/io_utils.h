@@ -15,8 +15,8 @@ namespace cvulkan::io_utils {
     inline const std::filesystem::path MODELS{"models"};
     inline const std::filesystem::path RESOURCES{"resources"};
 
-    inline const std::filesystem::path SHADERS_SOURCE {SHADERS / SOURCE};
-    inline const std::filesystem::path SHADERS_COMPILED {SHADERS / COMPILED};
+    inline const std::filesystem::path SHADERS_SOURCE{SHADERS / SOURCE};
+    inline const std::filesystem::path SHADERS_COMPILED{SHADERS / COMPILED};
 
     inline const std::filesystem::path MODELS_COMPILED{MODELS / COMPILED};
     inline const std::filesystem::path MODELS_SOURCE{MODELS / SOURCE};
@@ -31,7 +31,8 @@ namespace cvulkan::io_utils {
 
     class CVulkanResourcePath {
     public:
-        explicit CVulkanResourcePath() {};
+        explicit CVulkanResourcePath() {
+        };
 
         explicit CVulkanResourcePath(std::filesystem::path path) : _path(std::move(path)) {
             //if (this->_path.empty()) {
@@ -42,11 +43,11 @@ namespace cvulkan::io_utils {
             }
         }
 
-        [[nodiscard]] CVulkanResourcePath operator/ (const CVulkanResourcePath& other) const {
+        [[nodiscard]] CVulkanResourcePath operator/(const CVulkanResourcePath& other) const {
             return CVulkanResourcePath{_path / other._path};
         }
 
-        [[nodiscard]] CVulkanResourcePath operator/ (const std::filesystem::path& other) const {
+        [[nodiscard]] CVulkanResourcePath operator/(const std::filesystem::path& other) const {
             return CVulkanResourcePath{_path / other};
         }
 
@@ -55,8 +56,11 @@ namespace cvulkan::io_utils {
         }
 
         CVulkanResourcePath(const CVulkanResourcePath&) = default;
+
         CVulkanResourcePath& operator=(const CVulkanResourcePath&) = default;
+
         CVulkanResourcePath(CVulkanResourcePath&&) = default;
+
         CVulkanResourcePath& operator=(CVulkanResourcePath&&) = default;
 
         [[nodiscard]] const std::filesystem::path& path() const noexcept {
@@ -69,15 +73,18 @@ namespace cvulkan::io_utils {
 
     class CVulkanResourceResolver {
     public:
-        explicit CVulkanResourceResolver(std::filesystem::path&& root) : _root(std::filesystem::absolute(std::move(root)).lexically_normal()) { }
+        explicit CVulkanResourceResolver(std::filesystem::path&& root) : _root(std::filesystem::absolute(std::move(root)).lexically_normal()) {
+        }
 
-        [[nodiscard]] std::filesystem::path operator/ (const CVulkanResourcePath& resourcePath) const {
+        [[nodiscard]] std::filesystem::path operator/(const CVulkanResourcePath& resourcePath) const {
             return resolve(resourcePath);
         }
 
         CLASS_NO_COPY_NO_MOVE(CVulkanResourceResolver)
 
-        [[nodiscard]] std::filesystem::path resolve(const CVulkanResourcePath& resourcePath) const;
+        [[nodiscard]] std
+
+        ::filesystem::path resolve(const CVulkanResourcePath& resourcePath) const;
 
         [[nodiscard]] const std::filesystem::path& root() const noexcept {
             return _root;
@@ -90,8 +97,8 @@ namespace cvulkan::io_utils {
     std::filesystem::path getExecutableDirectory();
 
 #ifdef CVULKAN_DEV_MODE
-    inline CVulkanResourceResolver RES_RESOLVER {getExecutableDirectory().parent_path() / RESOURCES};
+    inline CVulkanResourceResolver RES_RESOLVER{getExecutableDirectory().parent_path() / RESOURCES};
 #else
-    inline CVulkanResourceResolver RES_RESOLVER {getExecutableDirectory() / RESOURCES};
+    inline CVulkanResourceResolver RES_RESOLVER{getExecutableDirectory() / RESOURCES};
 #endif
 }

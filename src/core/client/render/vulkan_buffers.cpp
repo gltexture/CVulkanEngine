@@ -5,60 +5,56 @@
 #include "vulkan_buffers.h"
 
 #include "vulkan_commands.h"
+#include "vulkan_mem_alloc.h"
 #include "assets/asset_models.h"
 #include "scene/vulkan_render_structs.h"
 
 namespace cvulkan::client::render::vk {
-    CVulkanBuffer::CVulkanBuffer(const CVulkanContext& context, const VkBufferUsageFlags& usage, const uint32_t& reqMask, const VkDeviceSize& size) : _context{context} {
+    CVulkanBuffer::CVulkanBuffer(const CVulkanContext& context, const VkDeviceSize size, const VkBufferUsageFlags bufferUsage, const VmaMemoryUsage vmaMemoryUsage, const VmaAllocationCreateFlags vmaFlags, const VkMemoryPropertyFlags reqFlags) : _context{context} {
         this->_vkRequestedSize = size;
-        const VkBufferCreateInfo bufferCreateInfo  {
+        const VkBufferCreateInfo bufferCreateInfo {
             .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
             .size = size,
-            .usage = usage,
+            .usage = bufferUsage,
             .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         };
-        util::vkCheck(vkCreateBuffer(this->_context.device().vkDevice(), &bufferCreateInfo, nullptr, &this->_vkBuffer), "Failed to create buffer");
 
-        VkMemoryRequirements memoryRequirements  {};
-        vkGetBufferMemoryRequirements(this->_context.device().vkDevice(), this->_vkBuffer, &memoryRequirements);
-
-        const VkMemoryAllocateInfo memoryAllocateInfo  {
-            .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-            .allocationSize = memoryRequirements.size,
-            .memoryTypeIndex = vk::util::getMemoryTypeIndexFromProperties(context.physicalDevice().vkMemoryProperties(), memoryRequirements.memoryTypeBits, reqMask),
+        const VmaAllocationCreateInfo memoryAllocateInfo {
+            .flags = vmaFlags,
+            .usage = vmaMemoryUsage,
+            .requiredFlags = reqFlags
         };
-        this->_vkAllocationSize = memoryAllocateInfo.allocationSize;
 
-        vk::util::vkCheck(vkAllocateMemory(this->_context.device().vkDevice(), &memoryAllocateInfo, nullptr, &this->_vkDeviceMemory), "Failed to allocate memory");
-        vk::util::vkCheck(vkBindBufferMemory(this->_context.device().vkDevice(), this->_vkBuffer, this->_vkDeviceMemory, 0), "Failed to bind buffer memory");
+        util::vkCheck(vmaCreateBuffer(this->_context.device().vkMemoryAllocator().vmaAllocator(), &bufferCreateInfo, &memoryAllocateInfo, &this->_vkBuffer, &this->_allocation, nullptr), "Failed to create buffer");
     }
 
     CVulkanBuffer::~CVulkanBuffer() {
         if (this->_vkBuffer != VK_NULL_HANDLE) {
-            vkDestroyBuffer(this->_context.device().vkDevice(), this->_vkBuffer, nullptr);
+            vmaDestroyBuffer(this->_context.device().vkMemoryAllocator().vmaAllocator(), this->_vkBuffer, this->_allocation);
             this->_vkBuffer = VK_NULL_HANDLE;
-        }
-        if (this->_vkDeviceMemory != VK_NULL_HANDLE) {
-            vkFreeMemory(this->_context.device().vkDevice(), this->_vkDeviceMemory, nullptr);
-            this->_vkDeviceMemory = VK_NULL_HANDLE;
+            this->_allocation = VK_NULL_HANDLE;
         }
     }
 
     void CVulkanBuffer::mapMem() {
         if (this->_mappedMemory == nullptr) {
-            vk::util::vkCheck(vkMapMemory(this->_context.device().vkDevice(), this->_vkDeviceMemory, 0, this->_vkAllocationSize, 0, &this->_mappedMemory), "Failed to bind buffer memory");
+            util::vkCheck(vmaMapMemory(this->_context.device().vkMemoryAllocator().vmaAllocator(), this->_allocation, &this->_mappedMemory), "Failed to map buffer");
         }
     }
 
     void CVulkanBuffer::unMapMem() {
         if (this->_mappedMemory != nullptr) {
-            vkUnmapMemory(this->_context.device().vkDevice(), this->_vkDeviceMemory);
+            vmaUnmapMemory(this->_context.device().vkMemoryAllocator().vmaAllocator(), this->_allocation);
             this->_mappedMemory = nullptr;
         }
     }
 
+    void CVulkanBuffer::flush() const {
+        vmaFlushAllocation(this->_context.device().vkMemoryAllocator().vmaAllocator(), this->_allocation, 0, VK_WHOLE_SIZE);
+    }
+
     void CVulkanTransferBufferData::recordTransferCommand(const CVulkanCommandBuffer& commandBuffer) const {
-        const VkBufferCopy copyRegion  {
+        const VkBufferCopy copyRegion{
             .srcOffset = 0,
             .dstOffset = 0,
             .size = this->_src.vkRequestedSize()
@@ -94,8 +90,8 @@ namespace cvulkan::client::render::vk {
             throw std::runtime_error(std::format("Vertex data range exceeds file boundaries: file='{}', offset={} bytes, size={} bytes, file size={} bytes", vtxPath.string(), bufferOffset, bufferSize, fileSize));
         }
 
-        CVulkanBuffer src{context, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, bufferSize};
-        CVulkanBuffer dst{context, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, bufferSize};
+        CVulkanBuffer src{context, bufferSize,VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_AUTO, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT};
+        CVulkanBuffer dst{context, bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_AUTO, 0, 0};
 
         std::ifstream binFile{vtxPath, std::ios::binary | std::ios::in};
 
@@ -122,7 +118,7 @@ namespace cvulkan::client::render::vk {
 
         logging::debug("Reading vertex data: file='{}', offset={} bytes, size={} bytes", vtxPath.string(), bufferOffset, bufferSize);
 
-        binFile.read(static_cast<char*>(mappedMemory), static_cast<std::streamsize>(bufferSize));
+        binFile.read(static_cast<char *>(mappedMemory), static_cast<std::streamsize>(bufferSize));
         const std::streamsize bytesRead = binFile.gcount();
 
         src.unMapMem();
@@ -159,8 +155,8 @@ namespace cvulkan::client::render::vk {
             throw std::runtime_error(std::format("Index file size mismatch for '{}': offset={} bytes, expected range={} bytes, actual file size={} bytes", idxPath.string(), bufferOffset, bufferSize, fileSize));
         }
 
-        CVulkanBuffer src{context, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, bufferSize};
-        CVulkanBuffer dst{context, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, bufferSize};
+        CVulkanBuffer src{context, bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_AUTO, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT};
+        CVulkanBuffer dst{context, bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_AUTO, 0, 0};
 
         std::ifstream binFile{idxPath, std::ios::binary | std::ios::in};
         if (!binFile) {
@@ -181,7 +177,7 @@ namespace cvulkan::client::render::vk {
             throw std::runtime_error(std::format("Failed to seek index file '{}': offset={} bytes", idxPath.string(), bufferOffset));
         }
 
-        binFile.read(static_cast<char*>(mappedMemory), static_cast<std::streamsize>(bufferSize));
+        binFile.read(static_cast<char *>(mappedMemory), static_cast<std::streamsize>(bufferSize));
         const std::streamsize bytesRead = binFile.gcount();
         src.unMapMem();
 
@@ -193,20 +189,22 @@ namespace cvulkan::client::render::vk {
         return {std::move(src), std::move(dst)};
     }
 
-    CVulkanBuffer buffutil::allocateHostVisibleBuffer(const CVulkanContext& context, CVulkanDescriptorAllocator& allocator, const VkDeviceSize size, const VkBufferUsageFlags usage, const std::string& id, const CVulkanDescriptorSetLayout& layout) {
-        CVulkanBuffer buffer {context, usage, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, size};
-        const auto& t = allocator.allocateDescriptorSets(id, 1, layout).front();
+    CVulkanBuffer buffutil::allocateHostVisibleBuffer(const CVulkanContext& context, CVulkanDescriptorAllocator& allocator, const VkDeviceSize size, const VkBufferUsageFlags usage, const std::string_view id,
+                                                      const CVulkanDescriptorSetLayout& layout) {
+        CVulkanBuffer buffer{context, size, usage, VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT};
+        const auto& t = allocator.allocateDescriptorSets(std::string{id}, 1, layout).front();
         t.setBuffer(buffer, buffer.vkRequestedSize(), layout.layoutInfoArray().front()._binding, layout.layoutInfoArray().front()._descType);
         return buffer;
     }
 
-    std::vector<CVulkanBuffer> buffutil::allocateHostVisibleBuffers(const CVulkanContext& context, CVulkanDescriptorAllocator& allocator, const VkDeviceSize size, const VkBufferUsageFlags usage, const uint32_t buffersCount, const std::string& id, const CVulkanDescriptorSetLayout& layout) {
-        std::vector<CVulkanBuffer> buffers {};
+    std::vector<CVulkanBuffer> buffutil::allocateHostVisibleBuffers(const CVulkanContext& context, CVulkanDescriptorAllocator& allocator, const VkDeviceSize size, const VkBufferUsageFlags usage, const uint32_t buffersCount,
+                                                                    const std::string_view id, const CVulkanDescriptorSetLayout& layout) {
+        std::vector<CVulkanBuffer> buffers{};
         buffers.reserve(buffersCount);
 
-        const auto& descriptorSets = allocator.allocateDescriptorSets(id, buffersCount, layout);
+        const auto& descriptorSets = allocator.allocateDescriptorSets(std::string{id}, buffersCount, layout);
         for (uint32_t i = 0; i < buffersCount; i++) {
-            buffers.emplace_back(context, usage, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, size);
+            buffers.emplace_back(context, size, usage, VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
             descriptorSets[i].setBuffer(buffers.back(), buffers.back().vkRequestedSize(), layout.layoutInfoArray().front()._binding, layout.layoutInfoArray().front()._descType);
         }
 
@@ -215,7 +213,7 @@ namespace cvulkan::client::render::vk {
 
     void buffutil::copyMatrixToBuffer(CVulkanBuffer& buffer, const glm::mat4& matrix, const uint32_t offset) {
         buffer.mapMem();
-        std::memcpy(static_cast<char*>(buffer.mappedMemory()) + offset, &matrix, sizeof(glm::mat4));
+        std::memcpy(static_cast<char *>(buffer.mappedMemory()) + offset, &matrix, sizeof(glm::mat4));
         buffer.unMapMem();
     }
 }

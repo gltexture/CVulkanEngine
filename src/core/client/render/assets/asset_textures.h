@@ -20,7 +20,8 @@ namespace cvulkan::client::render::asset {
         ~CVulkanImageSrc();
 
         CVulkanImageSrc(unsigned char* data, const size_t dataSize, const glm::ivec2 size, const uint32_t channels)
-            : _data(data), _dataSize(dataSize), _size(size), _channels(channels) {}
+            : _data(data), _dataSize(dataSize), _size(size), _channels(channels) {
+        }
 
         CLASS_NO_COPY(CVulkanImageSrc);
 
@@ -33,13 +34,17 @@ namespace cvulkan::client::render::asset {
     class CVulkanTexture2D {
     public:
         CVulkanTexture2D(const vk::CVulkanContext& context, const std::string& id, const CVulkanImageSrc& imageSrc, const VkFormat& format);
+
         ~CVulkanTexture2D();
 
         CLASS_NO_COPY(CVulkanTexture2D);
+
         CVulkanTexture2D(CVulkanTexture2D&& other) noexcept;
+
         CVulkanTexture2D& operator=(CVulkanTexture2D&& other) noexcept;
 
         void recordTextureTransition(const vk::CVulkanCommandBuffer& commandBuffer);
+
         void recordCopyBuffer(const vk::CVulkanCommandBuffer& commandBuffer, const vk::CVulkanBuffer& bufferData) const;
 
         void destroyStgBuffer();
@@ -73,18 +78,20 @@ namespace cvulkan::client::render::asset {
         }
 
     protected:
-        void createStgBuffer(const vk::CVulkanContext &context, const unsigned char *_data, const size_t &_dataSize);
+        void createStgBuffer(const vk::CVulkanContext& context, const unsigned char* _data, const size_t& _dataSize);
+
         void transparencyCheck(const CVulkanImageSrc& imageSrc);
+
         void recordMipMapGeneration(const vk::CVulkanCommandBuffer& commandBuffer) const;
 
     private:
         std::string _id;
         glm::vec2 _size;
-        bool _recordedTransition {false};
+        bool _recordedTransition{false};
         std::unique_ptr<vk::CVulkanImage2D> _image;
         std::unique_ptr<vk::CVulkanImage2DView> _imageView;
         std::unique_ptr<vk::CVulkanBuffer> _stgBuffer;
-        bool _hasTransparency {false};
+        bool _hasTransparency{false};
     };
 
 

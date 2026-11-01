@@ -63,12 +63,12 @@ namespace cvulkan::client::render::vk {
             std::vector<VkImage> images(this->numImages());
             vk::util::vkCheck(vkGetSwapchainImagesKHR(this->_context.device().vkDevice(), this->_vkSwapChain, &this->_numImages, images.data()), "Failed to create swapChain Images");
 
-            const CVulkanImage2DViewData image_view_data {
+            const CVulkanImage2DViewData image_view_data{
                 ._aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
                 ._format = vkFormat
             };
             this->_imageViews.reserve(images.size());
-            for (const auto image : images) {
+            for (const auto image: images) {
                 this->_imageViews.emplace_back(this->_context, image_view_data, image, false);
             }
         }
@@ -136,7 +136,7 @@ namespace cvulkan::client::render::vk {
 
     bool CVulkanSwapChain::presentImage(const CVulkanQueue& queue, const sync::CVulkanSemaphore& renderCompleteSemaphore, const uint32_t& imageIndex) const {
         const VkSemaphore vkSemaphore = renderCompleteSemaphore.vkSemaphore();
-        const VkPresentInfoKHR presentInfo  {
+        const VkPresentInfoKHR presentInfo{
             .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
             .waitSemaphoreCount = 1,
             .pWaitSemaphores = &vkSemaphore,

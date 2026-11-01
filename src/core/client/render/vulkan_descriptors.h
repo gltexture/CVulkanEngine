@@ -33,9 +33,11 @@ namespace cvulkan::client::render::vk {
     class CVulkanDescriptorsPool {
     public:
         CVulkanDescriptorsPool(const CVulkanContext& context, const std::vector<CVulkanDescriptorTypeCount>& descriptorTypeCounts);
+
         ~CVulkanDescriptorsPool();
 
         CLASS_NO_COPY_NO_ASSIGN_MOVE(CVulkanDescriptorsPool)
+
         CVulkanDescriptorsPool(CVulkanDescriptorsPool&& other) noexcept : _context(other._context), _descriptorTypeCounts(std::move(other._descriptorTypeCounts)), _vkDescriptorPool(other._vkDescriptorPool) {
             other._vkDescriptorPool = VK_NULL_HANDLE;
         };
@@ -66,9 +68,11 @@ namespace cvulkan::client::render::vk {
     class CVulkanDescriptorSetLayout {
     public:
         CVulkanDescriptorSetLayout(const CVulkanContext& context, const std::vector<CVulkanLayoutInfo>&& layoutInfoArray);
+
         ~CVulkanDescriptorSetLayout();
 
         CLASS_NO_COPY_NO_ASSIGN_MOVE(CVulkanDescriptorSetLayout)
+
         CVulkanDescriptorSetLayout(CVulkanDescriptorSetLayout&& other) noexcept : _context(other._context), _layoutInfoArray(std::move(other._layoutInfoArray)), _vkDescriptorSetLayout(other._vkDescriptorSetLayout) {
             other._vkDescriptorSetLayout = VK_NULL_HANDLE;
         }
@@ -90,17 +94,20 @@ namespace cvulkan::client::render::vk {
     class CVulkanDescriptorSet {
     public:
         CVulkanDescriptorSet(const CVulkanContext& context, const CVulkanDescriptorsPool& descriptorsPool, const CVulkanDescriptorSetLayout& vkDescriptorSetLayout);
+
         ~CVulkanDescriptorSet();
 
         CLASS_NO_COPY_NO_ASSIGN_MOVE(CVulkanDescriptorSet)
+
         CVulkanDescriptorSet(CVulkanDescriptorSet&& other) noexcept : _context(other._context), _descriptorsPool(other._descriptorsPool), _vkDescriptorSet(other._vkDescriptorSet) {
             other._vkDescriptorSet = VK_NULL_HANDLE;
         }
 
         void setBuffer(const CVulkanBuffer& buffer, VkDeviceSize range, uint32_t binding, VkDescriptorType descriptorType) const;
 
-        void setImages(const std::vector<const CVulkanImage2DView*>& imageViews, const CVulkanSampler& sampler, uint32_t baseBinding) const;
-        void setImagesArray(const std::vector<const CVulkanImage2DView*>& imageViews, const CVulkanSampler& sampler, uint32_t baseBinding) const;
+        void setImages(const std::vector<const CVulkanImage2DView *>& imageViews, const CVulkanSampler& sampler, uint32_t baseBinding) const;
+
+        void setImagesArray(const std::vector<const CVulkanImage2DView *>& imageViews, const CVulkanSampler& sampler, uint32_t baseBinding) const;
 
         [[nodiscard]] VkDescriptorSet vkDescriptorSet() const {
             return _vkDescriptorSet;
@@ -115,15 +122,16 @@ namespace cvulkan::client::render::vk {
     class CVulkanDescriptorAllocator {
     public:
         explicit CVulkanDescriptorAllocator(const CVulkanContext& context);
+
         ~CVulkanDescriptorAllocator();
 
         CLASS_NO_COPY_NO_MOVE(CVulkanDescriptorAllocator)
 
-        std::vector<CVulkanDescriptorSet>& allocateDescriptorSets(const std::string& id, uint32_t count, const CVulkanDescriptorSetLayout& layout);
+        std::vector<CVulkanDescriptorSet>& allocateDescriptorSets(const std::string_view& id, uint32_t count, const CVulkanDescriptorSetLayout& layout);
 
-        void freeDescriptorSet(const std::string& id);
+        void freeDescriptorSet(const std::string_view& id);
 
-        const CVulkanDescriptorSet& getDescriptorSet(const std::string& id, uint32_t pos) const;
+        const CVulkanDescriptorSet& getDescriptorSet(const std::string_view& id, uint32_t pos) const;
 
         [[nodiscard]] const std::unordered_map<VkDescriptorType, uint32_t>& descriptorLimits() const {
             return _descriptorLimits;
@@ -139,6 +147,7 @@ namespace cvulkan::client::render::vk {
 
     protected:
         void createDescriptorLimits();
+
         CVulkanDescriptorPoolInfo createDescriptorPoolInfo();
 
     private:

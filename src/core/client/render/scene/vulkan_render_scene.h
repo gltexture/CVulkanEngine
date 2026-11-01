@@ -45,6 +45,7 @@ namespace cvulkan::client::render::scene {
     class CVulkanSceneEntitiesCollection {
     public:
         CVulkanSceneEntitiesCollection();
+
         ~CVulkanSceneEntitiesCollection() = default;
 
         CLASS_NO_COPY_NO_MOVE(CVulkanSceneEntitiesCollection);
@@ -54,6 +55,7 @@ namespace cvulkan::client::render::scene {
         }
 
         void addEntity(entity::CVulkanSceneEntity&& entity);
+
         [[nodiscard]] bool hasEntity(const std::string& id) const;
 
     private:
@@ -64,12 +66,13 @@ namespace cvulkan::client::render::scene {
         using ModelId = std::string;
 
         struct CVulkanLoadedResourcesData {
-            std::vector<asset::modelLoad::CVulkanLoadedModelData> _loadedModels {};
+            std::vector<asset::modelLoad::CVulkanLoadedModelData> _loadedModels{};
         };
 
         class CVulkanSceneResourcesInitializer {
         public:
             CVulkanSceneResourcesInitializer() = default;
+
             ~CVulkanSceneResourcesInitializer() = default;
 
             ModelId loadModelWithMaterials(const io_utils::CVulkanResourcePath& resourcePath);
@@ -85,14 +88,17 @@ namespace cvulkan::client::render::scene {
         class CVulkanSceneContext {
         public:
             explicit CVulkanSceneContext(const vk::CVulkanContext& context);
+
             ~CVulkanSceneContext() = default;
 
             CLASS_NO_COPY_NO_MOVE(CVulkanSceneContext)
 
             void loadResources(vk::CVulkanDescriptorAllocator& descriptorAllocator, CVulkanSceneResourcesInitializer& sceneResourcesInitializer);
+
             void initializeObjects(CVulkanSceneEntitiesCollection& entitiesCollection);
 
-            void renderContext(const vk::CVulkanCommandBuffer& commandBuffer, const vk::CVulkanDescriptorAllocator& descriptorAllocator, const CVulkanSceneEntitiesCollection& entitiesCollection, const cache::CVulkanCacheCollection& caches, uint32_t currentFrame) const;
+            void renderContext(const vk::CVulkanCommandBuffer& commandBuffer, const vk::CVulkanDescriptorAllocator& descriptorAllocator, const CVulkanSceneEntitiesCollection& entitiesCollection, const cache::CVulkanCacheCollection& caches,
+                               uint32_t currentFrame) const;
 
             void renderEntities(const vk::CVulkanCommandBuffer& commandBuffer, const CVulkanSceneEntitiesCollection& entitiesCollection, const cache::CVulkanCacheCollection& caches, bool transparent) const;
 
@@ -135,24 +141,25 @@ namespace cvulkan::client::render::scene {
 
             transform::CVulkanSceneProjection _projection;
 
-            std::unique_ptr<vk::CVulkanDescriptorSetLayout> _descVertexUniformLayout {};
-            std::unique_ptr<vk::CVulkanDescriptorSetLayout> _descFragmentStorageLayout {};
-            std::unique_ptr<vk::CVulkanDescriptorSetLayout> _descTextureLayout {};
+            std::unique_ptr<vk::CVulkanDescriptorSetLayout> _descVertexUniformLayout{};
+            std::unique_ptr<vk::CVulkanDescriptorSetLayout> _descFragmentStorageLayout{};
+            std::unique_ptr<vk::CVulkanDescriptorSetLayout> _descTextureLayout{};
 
-            std::unique_ptr<vk::CVulkanSampler> _defaultTextureSampler {};
+            std::unique_ptr<vk::CVulkanSampler> _defaultTextureSampler{};
 
-            std::unique_ptr<vk::CVulkanBuffer> _bufferProjMatrix {};
-            std::unique_ptr<std::vector<vk::CVulkanBuffer>> _bufferViewMatrices {};
+            std::unique_ptr<vk::CVulkanBuffer> _bufferProjMatrix{};
+            std::unique_ptr<std::vector<vk::CVulkanBuffer> > _bufferViewMatrices{};
 
-            std::unique_ptr<vk::CVulkanPipeline> _defaultRenderPipeline {};
+            std::unique_ptr<vk::CVulkanPipeline> _defaultRenderPipeline{};
 
-            std::unique_ptr<camera::CVulkanCamera> _currentCamera {};
+            std::unique_ptr<camera::CVulkanCamera> _currentCamera{};
         };
     }
 
     class CVulkanSceneRenderer {
     public:
         CVulkanSceneRenderer(const vk::CVulkanContext& context, const loop::CVulkanRenderLoop& renderLoop);
+
         ~CVulkanSceneRenderer();
 
         CLASS_NO_COPY(CVulkanSceneRenderer);
@@ -187,14 +194,17 @@ namespace cvulkan::client::render::scene {
 
     protected:
         void setDefaults();
+
         void createMaterialDescriptors();
+
         void createRenderAttachmentsData();
+
         void initCacheData(std::vector<asset::modelGen::CVulkanMaterialData>& materials, const std::vector<asset::modelGen::CVulkanModelData>& models);
 
     private:
         const vk::CVulkanContext& _context;
         context::CVulkanSceneContext _sceneContext;
-        CVulkanSceneEntitiesCollection _entitiesCollection {};
+        CVulkanSceneEntitiesCollection _entitiesCollection{};
         cache::CVulkanCacheCollection _caches;
         const loop::CVulkanRenderLoop& _renderLoop;
         std::vector<VkRenderingAttachmentInfo> _vkColorAttachmentsInfo{};

@@ -16,10 +16,10 @@ namespace cvulkan::test_logic {
     constexpr static float MOUSE_SENSITIVITY = 0.5f;
     constexpr static float MOVEMENT_SPEED = 5.0f;
 
-    static client::render::scene::context::ModelId SCENE_MODEL_ID {};
+    static client::render::scene::context::ModelId SCENE_MODEL_ID{};
 
     void initSceneResources(client::render::scene::context::CVulkanSceneResourcesInitializer& sceneResourcesInitializer) {
-        SCENE_MODEL_ID = sceneResourcesInitializer.loadModelWithMaterials(io_utils::CVulkanResourcePath {"limbo_final/limbo.gltf"});
+        SCENE_MODEL_ID = sceneResourcesInitializer.loadModelWithMaterials(io_utils::CVulkanResourcePath{"limbo_final/limbo.gltf"});
     }
 
     void initSceneObjects(client::render::scene::CVulkanSceneEntitiesCollection& entitiesCollection) {

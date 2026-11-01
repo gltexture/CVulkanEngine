@@ -8,6 +8,7 @@ namespace cvulkan::client::render::transform {
     class CVulkanSceneProjection {
     public:
         CVulkanSceneProjection(float fov, float zNear, float zFar, const VkExtent2D& extent);
+
         ~CVulkanSceneProjection() = default;
 
         void resize(const VkExtent2D& extent);
@@ -17,7 +18,7 @@ namespace cvulkan::client::render::transform {
         }
 
     private:
-        glm::mat4 _projection {};
+        glm::mat4 _projection{};
         float _fov;
         float _zNear;
         float _zFar;

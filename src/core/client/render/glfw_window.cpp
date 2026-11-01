@@ -47,7 +47,7 @@ namespace cvulkan::client::window {
     }
 
     void createWindow(const EngineData& engineData) {
-        glfwWindow = std::make_unique<CVulkanWindow>(engineData);
+        glfwWindow = std::make_unique < CVulkanWindow > (engineData);
     }
 
     void destroyWindow() {

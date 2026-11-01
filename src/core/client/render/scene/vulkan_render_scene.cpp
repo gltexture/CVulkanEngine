@@ -15,8 +15,8 @@
 #include "client/render/assets/asset_models.h"
 
 namespace cvulkan::client::render::scene {
-    static constexpr VkClearValue CLEAR_COLOR  {0.5f, 0.7f, 0.9f, 1.0f};
-    static constexpr VkClearValue CLEAR_DEPTH  {1.0f, 0.0f};
+    static constexpr VkClearValue CLEAR_COLOR{0.5f, 0.7f, 0.9f, 1.0f};
+    static constexpr VkClearValue CLEAR_DEPTH{1.0f, 0.0f};
 
     /*
     *             VkUtils.imageBarrier(stack, cmdHandle, swapChainImage,
@@ -54,7 +54,7 @@ namespace cvulkan::client::render::scene {
             vkCmdBeginRendering(commandBuffer.vkCommandBuffer(), &this->_vkRenderingInfo[imageIndex]);
 
             const VkExtent2D extent = this->_context.swapChain().extent();
-            const VkViewport viewport {
+            const VkViewport viewport{
                 .x = 0.0F,
                 .y = static_cast<float>(extent.height),
                 .width = static_cast<float>(extent.width),
@@ -65,7 +65,7 @@ namespace cvulkan::client::render::scene {
             vkCmdSetViewport(commandBuffer.vkCommandBuffer(), 0, 1, &viewport);
 
             const VkRect2D scissor{
-                .offset  {
+                .offset{
                     .x = 0,
                     .y = 0
                 },
@@ -108,18 +108,19 @@ namespace cvulkan::client::render::scene {
     }
 
     void CVulkanSceneRenderer::createMaterialDescriptors() {
-        const vk::CVulkanDescriptorSet& mat_descriptorSet = this->_descriptorAllocator.allocateDescriptorSets(std::string {DESC_ID_MAT}, 1, *this->_sceneContext.descFragmentStorageLayout()).front();
+        const vk::CVulkanDescriptorSet& mat_descriptorSet = this->_descriptorAllocator.allocateDescriptorSets(DESC_ID_MAT, 1, *this->_sceneContext.descFragmentStorageLayout()).front();
         const vk::CVulkanBuffer& materials = *this->_caches.materialsCache().materialsBuffer();
-        mat_descriptorSet.setBuffer(materials, materials.vkRequestedSize(), this->_sceneContext.descFragmentStorageLayout()->layoutInfoArray().front()._binding, this->_sceneContext.descFragmentStorageLayout()->layoutInfoArray().front()._descType);
+        mat_descriptorSet.setBuffer(materials, materials.vkRequestedSize(), this->_sceneContext.descFragmentStorageLayout()->layoutInfoArray().front()._binding,
+                                    this->_sceneContext.descFragmentStorageLayout()->layoutInfoArray().front()._descType);
 
         const auto& texturesMap = this->_caches.texturesCache().indexedTexturesMap();
-        std::vector<const vk::CVulkanImage2DView*> imageViews;
+        std::vector<const vk::CVulkanImage2DView *> imageViews;
         imageViews.reserve(texturesMap.keys().size());
-        for (const auto& key : texturesMap.keys()) {
+        for (const auto& key: texturesMap.keys()) {
             imageViews.push_back(texturesMap.getValue(key).imageView());
         }
 
-        const vk::CVulkanDescriptorSet& txt_descriptorSet = this->_descriptorAllocator.allocateDescriptorSets(std::string {DESC_ID_TEXT}, 1, *this->_sceneContext.descTextureLayout()).front();
+        const vk::CVulkanDescriptorSet& txt_descriptorSet = this->_descriptorAllocator.allocateDescriptorSets(DESC_ID_TEXT, 1, *this->_sceneContext.descTextureLayout()).front();
         txt_descriptorSet.setImagesArray(imageViews, *this->_sceneContext.defaultTextureSampler(), 0);
     }
 
@@ -139,7 +140,8 @@ namespace cvulkan::client::render::scene {
 
             this->_depthAttachments.reserve(this->_context.swapChain().numImages());
             for (uint32_t i = 0; i < this->_context.swapChain().numImages(); ++i) {
-                this->_depthAttachments.emplace_back(vk::CVulkanAttachment2D::createSimpleAttachment(this->_context, {this->_context.swapChain().extent().width, this->_context.swapChain().extent().height, 1}, VK_FORMAT_D16_UNORM, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT));
+                this->_depthAttachments.emplace_back(vk::CVulkanAttachment2D::createSimpleAttachment(this->_context, {this->_context.swapChain().extent().width, this->_context.swapChain().extent().height, 1}, VK_FORMAT_D16_UNORM,
+                                                                                                     VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT));
             }
 
             this->_vkDepthAttachmentsInfo.resize(this->_context.swapChain().numImages());
@@ -158,22 +160,22 @@ namespace cvulkan::client::render::scene {
             for (uint32_t i = 0; i < this->_context.swapChain().numImages(); ++i) {
                 this->_vkRenderingInfo[i] = {
                     .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
-                    .renderArea  {
-                            {}, this->_context.swapChain().extent(),
-                        },
-                        .layerCount = 1,
-                        .colorAttachmentCount = 1,
-                        .pColorAttachments = &this->_vkColorAttachmentsInfo[i],
-                        .pDepthAttachment = &this->_vkDepthAttachmentsInfo[i],
-                    };
+                    .renderArea{
+                        {}, this->_context.swapChain().extent(),
+                    },
+                    .layerCount = 1,
+                    .colorAttachmentCount = 1,
+                    .pColorAttachments = &this->_vkColorAttachmentsInfo[i],
+                    .pDepthAttachment = &this->_vkDepthAttachmentsInfo[i],
+                };
             }
         }
     }
 
     void CVulkanSceneRenderer::initCacheData(std::vector<asset::modelGen::CVulkanMaterialData>& materials, const std::vector<asset::modelGen::CVulkanModelData>& models) {
         const uint32_t transferQueueFamilyIndex = vk::util::findQueueFamilyIndex(this->_context, vk::CVulkanQueueFamilyBitMasks::TRANSFER);
-        const vk::CVulkanCommandPool tempPool {this->_context, transferQueueFamilyIndex, true};
-        const vk::CVulkanQueue tempQueue {this->_context, transferQueueFamilyIndex, 0};
+        const vk::CVulkanCommandPool tempPool{this->_context, transferQueueFamilyIndex, true};
+        const vk::CVulkanQueue tempQueue{this->_context, transferQueueFamilyIndex, 0};
         logging::info("Loading {} material(s) into cache", materials.size());
         this->_caches.materialsCache().loadMaterials(materials, this->_caches.texturesCache(), tempPool, tempQueue);
         logging::info("Loaded {} material(s) into cache", materials.size());
@@ -189,20 +191,19 @@ namespace cvulkan::client::render::scene {
         this->createMaterialDescriptors();
     }
 
-    CVulkanSceneRenderer::CVulkanSceneRenderer(const vk::CVulkanContext& context, const loop::CVulkanRenderLoop& renderLoop) :
-        _context{context},
-        _sceneContext{context},
-        _caches{context},
-        _renderLoop{renderLoop},
-        _descriptorAllocator{context} {
+    CVulkanSceneRenderer::CVulkanSceneRenderer(const vk::CVulkanContext& context, const loop::CVulkanRenderLoop& renderLoop) : _context{context},
+                                                                                                                               _sceneContext{context},
+                                                                                                                               _caches{context},
+                                                                                                                               _renderLoop{renderLoop},
+                                                                                                                               _descriptorAllocator{context} {
         this->createRenderAttachmentsData();
 
-        context::CVulkanSceneResourcesInitializer resourcesInitializer {};
+        context::CVulkanSceneResourcesInitializer resourcesInitializer{};
         this->_sceneContext.loadResources(this->_descriptorAllocator, resourcesInitializer);
 
-        std::vector<asset::modelGen::CVulkanMaterialData> materials {};
-        std::vector<asset::modelGen::CVulkanModelData> models {};
-        for (const auto& [_modelData, _materialsData] : resourcesInitializer.loadedResourcesData()._loadedModels) {
+        std::vector<asset::modelGen::CVulkanMaterialData> materials{};
+        std::vector<asset::modelGen::CVulkanModelData> models{};
+        for (const auto& [_modelData, _materialsData]: resourcesInitializer.loadedResourcesData()._loadedModels) {
             materials.insert(materials.end(), _materialsData.begin(), _materialsData.end());
             models.push_back(_modelData);
         }

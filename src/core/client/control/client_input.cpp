@@ -18,11 +18,11 @@ namespace cvulkan::client::input {
         GLFWwindow* window = this->_glfwWindow.glfwWindowDescriptor();
         glfwSetWindowUserPointer(window, this);
         glfwSetKeyCallback(window, [](GLFWwindow* mWindow, const int key, int scancode, const int action, int mods) {
-            auto* input = static_cast<CVulkanClientInput*>(glfwGetWindowUserPointer(mWindow));
+            auto* input = static_cast<CVulkanClientInput *>(glfwGetWindowUserPointer(mWindow));
             input->onKeyboardEvent(key, action);
         });
         glfwSetMouseButtonCallback(window, [](GLFWwindow* mWindow, const int button, const int action, int mods) {
-            auto* input = static_cast<CVulkanClientInput*>(glfwGetWindowUserPointer(mWindow));
+            auto* input = static_cast<CVulkanClientInput *>(glfwGetWindowUserPointer(mWindow));
             input->onMouseButtonEvent(button, action);
         });
     }
@@ -53,7 +53,7 @@ namespace cvulkan::client::input {
 
     void CVulkanClientInput::updateInput() {
         {
-            for (auto& state : this->_mouseButtonStates) {
+            for (auto& state: this->_mouseButtonStates) {
                 state._justPressed = false;
                 state._justReleased = false;
             }
@@ -79,7 +79,7 @@ namespace cvulkan::client::input {
         }
 
         {
-            for (auto& state : this->_keyStates) {
+            for (auto& state: this->_keyStates) {
                 state._justPressed = false;
                 state._justReleased = false;
             }
@@ -157,7 +157,7 @@ namespace cvulkan::client::input {
     }
 
     void setupInput(const window::CVulkanWindow& window) {
-        _clientInput = std::make_unique<CVulkanClientInput>(window);
+        _clientInput = std::make_unique < CVulkanClientInput > (window);
     }
 
     void updateInput() {

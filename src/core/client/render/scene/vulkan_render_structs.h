@@ -49,9 +49,11 @@ namespace cvulkan::client::render::structs {
     class CVulkanMesh {
     public:
         CVulkanMesh(const std::string& id, vk::CVulkanBuffer&& verticesBuffer, vk::CVulkanBuffer&& indicesBuffer, const uint32_t& numIndices, const std::string& materialId);
+
         ~CVulkanMesh();
 
         CLASS_NO_COPY_NO_ASSIGN_MOVE(CVulkanMesh);
+
         CVulkanMesh(CVulkanMesh&& other) noexcept = default;
 
         [[nodiscard]] const std::string& id() const {
@@ -85,9 +87,11 @@ namespace cvulkan::client::render::structs {
     class CVulkanModel {
     public:
         explicit CVulkanModel(const std::string& id);
+
         ~CVulkanModel();
 
         CLASS_NO_COPY_NO_ASSIGN_MOVE(CVulkanModel);
+
         CVulkanModel(CVulkanModel&& other) noexcept = default;
 
         [[nodiscard]] const std::string& id() const {

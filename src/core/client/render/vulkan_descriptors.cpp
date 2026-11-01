@@ -17,7 +17,7 @@ namespace cvulkan::client::render::vk {
         std::vector<VkDescriptorPoolSize> poolSizes;
         poolSizes.reserve(_descriptorTypeCounts.size());
         uint32_t maxSets = 0;
-        for (auto [_descType, _descCount] : _descriptorTypeCounts) {
+        for (auto [_descType, _descCount]: _descriptorTypeCounts) {
             maxSets += _descCount;
             poolSizes.push_back({
                 .type = _descType,
@@ -25,7 +25,7 @@ namespace cvulkan::client::render::vk {
             });
         }
 
-        const VkDescriptorPoolCreateInfo poolCreateInfo {
+        const VkDescriptorPoolCreateInfo poolCreateInfo{
             .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
             .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
             .maxSets = maxSets,
@@ -49,14 +49,14 @@ namespace cvulkan::client::render::vk {
 
     CVulkanDescriptorSetLayout::CVulkanDescriptorSetLayout(const CVulkanContext& context, const std::vector<CVulkanLayoutInfo>&& layoutInfoArray) : _context{context}, _layoutInfoArray{std::move(layoutInfoArray)} {
         logging::debug("Creating Vulkan descriptor set layout with {} bindings", _layoutInfoArray.size());
-        for (const auto& [_descType, _binding, _descCount, _stage] : _layoutInfoArray) {
+        for (const auto& [_descType, _binding, _descCount, _stage]: _layoutInfoArray) {
             logging::debug("Descriptor binding {}: type={}, count={}, stages={}", _binding, static_cast<uint32_t>(_descType), _descCount, _stage);
         }
 
         std::vector<VkDescriptorSetLayoutBinding> layoutBindings;
         layoutBindings.reserve(layoutInfoArray.size());
 
-        for (const auto& [_descType, _binding, _descCount, _stage] : layoutInfoArray) {
+        for (const auto& [_descType, _binding, _descCount, _stage]: layoutInfoArray) {
             layoutBindings.push_back({
                 .binding = _binding,
                 .descriptorType = _descType,
@@ -65,7 +65,7 @@ namespace cvulkan::client::render::vk {
             });
         }
 
-        const VkDescriptorSetLayoutCreateInfo vkDescriptorSetLayoutCreateInfo {
+        const VkDescriptorSetLayoutCreateInfo vkDescriptorSetLayoutCreateInfo{
             .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
             .bindingCount = static_cast<uint32_t>(layoutBindings.size()),
             .pBindings = layoutBindings.data()
@@ -84,7 +84,7 @@ namespace cvulkan::client::render::vk {
     CVulkanDescriptorSet::CVulkanDescriptorSet(const CVulkanContext& context, const CVulkanDescriptorsPool& descriptorsPool, const CVulkanDescriptorSetLayout& vkDescriptorSetLayout) : _context{context}, _descriptorsPool{descriptorsPool} {
         const VkDescriptorSetLayout layout = vkDescriptorSetLayout.vkDescriptorSetLayout();
 
-        const VkDescriptorSetAllocateInfo descriptorAllocateInfo {
+        const VkDescriptorSetAllocateInfo descriptorAllocateInfo{
             .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
             .descriptorPool = descriptorsPool.vkDescriptorPool(),
             .descriptorSetCount = 1,
@@ -95,17 +95,16 @@ namespace cvulkan::client::render::vk {
     }
 
     CVulkanDescriptorSet::~CVulkanDescriptorSet() {
-
     }
 
     void CVulkanDescriptorSet::setBuffer(const CVulkanBuffer& buffer, const VkDeviceSize range, const uint32_t binding, const VkDescriptorType descriptorType) const {
-        const VkDescriptorBufferInfo bufferInfo {
+        const VkDescriptorBufferInfo bufferInfo{
             .buffer = buffer.vkBuffer(),
             .offset = 0,
             .range = range,
         };
 
-        const VkWriteDescriptorSet writeDescriptorSet {
+        const VkWriteDescriptorSet writeDescriptorSet{
             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             .dstSet = this->_vkDescriptorSet,
             .dstBinding = binding,
@@ -117,7 +116,7 @@ namespace cvulkan::client::render::vk {
         vkUpdateDescriptorSets(this->_context.device().vkDevice(), 1, &writeDescriptorSet, 0, nullptr);
     }
 
-    void CVulkanDescriptorSet::setImages(const std::vector<const CVulkanImage2DView*>& imageViews, const CVulkanSampler& sampler, const uint32_t baseBinding) const {
+    void CVulkanDescriptorSet::setImages(const std::vector<const CVulkanImage2DView *>& imageViews, const CVulkanSampler& sampler, const uint32_t baseBinding) const {
         const uint32_t numImages = imageViews.size();
         std::vector<VkDescriptorImageInfo> imageInfos;
         imageInfos.reserve(numImages);
@@ -150,13 +149,13 @@ namespace cvulkan::client::render::vk {
         vkUpdateDescriptorSets(this->_context.device().vkDevice(), static_cast<uint32_t>(writes.size()), writes.data(), 0, nullptr);
     }
 
-    void CVulkanDescriptorSet::setImagesArray(const std::vector<const CVulkanImage2DView*>& imageViews, const CVulkanSampler& sampler, const uint32_t baseBinding) const {
+    void CVulkanDescriptorSet::setImagesArray(const std::vector<const CVulkanImage2DView *>& imageViews, const CVulkanSampler& sampler, const uint32_t baseBinding) const {
         const uint32_t numImages = static_cast<uint32_t>(imageViews.size());
 
         std::vector<VkDescriptorImageInfo> imageInfos;
         imageInfos.reserve(numImages);
 
-        for (const auto& imageView : imageViews) {
+        for (const auto& imageView: imageViews) {
             imageInfos.push_back({
                 .sampler = sampler.vkSampler(),
                 .imageView = imageView->vkImageView(),
@@ -164,7 +163,7 @@ namespace cvulkan::client::render::vk {
             });
         }
 
-        const VkWriteDescriptorSet write {
+        const VkWriteDescriptorSet write{
             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             .dstSet = _vkDescriptorSet,
             .dstBinding = baseBinding,
@@ -186,7 +185,8 @@ namespace cvulkan::client::render::vk {
         logging::info("Destroying Vulkan descriptor allocator");
     }
 
-    std::vector<CVulkanDescriptorSet>& CVulkanDescriptorAllocator::allocateDescriptorSets(const std::string& id, const uint32_t count, const CVulkanDescriptorSetLayout& layout) {
+    std::vector<CVulkanDescriptorSet>& CVulkanDescriptorAllocator::allocateDescriptorSets(const std::string_view& id, const uint32_t count, const CVulkanDescriptorSetLayout& layout) {
+        const std::string s_id{id};
         logging::debug("Allocating descriptor sets '{}': count={}, bindings={}", id, count, layout.layoutInfoArray().size());
 
         if (count == 0) {
@@ -195,12 +195,12 @@ namespace cvulkan::client::render::vk {
         if (layout.layoutInfoArray().empty()) {
             throw std::runtime_error(std::format("Cannot allocate descriptor sets '{}': descriptor set layout has no bindings", id));
         }
-        if (this->_descriptorSetInfoMap.contains(id)) {
+        if (this->_descriptorSetInfoMap.contains(s_id)) {
             throw std::runtime_error(std::format("Descriptor set with ID '{}' already exists", id));
         }
 
         std::unordered_map<VkDescriptorType, uint64_t> requiredCounts{};
-        for (const auto& layoutInfo : layout.layoutInfoArray()) {
+        for (const auto& layoutInfo: layout.layoutInfoArray()) {
             if (layoutInfo._descCount == 0) {
                 throw std::runtime_error(std::format("Descriptor binding {} has zero descriptor count in layout '{}'", layoutInfo._binding, id));
             }
@@ -214,11 +214,12 @@ namespace cvulkan::client::render::vk {
 
             const uint64_t maxTotal = this->_descriptorLimits.at(layoutInfo._descType);
             if (requiredCounts.at(layoutInfo._descType) > maxTotal) {
-                throw std::runtime_error(std::format("Cannot allocate descriptor sets '{}': descriptor type {} requires {} descriptors, configured limit is {}", id, static_cast<uint32_t>(layoutInfo._descType), requiredCounts.at(layoutInfo._descType), maxTotal));
+                throw std::runtime_error(std::format("Cannot allocate descriptor sets '{}': descriptor type {} requires {} descriptors, configured limit is {}", id, static_cast<uint32_t>(layoutInfo._descType),
+                                                     requiredCounts.at(layoutInfo._descType), maxTotal));
             }
         }
 
-        for (const auto& [descriptorType, requiredCount] : requiredCounts) {
+        for (const auto& [descriptorType, requiredCount]: requiredCounts) {
             logging::debug("Descriptor allocation requirement: type={}, count={}", static_cast<uint32_t>(descriptorType), requiredCount);
         }
 
@@ -229,7 +230,7 @@ namespace cvulkan::client::render::vk {
             CVulkanDescriptorPoolInfo& descriptorPoolInfo = this->_descriptorPoolInfoList[i];
             bool hasCapacity = true;
 
-            for (const auto& [descriptorType, requiredCount] : requiredCounts) {
+            for (const auto& [descriptorType, requiredCount]: requiredCounts) {
                 if (!descriptorPoolInfo._descriptorCount.contains(descriptorType)) {
                     throw std::runtime_error(std::format("Descriptor type {} not found in descriptor pool at position {}", static_cast<uint32_t>(descriptorType), i));
                 }
@@ -252,12 +253,13 @@ namespace cvulkan::client::render::vk {
             logging::debug("Creating new descriptor pool for '{}'", id);
             CVulkanDescriptorPoolInfo descriptorPoolInfo = this->createDescriptorPoolInfo();
 
-            for (const auto& [descriptorType, requiredCount] : requiredCounts) {
+            for (const auto& [descriptorType, requiredCount]: requiredCounts) {
                 if (!descriptorPoolInfo._descriptorCount.contains(descriptorType)) {
                     throw std::runtime_error(std::format("New descriptor pool does not support descriptor type {}", static_cast<uint32_t>(descriptorType)));
                 }
                 if (descriptorPoolInfo._descriptorCount.at(descriptorType) < requiredCount) {
-                    throw std::runtime_error(std::format("New descriptor pool has insufficient capacity for type {}: available={}, required={}", static_cast<uint32_t>(descriptorType), descriptorPoolInfo._descriptorCount.at(descriptorType), requiredCount));
+                    throw std::runtime_error(std::format("New descriptor pool has insufficient capacity for type {}: available={}, required={}", static_cast<uint32_t>(descriptorType), descriptorPoolInfo._descriptorCount.at(descriptorType),
+                                                         requiredCount));
                 }
             }
 
@@ -277,19 +279,19 @@ namespace cvulkan::client::render::vk {
             result.push_back(std::move(descriptorSet));
         }
 
-        this->_descriptorSetInfoMap.emplace(id, CVulkanDescriptorSetInfo{std::move(result), poolPos});
+        this->_descriptorSetInfoMap.emplace(s_id, CVulkanDescriptorSetInfo{std::move(result), poolPos});
 
-        for (const auto& [descriptorType, requiredCount] : requiredCounts) {
+        for (const auto& [descriptorType, requiredCount]: requiredCounts) {
             targetPool->_descriptorCount.at(descriptorType) -= requiredCount;
             logging::debug("Descriptor pool {} remaining capacity: type={}, remaining={}", poolPos, static_cast<uint32_t>(descriptorType), targetPool->_descriptorCount.at(descriptorType));
         }
 
         logging::debug("Descriptor sets '{}' allocated successfully: count={}, pool={}", id, count, poolPos);
-        return this->_descriptorSetInfoMap.at(id)._descriptorSets;
+        return this->_descriptorSetInfoMap.at(s_id)._descriptorSets;
     }
 
     void CVulkanDescriptorAllocator::createDescriptorLimits() {
-        const VkPhysicalDeviceLimits& limits =_context.physicalDevice().vkPhysicalDeviceProperties().limits;
+        const VkPhysicalDeviceLimits& limits = _context.physicalDevice().vkPhysicalDeviceProperties().limits;
         this->_descriptorLimits.emplace(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, std::min(renderConfig::MAX_DESCRIPTORS, limits.maxDescriptorSetUniformBuffers));
         this->_descriptorLimits.emplace(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, std::min(renderConfig::MAX_DESCRIPTORS, limits.maxDescriptorSetSamplers));
         this->_descriptorLimits.emplace(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, std::min(renderConfig::MAX_DESCRIPTORS, limits.maxDescriptorSetStorageBuffers));
@@ -298,28 +300,30 @@ namespace cvulkan::client::render::vk {
     CVulkanDescriptorPoolInfo CVulkanDescriptorAllocator::createDescriptorPoolInfo() {
         std::vector<CVulkanDescriptorTypeCount> descTypeCounts;
         descTypeCounts.reserve(this->_descriptorLimits.size());
-        for (const auto& [type, count] : this->_descriptorLimits) {
+        for (const auto& [type, count]: this->_descriptorLimits) {
             descTypeCounts.push_back({type, count});
         }
         return {this->_descriptorLimits, {this->_context, descTypeCounts}};
     }
 
-    void CVulkanDescriptorAllocator::freeDescriptorSet(const std::string& id) {
-        if (!this->_descriptorSetInfoMap.contains(id)) {
+    void CVulkanDescriptorAllocator::freeDescriptorSet(const std::string_view& id) {
+        const std::string s_id{id};
+        if (!this->_descriptorSetInfoMap.contains(s_id)) {
             throw std::runtime_error(std::format("Descriptor set with ID '{}' not found", id));
         }
-        const CVulkanDescriptorSetInfo& descriptorSetInfo = this->_descriptorSetInfoMap.at(id);
+        const CVulkanDescriptorSetInfo& descriptorSetInfo = this->_descriptorSetInfoMap.at(s_id);
         if (descriptorSetInfo._poolPos >= this->_descriptorPoolInfoList.size()) {
             throw std::runtime_error(std::format("No descriptor pool associated with descriptor set '{}'", id));
         }
         CVulkanDescriptorPoolInfo& descriptorPoolInfo = this->_descriptorPoolInfoList.at(descriptorSetInfo._poolPos);
-        for (const auto& t : descriptorSetInfo._descriptorSets) {
+        for (const auto& t: descriptorSetInfo._descriptorSets) {
             descriptorPoolInfo._descriptorsPool.freeDescriptorSet(t.vkDescriptorSet());
         }
     }
 
-    const CVulkanDescriptorSet& CVulkanDescriptorAllocator::getDescriptorSet(const std::string& id, uint32_t pos) const {
-        const auto it = this->_descriptorSetInfoMap.find(id);
+    const CVulkanDescriptorSet& CVulkanDescriptorAllocator::getDescriptorSet(const std::string_view& id, uint32_t pos) const {
+        const std::string s_id{id};
+        const auto it = this->_descriptorSetInfoMap.find(s_id);
         if (it == this->_descriptorSetInfoMap.end()) {
             throw std::runtime_error(std::format("Descriptor set with ID '{}' not found", id));
         }

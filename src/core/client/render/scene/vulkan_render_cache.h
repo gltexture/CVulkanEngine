@@ -19,7 +19,6 @@ namespace cvulkan::client::render::asset {
     }
 
     struct CVulkanImageSrc;
-
 }
 
 namespace cvulkan::client::render::vk {
@@ -33,7 +32,9 @@ namespace cvulkan::client::render::cache {
     class CVulkanModelsCache {
     public:
         explicit CVulkanModelsCache(const vk::CVulkanContext& context)
-            : _context{context} { }
+            : _context{context} {
+        }
+
         ~CVulkanModelsCache();
 
         CLASS_NO_COPY_NO_ASSIGN_MOVE(CVulkanModelsCache)
@@ -54,14 +55,16 @@ namespace cvulkan::client::render::cache {
     class CVulkanTexturesCache {
     public:
         explicit CVulkanTexturesCache(const vk::CVulkanContext& context)
-            : _context{context} { }
+            : _context{context} {
+        }
+
         ~CVulkanTexturesCache();
 
         CLASS_NO_COPY_NO_ASSIGN_MOVE(CVulkanTexturesCache)
 
         void transitTextures(const vk::CVulkanCommandPool& commandPool, const vk::CVulkanQueue& queue);
 
-        const asset::CVulkanTexture2D& loadTexture(const std::string &id, const asset::CVulkanImageSrc &srcImage, const VkFormat &format);
+        const asset::CVulkanTexture2D& loadTexture(const std::string& id, const asset::CVulkanImageSrc& srcImage, const VkFormat& format);
 
         const asset::CVulkanTexture2D& loadTexture(const std::string& id, const std::filesystem::path& texturePath, const VkFormat& format);
 
@@ -80,7 +83,9 @@ namespace cvulkan::client::render::cache {
     class CVulkanMaterialsCache {
     public:
         explicit CVulkanMaterialsCache(const vk::CVulkanContext& context)
-            : _context{context} { }
+            : _context{context} {
+        }
+
         ~CVulkanMaterialsCache();
 
         CLASS_NO_COPY_NO_ASSIGN_MOVE(CVulkanMaterialsCache)
@@ -106,11 +111,11 @@ namespace cvulkan::client::render::cache {
     };
 
 
-
     class CVulkanCacheCollection {
     public:
         explicit CVulkanCacheCollection(const vk::CVulkanContext& context)
-            : _context{context}, _modelCache{context}, _texturesCache{context}, _materialsCache{context} { }
+            : _context{context}, _modelCache{context}, _texturesCache{context}, _materialsCache{context} {
+        }
 
         CLASS_NO_COPY_NO_ASSIGN_MOVE(CVulkanCacheCollection)
 

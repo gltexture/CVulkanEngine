@@ -14,6 +14,8 @@ namespace cvulkan::client::render::scene::context {
 
 namespace cvulkan::test_logic {
     void initSceneResources(client::render::scene::context::CVulkanSceneResourcesInitializer& sceneResourcesInitializer);
+
     void initSceneObjects(client::render::scene::CVulkanSceneEntitiesCollection& entitiesCollection);
+
     void updateInput(double deltaTime);
 }
