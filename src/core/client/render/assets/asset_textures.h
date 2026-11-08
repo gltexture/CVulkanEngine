@@ -61,12 +61,12 @@ namespace cvulkan::client::render::asset {
             return _recordedTransition;
         }
 
-        [[nodiscard]] const vk::CVulkanImage2D* image() const {
-            return _image.get();
+        [[nodiscard]] const vk::CVulkanImage2D& image() const {
+            return *_image;
         }
 
-        [[nodiscard]] const vk::CVulkanImage2DView* imageView() const {
-            return _imageView.get();
+        [[nodiscard]] const vk::CVulkanImage2DView& imageView() const {
+            return *_imageView;
         }
 
         [[nodiscard]] const vk::CVulkanBuffer* stgBuffer() const {

@@ -6,7 +6,7 @@
 
 #include "client/control/client_input.h"
 #include "client/render/scene/vulkan_render_loop.h"
-#include "client/render/scene/vulkan_render_scene.h"
+#include "client/render/scene/vulkan_render_scene__main.h"
 #include "client/render/scene/vulkan_scene_objects.h"
 #include "client/render/scene/camera/view_camera.h"
 #include "utility/io_utils.h"
@@ -16,13 +16,13 @@ namespace cvulkan::test_logic {
     constexpr static float MOUSE_SENSITIVITY = 0.5f;
     constexpr static float MOVEMENT_SPEED = 5.0f;
 
-    static client::render::scene::context::ModelId SCENE_MODEL_ID{};
+    static client::render::scene::main::context::ModelId SCENE_MODEL_ID{};
 
-    void initSceneResources(client::render::scene::context::CVulkanSceneResourcesInitializer& sceneResourcesInitializer) {
+    void initSceneResources(client::render::scene::main::context::CVulkanSceneResourcesInitializer& sceneResourcesInitializer) {
         SCENE_MODEL_ID = sceneResourcesInitializer.loadModelWithMaterials(io_utils::CVulkanResourcePath{"limbo_final/limbo.gltf"});
     }
 
-    void initSceneObjects(client::render::scene::CVulkanSceneEntitiesCollection& entitiesCollection) {
+    void initSceneObjects(client::render::scene::main::CVulkanSceneEntitiesCollection& entitiesCollection) {
         client::render::entity::CVulkanSceneEntity entity = {"CubeEnt", SCENE_MODEL_ID};
         entity.transform()._position = {0.0f, 0.0f, -6.0f};
         entity.transform()._rotation = glm::angleAxis(glm::radians(0.0f), glm::vec3(1.0f, 1.0f, 1.0f));
@@ -31,7 +31,7 @@ namespace cvulkan::test_logic {
 
     void updateInput(const double deltaTime) {
         const auto& input = *client::input::_clientInput;
-        const auto& scene = client::render::loop::_sceneRenderer->sceneContext();
+        const auto& scene = client::render::loop::_renderLoop->mainSceneRenderer().sceneContext();
 
         const float move = static_cast<float>(deltaTime) * MOVEMENT_SPEED;
         auto* camera = scene.currentCamera();

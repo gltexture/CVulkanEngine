@@ -27,22 +27,27 @@ namespace cvulkan::client::render::vk {
         }
     }
 
-    CVulkanPipelineBuildInfo::CVulkanPipelineBuildInfo(const std::vector<Ref_CVulkanDescriptorSetLayout>& descriptorSetLayouts, const std::vector<Ref_CVulkanShaderModule>& shaderModules,
-                                                       const std::vector<Ref_CVulkanPushConstantRange>& pushConstantRanges, const VkPipelineVertexInputStateCreateInfo& vertexInputInfo, const VkFormat& colorFormat,
-                                                       const VkFormat& depthFormat, bool useBlend)
-        : _colorFormat(colorFormat), _depthFormat(depthFormat), _pushConstantRanges(pushConstantRanges), _shaderModules(shaderModules), _descriptorSetLayouts(descriptorSetLayouts), _vertexInputInfo(vertexInputInfo), _useBlend(useBlend) {
+    CVulkanPipelineBuildInfo::CVulkanPipelineBuildInfo(const std::span<CRef_CVulkanDescriptorSetLayout> descriptorSetLayouts,
+                                 const std::span<CRef_CVulkanShaderModule> shaderModules,
+                                 const std::span<CRef_CVulkanPushConstantRange> pushConstantRanges,
+                                 const VkPipelineVertexInputStateCreateInfo& vkVertexInputInfo,
+                                 const VkFormat vkColorFormat, const VkFormat vkDepthFormat, const bool useBlend)
+        : _vkColorFormat(vkColorFormat), _vkDepthFormat(vkDepthFormat), _pushConstantRanges(pushConstantRanges), _shaderModules(shaderModules), _descriptorSetLayouts(descriptorSetLayouts), _vkVertexInputInfo(vkVertexInputInfo), _useBlend(useBlend) {
     }
 
     CVulkanPipeline::CVulkanPipeline(const CVulkanContext& context, const CVulkanPipelineBuildInfo& buildInfo) : _context{context} {
         std::vector<VkPipelineShaderStageCreateInfo> shaderStages{};
         shaderStages.reserve(buildInfo.shaderModules().size());
         for (const auto& t: buildInfo.shaderModules()) {
-            const VkPipelineShaderStageCreateInfo shaderStageCreateInfo{
+            VkPipelineShaderStageCreateInfo shaderStageCreateInfo{
                 .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-                .stage = t.get().stage(),
+                .stage = t.get().vkStage(),
                 .module = t.get().vkShaderModule(),
                 .pName = "main"
             };
+            if (t.get().vkSpecializationInfo() != nullptr) {
+                shaderStageCreateInfo.pSpecializationInfo = t.get().vkSpecializationInfo();
+            }
             shaderStages.emplace_back(shaderStageCreateInfo);
         }
         const VkPipelineInputAssemblyStateCreateInfo inputAssemblyState{
@@ -94,10 +99,10 @@ namespace cvulkan::client::render::vk {
             .attachmentCount = 1,
             .pAttachments = &blendAttachmentState
         };
-        const VkFormat colorFormat = buildInfo.colorFormat();
-        const VkFormat depthFormat = buildInfo.depthFormat();
+        const VkFormat colorFormat = buildInfo.vkColorFormat();
+        const VkFormat depthFormat = buildInfo.vkDepthFormat();
         std::optional<VkPipelineDepthStencilStateCreateInfo> depthStencilStateCreateInfoOptional{};
-        if (buildInfo.depthFormat() != VK_FORMAT_UNDEFINED) {
+        if (buildInfo.vkDepthFormat() != VK_FORMAT_UNDEFINED) {
             constexpr VkPipelineDepthStencilStateCreateInfo depthStencilStateCreateInfo{
                 .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
                 .depthTestEnable = VK_TRUE,
@@ -140,13 +145,13 @@ namespace cvulkan::client::render::vk {
         };
 
 
-        vk::util::vkCheck(vkCreatePipelineLayout(this->_context.device().vkDevice(), &pipelineLayoutCreateInfo, nullptr, &this->_vkPipelineLayout), "Failed to create pipeline layout");
+        util::vkCheck(vkCreatePipelineLayout(this->_context.device().vkDevice(), &pipelineLayoutCreateInfo, nullptr, &this->_vkPipelineLayout), "Failed to create pipeline layout");
         VkGraphicsPipelineCreateInfo createInfo{
             .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
             .pNext = &renderingCreateInfo,
             .stageCount = static_cast<uint32_t>(shaderStages.size()),
             .pStages = shaderStages.data(),
-            .pVertexInputState = &buildInfo.vertexInputInfo(),
+            .pVertexInputState = &buildInfo.vkVertexInputInfo(),
             .pInputAssemblyState = &inputAssemblyState,
             .pViewportState = &viewportState,
             .pRasterizationState = &rasterizationStateCreateInfo,
@@ -159,7 +164,7 @@ namespace cvulkan::client::render::vk {
         if (depthStencilStateCreateInfoOptional.has_value()) {
             createInfo.pDepthStencilState = &depthStencilStateCreateInfoOptional.value();
         }
-        vk::util::vkCheck(vkCreateGraphicsPipelines(this->_context.device().vkDevice(), this->_context.pipelineCache().vkPipelineCache(), 1, &createInfo, nullptr, &this->_vkPipeline), "Error creating graphics pipeline");
+        util::vkCheck(vkCreateGraphicsPipelines(this->_context.device().vkDevice(), this->_context.pipelineCache().vkPipelineCache(), 1, &createInfo, nullptr, &this->_vkPipeline), "Error creating graphics pipeline");
     }
 
     CVulkanPipeline::~CVulkanPipeline() {

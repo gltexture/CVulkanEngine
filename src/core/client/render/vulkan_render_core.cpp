@@ -358,8 +358,7 @@ namespace cvulkan::client::render::vk {
                                                                        _surface{std::make_unique<CVulkanSurface>(*this)},
                                                                        _device{this->_instance, contextBuildData, this->_physicalDevice, this->_surface->vkSurface(), logicalDeviceBuildData},
                                                                        _swapChain{
-                                                                           std::make_unique<CVulkanSwapChain>(*this, this->_surface->vkSurface(), this->_surface->vkSurfaceCapabilities(), this->_surface->vkFormat(),
-                                                                                                              this->_surface->vkColorSpace())
+                                                                           std::make_unique<CVulkanSwapChain>(*this, this->_surface->vkSurface(), this->_surface->vkSurfaceCapabilities(), this->_surface->vkFormat(), this->_surface->vkColorSpace())
                                                                        },
                                                                        _pipelineCache{*this} {
     }

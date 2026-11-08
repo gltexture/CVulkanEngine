@@ -11,7 +11,8 @@
 #include "utility/io_utils.h"
 
 namespace cvulkan::client::render::shader {
-    CVulkanShaderModule::CVulkanShaderModule(const vk::CVulkanContext& context, const io_utils::CVulkanResourcePath& shaderSpvFileName, const VkShaderStageFlagBits stage) : _context{context}, _stage(stage) {
+    CVulkanShaderModule::CVulkanShaderModule(const vk::CVulkanContext& context, const io_utils::CVulkanResourcePath& shaderSpvFileName, const VkShaderStageFlagBits vkStage, const VkSpecializationInfo* vkSpecializationInfo)
+        : _context{context}, _vkStage(vkStage), _vkSpecializationInfo(vkSpecializationInfo) {
         const std::filesystem::path spvFile = io_utils::RES_RESOLVER / (io_utils::CVulkanResourcePath{io_utils::SHADERS_COMPILED} / shaderSpvFileName);
         logging::debug("Loading shader module: '{}'", spvFile.string());
 
@@ -57,7 +58,7 @@ namespace cvulkan::client::render::shader {
             .pCode = spvCode,
         };
 
-        logging::debug("Creating shader module: stage={}, size={} bytes", static_cast<uint32_t>(this->_stage), fileSize);
+        logging::debug("Creating shader module: stage={}, size={} bytes", static_cast<uint32_t>(this->_vkStage), fileSize);
         vk::util::vkCheck(vkCreateShaderModule(this->_context.device().vkDevice(), &spvModuleCreateInfo, nullptr, &this->_vkShaderModule), "Failed to create shader module");
         logging::debug("Shader module created successfully: '{}'", spvFile.string());
     }

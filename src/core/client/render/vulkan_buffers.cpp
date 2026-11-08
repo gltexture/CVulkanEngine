@@ -36,10 +36,11 @@ namespace cvulkan::client::render::vk {
         }
     }
 
-    void CVulkanBuffer::mapMem() {
+    void* CVulkanBuffer::mapMem() {
         if (this->_mappedMemory == nullptr) {
             util::vkCheck(vmaMapMemory(this->_context.device().vkMemoryAllocator().vmaAllocator(), this->_allocation, &this->_mappedMemory), "Failed to map buffer");
         }
+        return this->_mappedMemory;
     }
 
     void CVulkanBuffer::unMapMem() {
@@ -208,7 +209,7 @@ namespace cvulkan::client::render::vk {
             descriptorSets[i].setBuffer(buffers.back(), buffers.back().vkRequestedSize(), layout.layoutInfoArray().front()._binding, layout.layoutInfoArray().front()._descType);
         }
 
-        return std::move(buffers);
+        return buffers;
     }
 
     void buffutil::copyMatrixToBuffer(CVulkanBuffer& buffer, const glm::mat4& matrix, const uint32_t offset) {

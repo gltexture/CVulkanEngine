@@ -1,52 +1,30 @@
-#include "vulkan_render_scene.h"
+#include "vulkan_render_scene__main.h"
 #include "vulkan_scene_objects.h"
 #include "test_logic/test_logic.h"
 #include "camera/view_camera.h"
 #include "client/render/vulkan_config.hpp"
 #include "client/render/assets/asset_models.h"
 #include "client/render/assets/asset_shaders.h"
+#include "utility/fun_utils.h"
 #include "utility/io_utils.h"
 
-namespace cvulkan::client::render::scene::context {
+namespace cvulkan::client::render::scene::main::context {
     ModelId CVulkanSceneResourcesInitializer::loadModelWithMaterials(const io_utils::CVulkanResourcePath& resourcePath) {
         asset::modelLoad::CVulkanLoadedModelData cubeModel = asset::modelLoad::loadModelWithMaterials(resourcePath);
         this->_loadedResourcesData._loadedModels.push_back(std::move(cubeModel));
         return this->_loadedResourcesData._loadedModels.back()._modelData._id;
     }
 
-    CVulkanSceneContext::CVulkanSceneContext(const vk::CVulkanContext& context) : _context{context}, _projection({glm::radians(60.0f), 1.0f, 1024.0f, {context.swapChain().extent()}}) {
+    CVulkanSceneContext::CVulkanSceneContext(const vk::CVulkanContext& context) : _context{context}, _projection({glm::radians(60.0f), 0.1f, 1024.0f, {context.swapChain().extent()}}) {
     }
 
     void CVulkanSceneContext::loadResources(vk::CVulkanDescriptorAllocator& descriptorAllocator, CVulkanSceneResourcesInitializer& sceneResourcesInitializer) {
-        this->_descVertexUniformLayout = std::make_unique<vk::CVulkanDescriptorSetLayout>(this->_context, std::initializer_list<vk::CVulkanLayoutInfo>{
-                                                                                              {
-                                                                                                  ._descType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                                                                                                  ._binding = 0,
-                                                                                                  ._descCount = 1,
-                                                                                                  ._stage = VK_SHADER_STAGE_VERTEX_BIT
-                                                                                              }
-                                                                                          });
-        this->_descFragmentStorageLayout = std::make_unique<vk::CVulkanDescriptorSetLayout>(this->_context, std::initializer_list<vk::CVulkanLayoutInfo>{
-                                                                                                {
-                                                                                                    ._descType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-                                                                                                    ._binding = 0,
-                                                                                                    ._descCount = 1,
-                                                                                                    ._stage = VK_SHADER_STAGE_FRAGMENT_BIT
-                                                                                                }
-                                                                                            });
-        this->_descTextureLayout = std::make_unique<vk::CVulkanDescriptorSetLayout>(this->_context, std::initializer_list<vk::CVulkanLayoutInfo>{
-                                                                                        {
-                                                                                            ._descType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-                                                                                            ._binding = 0,
-                                                                                            ._descCount = renderConfig::MAX_TEXTURES_IN_CACHE,
-                                                                                            ._stage = VK_SHADER_STAGE_FRAGMENT_BIT
-                                                                                        }
-                                                                                    });
+        this->_descVertexUniformLayout = std::make_unique<vk::CVulkanDescriptorSetLayout>(this->_context, vk::CVulkanLayoutInfo {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, 1, VK_SHADER_STAGE_VERTEX_BIT});
+        this->_descFragmentStorageLayout = std::make_unique<vk::CVulkanDescriptorSetLayout>(this->_context, vk::CVulkanLayoutInfo {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 0, 1, VK_SHADER_STAGE_FRAGMENT_BIT});
+        this->_descTextureLayout = std::make_unique<vk::CVulkanDescriptorSetLayout>(this->_context, vk::CVulkanLayoutInfo {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, renderConfig::MAX_TEXTURES_IN_CACHE, VK_SHADER_STAGE_FRAGMENT_BIT});
 
-        this->_bufferProjMatrix = std::make_unique<vk::CVulkanBuffer>(vk::buffutil::allocateHostVisibleBuffer(this->_context, descriptorAllocator, sizeof(glm::mat4), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, DESC_ID_PRJ,
-                                                                                                              *this->_descVertexUniformLayout));
-        this->_bufferViewMatrices = std::make_unique<std::vector<vk::CVulkanBuffer> >(
-            vk::buffutil::allocateHostVisibleBuffers(this->_context, descriptorAllocator, sizeof(glm::mat4), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, renderConfig::MAX_IMAGES_IN_FLIGHT, DESC_ID_VIEW, *this->_descVertexUniformLayout));
+        this->_bufferProjMatrix = std::make_unique<vk::CVulkanBuffer>(vk::buffutil::allocateHostVisibleBuffer(this->_context, descriptorAllocator, sizeof(glm::mat4), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, DESC_ID_PRJ, *this->_descVertexUniformLayout));
+        this->_bufferViewMatrices = std::make_unique<std::vector<vk::CVulkanBuffer>>(vk::buffutil::allocateHostVisibleBuffers(this->_context, descriptorAllocator, sizeof(glm::mat4), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, renderConfig::MAX_IMAGES_IN_FLIGHT, DESC_ID_VIEW, *this->_descVertexUniformLayout));
         vk::buffutil::copyMatrixToBuffer(*this->_bufferProjMatrix, this->projection().mat4Projection(), 0);
 
         constexpr vk::CVulkanSamplerInfo samplerInfo{
@@ -57,37 +35,26 @@ namespace cvulkan::client::render::scene::context {
         };
         this->_defaultTextureSampler = std::make_unique<vk::CVulkanSampler>(this->_context, samplerInfo);
 
-        const shader::CVulkanShaderModule shaderV = asset::shaderLoad::compileAndLoadShader(this->_context, io_utils::CVulkanResourcePath{"scene/v.vert"}, VK_SHADER_STAGE_VERTEX_BIT);
-        const shader::CVulkanShaderModule shaderF = asset::shaderLoad::compileAndLoadShader(this->_context, io_utils::CVulkanResourcePath{"scene/f.frag"}, VK_SHADER_STAGE_FRAGMENT_BIT);
-        std::vector<vk::Ref_CVulkanShaderModule> shaderModules{};
-        shaderModules.reserve(2);
-        shaderModules.push_back(std::cref(shaderV));
-        shaderModules.push_back(std::cref(shaderF));
+        const shader::CVulkanShaderModule shaderV = asset::shaderLoad::compileAndLoadShader(this->_context, io_utils::CVulkanResourcePath{"scene/v.vert"}, VK_SHADER_STAGE_VERTEX_BIT, nullptr);
+        const shader::CVulkanShaderModule shaderF = asset::shaderLoad::compileAndLoadShader(this->_context, io_utils::CVulkanResourcePath{"scene/f.frag"}, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr);
 
-        constexpr vk::CVulkanPushConstantRange push1{
+        constexpr vk::CVulkanPushConstantRange push1 {
             ._stage = VK_SHADER_STAGE_VERTEX_BIT,
             ._offset = 0,
             ._size = sizeof(glm::mat4)
         };
-        constexpr vk::CVulkanPushConstantRange push2{
+        constexpr vk::CVulkanPushConstantRange push2 {
             ._stage = VK_SHADER_STAGE_FRAGMENT_BIT,
             ._offset = sizeof(glm::mat4),
             ._size = sizeof(uint32_t)
         };
-        std::vector<vk::Ref_CVulkanPushConstantRange> pushConstantRanges{};
-        pushConstantRanges.reserve(2);
-        pushConstantRanges.push_back(std::cref(push1));
-        pushConstantRanges.push_back(std::cref(push2));
-
-        std::vector<vk::Ref_CVulkanDescriptorSetLayout> descriptorSetLayouts{};
-        descriptorSetLayouts.reserve(3);
-        descriptorSetLayouts.push_back(std::cref(*this->_descVertexUniformLayout));
-        descriptorSetLayouts.push_back(std::cref(*this->_descVertexUniformLayout));
-        descriptorSetLayouts.push_back(std::cref(*this->_descFragmentStorageLayout));
-        descriptorSetLayouts.push_back(std::cref(*this->_descTextureLayout));
 
         const structs::CVulkanVertexStruct vertexStruct{this->_context};
-        const vk::CVulkanPipelineBuildInfo buildInfo{descriptorSetLayouts, shaderModules, pushConstantRanges, vertexStruct.vkPipelineVertexInputStateCreateInfo(), this->_context.surface().vkFormat(), VK_FORMAT_D16_UNORM, true};
+        const vk::CVulkanPipelineBuildInfo buildInfo{
+            fun_utils::packCRefs(*this->_descVertexUniformLayout, *this->_descVertexUniformLayout, *this->_descFragmentStorageLayout, *this->_descTextureLayout),
+            fun_utils::packCRefs(shaderV, shaderF),
+            fun_utils::packCRefs(push1, push2),
+            vertexStruct.vkPipelineVertexInputStateCreateInfo(), COLOR_FORMAT, DEPTH_FORMAT, true};
 
         this->_defaultRenderPipeline = std::make_unique<vk::CVulkanPipeline>(this->_context, buildInfo);
 
@@ -110,7 +77,7 @@ namespace cvulkan::client::render::scene::context {
         std::vector<VkDescriptorSet> descriptorSets{};
         descriptorSets.reserve(3);
         descriptorSets.push_back(descriptorAllocator.getDescriptorSet(DESC_ID_PRJ, 0).vkDescriptorSet());
-        descriptorSets.push_back(descriptorAllocator.getDescriptorSet(DESC_ID_VIEW, 0).vkDescriptorSet());
+        descriptorSets.push_back(descriptorAllocator.getDescriptorSet(DESC_ID_VIEW, currentFrame).vkDescriptorSet());
         descriptorSets.push_back(descriptorAllocator.getDescriptorSet(DESC_ID_MAT, 0).vkDescriptorSet());
         descriptorSets.push_back(descriptorAllocator.getDescriptorSet(DESC_ID_TEXT, 0).vkDescriptorSet());
 

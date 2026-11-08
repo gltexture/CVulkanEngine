@@ -143,7 +143,7 @@ namespace cvulkan::client::render::asset {
 
         int32_t mipWidth = this->_size.x;
         int32_t mipHeight = this->_size.y;
-        const uint32_t mipLevels = this->image()->mipLevels();
+        const uint32_t mipLevels = this->image().mipLevels();
 
         for (uint32_t i = 1; i < mipLevels; i++) {
             imageSubresourceRange.baseMipLevel = i - 1;

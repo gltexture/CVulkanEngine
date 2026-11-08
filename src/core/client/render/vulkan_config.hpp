@@ -10,4 +10,5 @@ namespace cvulkan::client::renderConfig {
     static constexpr uint32_t MAX_TEXTURES_IN_CACHE = 256;
     static constexpr uint32_t MAX_DESCRIPTORS = 1024;
     static constexpr bool VSYNC = true;
+    static constexpr bool FXAA = true;
 }

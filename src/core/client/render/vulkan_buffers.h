@@ -31,7 +31,7 @@ namespace cvulkan::client::render::vk {
             other._mappedMemory = nullptr;
         }
 
-        void mapMem();
+        void* mapMem();
 
         void unMapMem();
 
@@ -61,6 +61,25 @@ namespace cvulkan::client::render::vk {
         void* _mappedMemory{};
     };
 
+    class CVulkanBufferMapped {
+    public:
+        explicit CVulkanBufferMapped(CVulkanBuffer& buffer) : _buffer(buffer), _data(buffer.mapMem()) {
+        }
+
+        ~CVulkanBufferMapped() {
+            _buffer.unMapMem();
+        }
+
+        CLASS_NO_COPY_NO_ASSIGN_MOVE(CVulkanBufferMapped)
+
+        [[nodiscard]] void* data() const {
+            return _data;
+        }
+
+    private:
+        CVulkanBuffer& _buffer;
+        void* _data;
+    };
 
     struct CVulkanTransferBufferData {
         CVulkanBuffer _src;
@@ -78,6 +97,14 @@ namespace cvulkan::client::render::vk {
 
         std::vector<CVulkanBuffer> allocateHostVisibleBuffers(const CVulkanContext& context, CVulkanDescriptorAllocator& allocator, VkDeviceSize size, VkBufferUsageFlags usage, uint32_t buffersCount, std::string_view id,
                                                               const CVulkanDescriptorSetLayout& layout);
+
+        inline VkPipelineVertexInputStateCreateInfo emptyVertexStruct() {
+            return {
+                .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+                .vertexBindingDescriptionCount = 0,
+                .vertexAttributeDescriptionCount = 0
+              };
+        };
 
         void copyMatrixToBuffer(CVulkanBuffer& buffer, const glm::mat4& matrix, uint32_t offset);
     }

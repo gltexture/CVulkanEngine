@@ -116,7 +116,7 @@ namespace cvulkan::client::render::vk {
         vkUpdateDescriptorSets(this->_context.device().vkDevice(), 1, &writeDescriptorSet, 0, nullptr);
     }
 
-    void CVulkanDescriptorSet::setImages(const std::vector<const CVulkanImage2DView *>& imageViews, const CVulkanSampler& sampler, const uint32_t baseBinding) const {
+    void CVulkanDescriptorSet::setImages(const std::span<const CVulkanImage2DView_CRef> imageViews, const CVulkanSampler& sampler, const uint32_t baseBinding) const {
         const uint32_t numImages = imageViews.size();
         std::vector<VkDescriptorImageInfo> imageInfos;
         imageInfos.reserve(numImages);
@@ -129,8 +129,8 @@ namespace cvulkan::client::render::vk {
 
             imageInfos.push_back({
                 .sampler = sampler.vkSampler(),
-                .imageView = imageView->vkImageView(),
-                .imageLayout = imageView->depthImage() ? VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+                .imageView = imageView.get().vkImageView(),
+                .imageLayout = imageView.get().depthImage() ? VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
             });
 
             writes.push_back({
@@ -149,7 +149,7 @@ namespace cvulkan::client::render::vk {
         vkUpdateDescriptorSets(this->_context.device().vkDevice(), static_cast<uint32_t>(writes.size()), writes.data(), 0, nullptr);
     }
 
-    void CVulkanDescriptorSet::setImagesArray(const std::vector<const CVulkanImage2DView *>& imageViews, const CVulkanSampler& sampler, const uint32_t baseBinding) const {
+    void CVulkanDescriptorSet::setImagesArray(const std::span<const CVulkanImage2DView_CRef> imageViews, const CVulkanSampler& sampler, const uint32_t baseBinding) const {
         const uint32_t numImages = static_cast<uint32_t>(imageViews.size());
 
         std::vector<VkDescriptorImageInfo> imageInfos;
@@ -158,8 +158,8 @@ namespace cvulkan::client::render::vk {
         for (const auto& imageView: imageViews) {
             imageInfos.push_back({
                 .sampler = sampler.vkSampler(),
-                .imageView = imageView->vkImageView(),
-                .imageLayout = imageView->depthImage() ? VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+                .imageView = imageView.get().vkImageView(),
+                .imageLayout = imageView.get().depthImage() ? VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
             });
         }
 

@@ -8,10 +8,8 @@
 #include "vulkan_render_core.h"
 
 namespace cvulkan::client::render::vk {
-    CVulkanImage2D::CVulkanImage2D(const CVulkanContext& context, const CVulkanImage2DData& imageData) : _context{context} {
-        this->_format = imageData._format;
-        this->_mipLevels = imageData._mipLevels;
-
+    CVulkanImage2D::CVulkanImage2D(const CVulkanContext& context, const CVulkanImage2DData& imageData)
+        : _context{context}, _format{imageData._format}, _mipLevels{imageData._mipLevels}, _extent{imageData._extent} {
         const VkImageCreateInfo vkImageCreateInfo{
             .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
             .imageType = VK_IMAGE_TYPE_2D,
@@ -42,22 +40,22 @@ namespace cvulkan::client::render::vk {
         }
     }
 
-    CVulkanImage2DView::CVulkanImage2DView(const CVulkanContext& context, const CVulkanImage2DViewData& view_data, const VkImage& vk_image, const bool depthImage) : _context{context}, _depthImage{depthImage} {
+    CVulkanImage2DView::CVulkanImage2DView(const CVulkanContext& context, const CVulkanImage2DViewData& imageViewData, const VkImage& vkImage, const bool depthImage) : _context{context}, _depthImage{depthImage} {
         const VkImageViewCreateInfo image_view_create_info{
             .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-            .image = vk_image,
-            .viewType = view_data._viewType,
-            .format = view_data._format,
+            .image = vkImage,
+            .viewType = imageViewData._viewType,
+            .format = imageViewData._format,
             .subresourceRange{
-                .aspectMask = view_data._aspectMask,
+                .aspectMask = imageViewData._aspectMask,
                 .baseMipLevel = 0,
-                .levelCount = view_data._mipLevels,
-                .baseArrayLayer = view_data._baseArrayLayer,
-                .layerCount = view_data._layerCount
+                .levelCount = imageViewData._mipLevels,
+                .baseArrayLayer = imageViewData._baseArrayLayer,
+                .layerCount = imageViewData._layerCount
             }
         };
         util::vkCheck(vkCreateImageView(this->_context.device().vkDevice(), &image_view_create_info, nullptr, &this->_vkImageView), "Failed to createImageView image view");
-        this->_vkImage = vk_image;
+        this->_vkImage = vkImage;
     }
 
     CVulkanImage2DView::~CVulkanImage2DView() {
@@ -68,17 +66,17 @@ namespace cvulkan::client::render::vk {
     }
 
     CVulkanAttachment2D::CVulkanAttachment2D(const CVulkanContext& context, CVulkanImage2D&& image, CVulkanImage2DView&& view, const bool depthAttachment)
-        : _context{context}, _image(std::move(image)), _view(std::move(view)), depthAttachment(depthAttachment) {
+        : _context{context}, _image(std::move(image)), _view(std::move(view)), _depthAttachment(depthAttachment) {
     }
 
     CVulkanAttachment2D::~CVulkanAttachment2D() = default;
 
-    CVulkanAttachment2D CVulkanAttachment2D::createSimpleAttachment(const CVulkanContext& context, const VkExtent3D& extent, const VkFormat format, const VkImageUsageFlags usage) {
+    CVulkanAttachment2D CVulkanAttachment2D::createSimpleAttachment(const CVulkanContext& context, const VkExtent3D vkExtent, const VkFormat vkFormat, const VkImageUsageFlags vkUsage) {
         const CVulkanImage2DData imageData {
-            ._format = format,
+            ._format = vkFormat,
             ._memFlags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT,
-            ._memUsage = usage | VK_IMAGE_USAGE_SAMPLED_BIT,
-            ._extent = extent
+            ._memUsage = vkUsage | VK_IMAGE_USAGE_SAMPLED_BIT,
+            ._extent = vkExtent
         };
 
         CVulkanImage2D image{context, imageData};
@@ -86,12 +84,12 @@ namespace cvulkan::client::render::vk {
         VkImageAspectFlags aspectMask{};
         bool depthAttachment{};
 
-        if ((usage & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT) != 0) {
+        if ((vkUsage & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT) != 0) {
             aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
             depthAttachment = false;
         }
 
-        if ((usage & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT) != 0) {
+        if ((vkUsage & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT) != 0) {
             aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
             depthAttachment = true;
         }
@@ -128,13 +126,13 @@ namespace cvulkan::client::render::vk {
             createInfo.maxAnisotropy = MAX_ANISOTROPY;
         }
 
-        util::vkCheck(vkCreateSampler(context.device().vkDevice(), &createInfo, nullptr, &this->_sampler), "Failed to create sampler");
+        util::vkCheck(vkCreateSampler(context.device().vkDevice(), &createInfo, nullptr, &this->_vkSampler), "Failed to create sampler");
     }
 
     CVulkanSampler::~CVulkanSampler() {
-        if (this->_sampler != VK_NULL_HANDLE) {
-            vkDestroySampler(this->_context.device().vkDevice(), this->_sampler, nullptr);
-            this->_sampler = VK_NULL_HANDLE;
+        if (this->_vkSampler != VK_NULL_HANDLE) {
+            vkDestroySampler(this->_context.device().vkDevice(), this->_vkSampler, nullptr);
+            this->_vkSampler = VK_NULL_HANDLE;
         }
     }
 

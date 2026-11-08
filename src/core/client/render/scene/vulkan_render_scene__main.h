@@ -32,15 +32,32 @@ struct CVulkanPushConstants {
     uint32_t materialId;
 };
 
-namespace cvulkan::client::render::scene {
-    constexpr std::string_view DESC_ID_MAT = "SCN_DESC_ID_MAT";
-    constexpr std::string_view DESC_ID_PRJ = "SCN_DESC_ID_PRJ";
-    constexpr std::string_view DESC_ID_VIEW = "SCN_DESC_ID_VIEW";
-    constexpr std::string_view DESC_ID_TEXT = "SCN_DESC_ID_TEXT";
+namespace cvulkan::client::render::scene::main {
+    constexpr inline std::string_view DESC_ID_MAT = "SCN_DESC_ID_MAT";
+    constexpr inline std::string_view DESC_ID_PRJ = "SCN_DESC_ID_PRJ";
+    constexpr inline std::string_view DESC_ID_VIEW = "SCN_DESC_ID_VIEW";
+    constexpr inline std::string_view DESC_ID_TEXT = "SCN_DESC_ID_TEXT";
 
-    namespace context {
-        class CVulkanSceneContext;
-    }
+    constexpr VkFormat COLOR_FORMAT {VK_FORMAT_R16G16B16A16_SFLOAT};
+    constexpr VkFormat DEPTH_FORMAT {VK_FORMAT_D16_UNORM};
+
+    constexpr VkClearValue CLEAR_COLOR{
+        .color = {.float32 = {0.5f, 0.7f, 0.9f, 1.0f}}
+    };
+    constexpr VkClearValue CLEAR_DEPTH{
+        .depthStencil = {1.0f, 0}
+    };
+
+    /*
+    class ISceneRenderStage {
+    public:
+        ISceneRenderStage() = default;
+        virtual ~ISceneRenderStage() = 0;
+
+        virtual void render(VkCommandBuffer commandBuffer) = 0;
+        virtual void onResize() = 0;
+    };
+    */
 
     class CVulkanSceneEntitiesCollection {
     public:
@@ -148,7 +165,7 @@ namespace cvulkan::client::render::scene {
             std::unique_ptr<vk::CVulkanSampler> _defaultTextureSampler{};
 
             std::unique_ptr<vk::CVulkanBuffer> _bufferProjMatrix{};
-            std::unique_ptr<std::vector<vk::CVulkanBuffer> > _bufferViewMatrices{};
+            std::unique_ptr<std::vector<vk::CVulkanBuffer>> _bufferViewMatrices{};
 
             std::unique_ptr<vk::CVulkanPipeline> _defaultRenderPipeline{};
 
@@ -158,30 +175,42 @@ namespace cvulkan::client::render::scene {
 
     class CVulkanSceneRenderer {
     public:
-        CVulkanSceneRenderer(const vk::CVulkanContext& context, const loop::CVulkanRenderLoop& renderLoop);
-
+        CVulkanSceneRenderer(const vk::CVulkanContext& context, vk::CVulkanDescriptorAllocator& descriptorAllocator, cache::CVulkanCacheCollection& caches);
         ~CVulkanSceneRenderer();
 
         CLASS_NO_COPY(CVulkanSceneRenderer);
 
-        void renderScene(const vk::CVulkanCommandBuffer& commandBuffer, uint32_t imageIndex, uint32_t currentFrame) const;
+        void renderScene(const vk::CVulkanCommandBuffer& commandBuffer, uint32_t currentFrame) const;
 
         void onResize();
 
-        [[nodiscard]] CVulkanSceneEntitiesCollection& entities() {
-            return _entitiesCollection;
-        }
+        static void setDefaultViewportAndScissor(const vk::CVulkanCommandBuffer& commandBuffer, const VkExtent2D extent2D) {
+            assert(extent2D.width > 0 && "Viewport width must be greater than zero");
+            assert(extent2D.height > 0 && "Viewport height must be greater than zero");
 
-        [[nodiscard]] const cache::CVulkanCacheCollection& caches() const {
-            return _caches;
-        }
+            if (extent2D.width == 0 || extent2D.height == 0) {
+                logging::error("Cannot set viewport and scissor: extent width or height is zero");
+                return;
+            }
 
-        [[nodiscard]] vk::CVulkanDescriptorAllocator& descriptorAllocator() {
-            return _descriptorAllocator;
-        }
+            const VkViewport viewport {
+                .x = 0.0F,
+                .y = static_cast<float>(extent2D.height),
+                .width = static_cast<float>(extent2D.width),
+                .height = -static_cast<float>(extent2D.height),
+                .minDepth = 0.0F,
+                .maxDepth = 1.0F
+            };
+            vkCmdSetViewport(commandBuffer.vkCommandBuffer(), 0, 1, &viewport);
 
-        [[nodiscard]] const vk::CVulkanDescriptorAllocator& descriptorAllocator() const {
-            return _descriptorAllocator;
+            const VkRect2D scissor {
+                .offset {
+                    .x = 0,
+                    .y = 0
+                },
+                .extent = extent2D
+            };
+            vkCmdSetScissor(commandBuffer.vkCommandBuffer(), 0, 1, &scissor);
         }
 
         [[nodiscard]] const context::CVulkanSceneContext& sceneContext() const {
@@ -192,26 +221,43 @@ namespace cvulkan::client::render::scene {
             return _sceneContext;
         }
 
+
+        [[nodiscard]] const CVulkanSceneEntitiesCollection& entitiesCollection() const {
+            return _entitiesCollection;
+        }
+
+        [[nodiscard]] CVulkanSceneEntitiesCollection& entitiesCollection() {
+            return _entitiesCollection;
+        }
+
+        [[nodiscard]] const vk::CVulkanAttachment2D& colorAttachment() const {
+            return *_colorAttachment;
+        }
+
+        [[nodiscard]] const vk::CVulkanAttachment2D& depthAttachment() const {
+            return *_depthAttachment;
+        }
+
     protected:
-        void setDefaults();
+        void createMaterialDescriptors() const;
+        void createRenderingData();
 
-        void createMaterialDescriptors();
-
-        void createRenderAttachmentsData();
-
-        void initCacheData(std::vector<asset::modelGen::CVulkanMaterialData>& materials, const std::vector<asset::modelGen::CVulkanModelData>& models);
+        void initCacheData(std::vector<asset::modelGen::CVulkanMaterialData>& materials, const std::vector<asset::modelGen::CVulkanModelData>& models) const;
 
     private:
         const vk::CVulkanContext& _context;
+        vk::CVulkanDescriptorAllocator& _descriptorAllocator;
+        cache::CVulkanCacheCollection& _caches;
         context::CVulkanSceneContext _sceneContext;
         CVulkanSceneEntitiesCollection _entitiesCollection{};
-        cache::CVulkanCacheCollection _caches;
-        const loop::CVulkanRenderLoop& _renderLoop;
-        std::vector<VkRenderingAttachmentInfo> _vkColorAttachmentsInfo{};
-        std::vector<VkRenderingAttachmentInfo> _vkDepthAttachmentsInfo{};
-        std::vector<vk::CVulkanAttachment2D> _depthAttachments{};
-        std::vector<VkRenderingInfo> _vkRenderingInfo{};
-
-        vk::CVulkanDescriptorAllocator _descriptorAllocator;
+        std::unique_ptr<vk::CVulkanAttachment2D> _colorAttachment{};
+        std::unique_ptr<vk::CVulkanAttachment2D> _depthAttachment{};
+        VkRenderingAttachmentInfo _vkAttachmentColorInfo {};
+        VkRenderingAttachmentInfo _vkAttachmentDepthInfo {};
+        VkRenderingInfo _vkRenderingInfo {};
+        //std::vector<VkRenderingAttachmentInfo> _vkColorAttachmentsInfo{};
+        //std::vector<VkRenderingAttachmentInfo> _vkDepthAttachmentsInfo{};
+        //std::vector<vk::CVulkanAttachment2D> _depthAttachments{};
+        //std::vector<VkRenderingInfo> _vkRenderingInfo{};
     };
 }

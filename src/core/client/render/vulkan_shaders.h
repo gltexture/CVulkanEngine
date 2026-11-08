@@ -18,8 +18,7 @@ namespace cvulkan::client::render::vk {
 namespace cvulkan::client::render::shader {
     class CVulkanShaderModule {
     public:
-        CVulkanShaderModule(const vk::CVulkanContext& context, const io_utils::CVulkanResourcePath& shaderSpvFileName, VkShaderStageFlagBits stage);
-
+        CVulkanShaderModule(const vk::CVulkanContext& context, const io_utils::CVulkanResourcePath& shaderSpvFileName, VkShaderStageFlagBits vkStage, const VkSpecializationInfo* vkSpecializationInfo);
         ~CVulkanShaderModule();
 
         CLASS_NO_COPY_NO_ASSIGN_MOVE(CVulkanShaderModule);
@@ -30,13 +29,18 @@ namespace cvulkan::client::render::shader {
             return _vkShaderModule;
         }
 
-        [[nodiscard]] const VkShaderStageFlagBits& stage() const {
-            return _stage;
+        [[nodiscard]] const VkShaderStageFlagBits& vkStage() const {
+            return _vkStage;
+        }
+
+        [[nodiscard]] const VkSpecializationInfo* vkSpecializationInfo() const {
+            return _vkSpecializationInfo;
         }
 
     private:
         const vk::CVulkanContext& _context;
-        const VkShaderStageFlagBits _stage;
+        const VkShaderStageFlagBits _vkStage;
+        const VkSpecializationInfo* _vkSpecializationInfo{};
         VkShaderModule _vkShaderModule{};
     };
 }

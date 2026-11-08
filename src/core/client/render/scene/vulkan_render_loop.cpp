@@ -6,14 +6,14 @@
 
 #include "client/render/vulkan_commands.h"
 #include "client/render/vulkan_config.hpp"
-#include "vulkan_render_scene.h"
+#include "vulkan_render_scene__main.h"
 #include "test_logic/test_logic.h"
+#include "client/render/scene/vulkan_render_scene__post.h"
+#include "client/render/scene/vulkan_render_scene__swapchain.h"
+#include "client/render/scene/vulkan_render_scene__main.h"
 
 namespace cvulkan::client::render::loop {
-    std::unique_ptr<scene::CVulkanSceneRenderer> _sceneRenderer;
-    std::unique_ptr<CVulkanRenderLoop> _renderLoop;
-
-    CVulkanRenderLoop::CVulkanRenderLoop(vk::CVulkanContext& context) : _context{context} {
+    CVulkanRenderLoop::CVulkanRenderLoop(vk::CVulkanContext& context) : _context{context}, _caches{context}, _descriptorAllocator{context} {
         const uint32_t graphicsQueueFamilyIndex = vk::util::findQueueFamilyIndex(context, vk::CVulkanQueueFamilyBitMasks::GRAPHICS);
         const uint32_t presentationQueueFamilyIndex = vk::util::findQueueFamilyIndex(context, vk::CVulkanQueueFamilyBitMasks::PRESENT);
         if (graphicsQueueFamilyIndex == UINT32_MAX) {
@@ -45,9 +45,75 @@ namespace cvulkan::client::render::loop {
             this->_graphicsQueue = std::make_unique<vk::CVulkanQueue>(this->_context, graphicsQueueFamilyIndex, 0);
             this->_presentQueue = std::make_unique<vk::CVulkanQueue>(this->_context, presentationQueueFamilyIndex, 0);
         }
+
+        {
+            this->_mainSceneRenderer = std::make_unique<scene::main::CVulkanSceneRenderer>(context, this->_descriptorAllocator, this->_caches);
+            this->_postSceneRenderer = std::make_unique<scene::post::CVulkanPostFXRenderer>(context, this->_descriptorAllocator, this->_mainSceneRenderer->colorAttachment());
+            this->_swapchainSceneRenderer = std::make_unique<scene::swapchain::CVulkanSwapchainRenderer>(context, this->_descriptorAllocator, this->_postSceneRenderer->colorAttachment());
+        }
     }
 
     CVulkanRenderLoop::~CVulkanRenderLoop() {
+    }
+
+    void CVulkanRenderLoop::runRenderLoop() {
+        static double LastTime = glfwGetTime();
+        const double Time = glfwGetTime();
+        const double DeltaTime = Time - LastTime;
+        LastTime = Time;
+
+        const vk::CVulkanCommandPool& commandPool = this->_commandPools[this->_currentFrame];
+        const vk::CVulkanCommandBuffer& commandBuffer = this->_commandBuffers[this->_currentFrame];
+
+        this->waitForFence();
+        this->recordingStart(commandPool, commandBuffer);
+
+        const uint32_t imageIndex = this->_context.swapChain().acquireSwapChainNextImage(this->_presentationCompleteSemaphores[this->_currentFrame]);
+        if (this->_shouldBeResized || imageIndex == UINT32_MAX) {
+            this->recordingStop(commandBuffer);
+            this->resize();
+            return;
+        }
+
+        {
+            {
+                test_logic::updateInput(DeltaTime);
+            }
+            this->_mainSceneRenderer->renderScene(commandBuffer, this->_currentFrame);
+            this->_postSceneRenderer->renderPostFX(commandBuffer, this->_mainSceneRenderer->colorAttachment());
+            this->_swapchainSceneRenderer->renderSwapchain(commandBuffer, this->_postSceneRenderer->colorAttachment(), imageIndex);
+        }
+
+        this->recordingStop(commandBuffer);
+        this->submit(commandBuffer, imageIndex);
+
+        this->_shouldBeResized = this->_context.swapChain().presentImage(*this->_presentQueue, this->_renderCompleteSemaphores[imageIndex], imageIndex);
+        this->_currentFrame = (this->_currentFrame + 1) % renderConfig::MAX_IMAGES_IN_FLIGHT;
+    }
+
+    void CVulkanRenderLoop::resize() {
+        if (const glm::vec2 windowSize = this->_context.glfwWindow().size(); windowSize.x * windowSize.y <= 0) {
+            return;
+        }
+        this->_context.device().deviceWaitIdle();
+        this->_context.resize();
+
+        this->_renderCompleteSemaphores.clear();
+        this->_presentationCompleteSemaphores.clear();
+
+        for (uint32_t i = 0; i < renderConfig::MAX_IMAGES_IN_FLIGHT; ++i) {
+            this->_presentationCompleteSemaphores.emplace_back(this->_context);
+        }
+
+        for (uint32_t i = 0; i < this->_context.swapChain().numImages(); ++i) {
+            this->_renderCompleteSemaphores.emplace_back(this->_context);
+        }
+
+        this->_mainSceneRenderer->onResize();
+        this->_postSceneRenderer->onResize(this->_mainSceneRenderer->colorAttachment());
+        this->_swapchainSceneRenderer->onResize(this->_postSceneRenderer->colorAttachment());
+        
+        this->_shouldBeResized = false;
     }
 
     void CVulkanRenderLoop::recordingStart(const vk::CVulkanCommandPool& commandPool, const vk::CVulkanCommandBuffer& commandBuffer) {
@@ -86,79 +152,21 @@ namespace cvulkan::client::render::loop {
         this->_graphicsQueue->submitQueue(v_commandSubmitInfos, &v_waitSemaphores, &v_signalSemaphores, &fence);
     }
 
-    void CVulkanRenderLoop::runRenderLoop() {
-        static double LastTime = glfwGetTime();
-        const double Time = glfwGetTime();
-        const double DeltaTime = Time - LastTime;
-        LastTime = Time;
-
-        const vk::CVulkanCommandPool& commandPool = this->_commandPools[this->_currentFrame];
-        const vk::CVulkanCommandBuffer& commandBuffer = this->_commandBuffers[this->_currentFrame];
-
-        this->waitForFence();
-        this->recordingStart(commandPool, commandBuffer);
-
-        const uint32_t imageIndex = this->_context.swapChain().acquireSwapChainNextImage(this->_presentationCompleteSemaphores[this->_currentFrame]);
-        if (this->_shouldBeResized || imageIndex == UINT32_MAX) {
-            this->recordingStop(commandBuffer);
-            this->resize();
-            return;
-        }
-        if (_sceneRenderer != nullptr) {
-            {
-                test_logic::updateInput(DeltaTime);
-            }
-            _sceneRenderer->renderScene(commandBuffer, imageIndex, this->_currentFrame);
-        }
-
-        this->recordingStop(commandBuffer);
-        this->submit(commandBuffer, imageIndex);
-
-        this->_shouldBeResized = this->_context.swapChain().presentImage(*this->_presentQueue, this->_renderCompleteSemaphores[imageIndex], imageIndex);
-        this->_currentFrame = (this->_currentFrame + 1) % renderConfig::MAX_IMAGES_IN_FLIGHT;
-    }
-
-    void CVulkanRenderLoop::resize() {
-        const glm::vec2 windowSize = this->_context.glfwWindow().size();
-        if (windowSize.x * windowSize.y <= 0) {
-            return;
-        }
-        this->_context.device().deviceWaitIdle();
-        this->_context.resize();
-
-        this->_renderCompleteSemaphores.clear();
-        this->_presentationCompleteSemaphores.clear();
-
-        for (uint32_t i = 0; i < renderConfig::MAX_IMAGES_IN_FLIGHT; ++i) {
-            this->_presentationCompleteSemaphores.emplace_back(this->_context);
-        }
-
-        for (uint32_t i = 0; i < this->_context.swapChain().numImages(); ++i) {
-            this->_renderCompleteSemaphores.emplace_back(this->_context);
-        }
-
-        _sceneRenderer->sceneContext().projection().resize({static_cast<uint32_t>(windowSize.x), static_cast<uint32_t>(windowSize.y)});
-        _sceneRenderer->onResize();
-        this->_shouldBeResized = false;
-    }
+    std::unique_ptr<CVulkanRenderLoop> _renderLoop;
 
     void createRendering(vk::CVulkanContext& context) {
-        _renderLoop = std::make_unique < CVulkanRenderLoop > (context);
-        _sceneRenderer = std::make_unique<scene::CVulkanSceneRenderer>(context, *_renderLoop);
-    }
-
-    void destroyRendering() {
-        if (_sceneRenderer != nullptr) {
-            _sceneRenderer.reset();
-        }
-        if (_renderLoop != nullptr) {
-            _renderLoop.reset();
-        }
+        _renderLoop = std::make_unique<CVulkanRenderLoop> (context);
     }
 
     void runRendering() {
         if (_renderLoop != nullptr) {
             _renderLoop->runRenderLoop();
+        }
+    }
+
+    void destroyRendering() {
+        if (_renderLoop != nullptr) {
+            _renderLoop.reset();
         }
     }
 }

@@ -30,6 +30,8 @@ namespace cvulkan::client::render::vk {
         uint32_t _poolPos;
     };
 
+    using CVulkanImage2DView_CRef = std::reference_wrapper<const CVulkanImage2DView>;
+
     class CVulkanDescriptorsPool {
     public:
         CVulkanDescriptorsPool(const CVulkanContext& context, const std::vector<CVulkanDescriptorTypeCount>& descriptorTypeCounts);
@@ -69,6 +71,10 @@ namespace cvulkan::client::render::vk {
     public:
         CVulkanDescriptorSetLayout(const CVulkanContext& context, const std::vector<CVulkanLayoutInfo>&& layoutInfoArray);
 
+        CVulkanDescriptorSetLayout(const CVulkanContext& context, CVulkanLayoutInfo&& layoutInfo)
+            : CVulkanDescriptorSetLayout(context, std::vector{std::move(layoutInfo)}) {
+        }
+
         ~CVulkanDescriptorSetLayout();
 
         CLASS_NO_COPY_NO_ASSIGN_MOVE(CVulkanDescriptorSetLayout)
@@ -105,9 +111,14 @@ namespace cvulkan::client::render::vk {
 
         void setBuffer(const CVulkanBuffer& buffer, VkDeviceSize range, uint32_t binding, VkDescriptorType descriptorType) const;
 
-        void setImages(const std::vector<const CVulkanImage2DView *>& imageViews, const CVulkanSampler& sampler, uint32_t baseBinding) const;
+        void setImage(const CVulkanImage2DView& imageView, const CVulkanSampler& sampler, const uint32_t baseBinding) const {
+            const std::array imageViews = {std::cref(imageView)};
+            this->setImages(imageViews, sampler, baseBinding);
+        }
 
-        void setImagesArray(const std::vector<const CVulkanImage2DView *>& imageViews, const CVulkanSampler& sampler, uint32_t baseBinding) const;
+        void setImages(std::span<const CVulkanImage2DView_CRef> imageViews, const CVulkanSampler& sampler, uint32_t baseBinding) const;
+
+        void setImagesArray(std::span<const CVulkanImage2DView_CRef> imageViews, const CVulkanSampler& sampler, uint32_t baseBinding) const;
 
         [[nodiscard]] VkDescriptorSet vkDescriptorSet() const {
             return _vkDescriptorSet;

@@ -41,8 +41,12 @@ namespace cvulkan::client::render::vk {
             return _numImages;
         }
 
-        [[nodiscard]] const VkExtent2D& extent() const {
+        [[nodiscard]] VkExtent2D extent() const {
             return _swapChainExtent;
+        }
+
+        [[nodiscard]] VkExtent3D extent3D() const {
+            return {this->extent().width, this->extent().height, 1};
         }
 
         [[nodiscard]] bool presentImage(const CVulkanQueue& queue, const sync::CVulkanSemaphore& renderCompleteSemaphore, const uint32_t& imageIndex) const;

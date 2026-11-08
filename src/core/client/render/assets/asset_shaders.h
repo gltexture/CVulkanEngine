@@ -38,6 +38,6 @@ namespace cvulkan::client::render::asset {
     }
 
     namespace shaderLoad {
-        shader::CVulkanShaderModule compileAndLoadShader(const vk::CVulkanContext& context, const io_utils::CVulkanResourcePath& shaderSourceFile, VkShaderStageFlagBits vkStage);
+        shader::CVulkanShaderModule compileAndLoadShader(const vk::CVulkanContext& context, const io_utils::CVulkanResourcePath& shaderSourceFile, VkShaderStageFlagBits vkStage, const VkSpecializationInfo* vkSpecializationInfo);
     }
 }

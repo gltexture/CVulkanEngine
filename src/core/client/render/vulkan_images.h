@@ -47,7 +47,7 @@ namespace cvulkan::client::render::vk {
         CLASS_NO_COPY(CVulkanImage2D)
 
         CVulkanImage2D(CVulkanImage2D&& other) noexcept
-            : _context(other._context), _vkImage(other._vkImage), _format(other._format), _mipLevels(other._mipLevels), _allocation(other._allocation) {
+            : _context(other._context), _vkImage(other._vkImage), _format(other._format), _mipLevels(other._mipLevels), _allocation(other._allocation), _extent{other._extent} {
             other._vkImage = VK_NULL_HANDLE;
             other._allocation = VK_NULL_HANDLE;
         }
@@ -64,17 +64,29 @@ namespace cvulkan::client::render::vk {
             return _mipLevels;
         }
 
+        [[nodiscard]] VkExtent3D extent() const {
+            return _extent;
+        }
+
+        [[nodiscard]] VkExtent2D extent2D() const {
+            return {
+                this->_extent.width,
+                this->_extent.height
+            };
+        }
+
     private:
         const CVulkanContext& _context;
         VkImage _vkImage{};
         VkFormat _format{};
         uint32_t _mipLevels{};
         VmaAllocation _allocation{};
+        VkExtent3D _extent{};
     };
 
     class CVulkanImage2DView {
     public:
-        CVulkanImage2DView(const CVulkanContext& context, const CVulkanImage2DViewData& view_data, const VkImage& vk_image, bool depthImage);
+        CVulkanImage2DView(const CVulkanContext& context, const CVulkanImage2DViewData& imageViewData, const VkImage& vkImage, bool depthImage);
 
         ~CVulkanImage2DView();
 
@@ -122,17 +134,17 @@ namespace cvulkan::client::render::vk {
             return _view;
         }
 
-        [[nodiscard]] bool depthAttachment1() const {
-            return depthAttachment;
+        [[nodiscard]] bool depthAttachment() const {
+            return _depthAttachment;
         }
 
-        static CVulkanAttachment2D createSimpleAttachment(const CVulkanContext& context, const VkExtent3D& extent, VkFormat format, VkImageUsageFlags usage);
+        static CVulkanAttachment2D createSimpleAttachment(const CVulkanContext& context, const VkExtent3D vkExtent, VkFormat vkFormat, VkImageUsageFlags vkUsage);
 
     private:
         const CVulkanContext& _context;
         CVulkanImage2D _image;
         CVulkanImage2DView _view;
-        bool depthAttachment;
+        bool _depthAttachment;
     };
 
     class CVulkanSampler {
@@ -143,17 +155,17 @@ namespace cvulkan::client::render::vk {
 
         CLASS_NO_COPY(CVulkanSampler)
 
-        CVulkanSampler(CVulkanSampler&& other) noexcept : _context(other._context), _sampler(other._sampler) {
-            other._sampler = VK_NULL_HANDLE;
+        CVulkanSampler(CVulkanSampler&& other) noexcept : _context(other._context), _vkSampler(other._vkSampler) {
+            other._vkSampler = VK_NULL_HANDLE;
         }
 
         [[nodiscard]] VkSampler vkSampler() const {
-            return _sampler;
+            return _vkSampler;
         }
 
     private:
         const CVulkanContext& _context;
-        VkSampler _sampler{};
+        VkSampler _vkSampler{};
     };
 
     namespace img_util {

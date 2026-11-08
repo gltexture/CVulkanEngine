@@ -93,7 +93,7 @@ add_executable(CVulkanEngine
         src/core/client/render/vulkan_swapchain.cpp
         src/core/client/render/scene/vulkan_render_loop.cpp
         src/core/client/render/vulkan_buffers.cpp
-        src/core/client/render/scene/vulkan_render_scene.cpp
+        src/core/client/render/scene/vulkan_render_scene__main.cpp
         src/core/client/render/scene/vulkan_render_structs.cpp
         src/core/client/render/scene/vulkan_render_cache.cpp
         src/core/client/render/vulkan_shaders.cpp
@@ -120,7 +120,7 @@ add_executable(CVulkanEngine
         src/core/utility/sys_utils.h
         src/core/utility/io_utils.cpp
         src/core/utility/io_utils.h
-        src/core/client/render/scene/vulkan_render_scene__context.cpp
+        src/core/client/render/scene/vulkan_render_scene__main_context.cpp
         src/core/client/render/scene/camera/view_camera.cpp
         src/core/client/render/scene/camera/view_camera.h
         src/core/test_logic/test_logic.cpp
@@ -128,6 +128,14 @@ add_executable(CVulkanEngine
         src/core/client/render/_impl/vma_impl.cpp
         src/core/client/render/vulkan_mem_alloc.cpp
         src/core/client/render/vulkan_mem_alloc.h
+        src/core/client/render/scene/vulkan_render_scene__post.cpp
+        src/core/client/render/scene/vulkan_render_scene__post.h
+        src/core/client/render/vulkan_spec_const.tpp
+        src/core/client/render/vulkan_spec_const.h
+        src/core/utility/fun_utils.cpp
+        src/core/utility/fun_utils.h
+        src/core/client/render/scene/vulkan_render_scene__swapchain.cpp
+        src/core/client/render/scene/vulkan_render_scene__swapchain.h
 )
 
 add_link_options("-fuse-ld=lld")

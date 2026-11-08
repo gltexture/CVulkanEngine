@@ -106,11 +106,11 @@ namespace cvulkan::client::render::vk {
             throw std::runtime_error("Failed to query surface format count");
         }
         std::vector<VkSurfaceFormatKHR> surfaceFormats(surfaceFormatCount);
-        vk::util::vkCheck(vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device_data.vkPhysicalDevice(), vkSurface, &surfaceFormatCount, surfaceFormats.data()));
-        vkFormat = VK_FORMAT_B8G8R8A8_SRGB;
+        util::vkCheck(vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device_data.vkPhysicalDevice(), vkSurface, &surfaceFormatCount, surfaceFormats.data()));
+        vkFormat = VK_FORMAT_B8G8R8A8_UNORM;
         vkColorSpace = surfaceFormats[0].colorSpace;
         for (const auto& [f, c]: surfaceFormats) {
-            if (f == VK_FORMAT_B8G8R8A8_SRGB && c == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+            if (f == VK_FORMAT_B8G8R8A8_UNORM && c == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
                 vkFormat = f;
                 vkColorSpace = c;
                 logging::debug("Using surface format {}, color space {}", static_cast<int>(f), static_cast<int>(c));

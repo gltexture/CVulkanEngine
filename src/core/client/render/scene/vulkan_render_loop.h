@@ -5,11 +5,22 @@
 #pragma once
 #include <memory>
 
-#include "../vulkan_commands.h"
-#include "../vulkan_synchronization.h"
+#include "vulkan_render_cache.h"
+#include "client/render/vulkan_commands.h"
+#include "client/render/vulkan_synchronization.h"
 
 namespace cvulkan::client::render::scene {
-    class CVulkanSceneRenderer;
+    namespace main {
+        class CVulkanSceneRenderer;
+    }
+
+    namespace swapchain {
+        class CVulkanSwapchainRenderer;
+    }
+
+    namespace post {
+        class CVulkanPostFXRenderer;
+    }
 }
 
 namespace cvulkan::client::render::vk {
@@ -47,7 +58,7 @@ namespace cvulkan::client::render::loop {
             return _renderCompleteSemaphores;
         }
 
-        [[nodiscard]] const uint32_t& currentFrame() const {
+        [[nodiscard]] uint32_t currentFrame() const noexcept {
             return _currentFrame;
         }
 
@@ -58,6 +69,37 @@ namespace cvulkan::client::render::loop {
         [[nodiscard]] const vk::CVulkanQueue& presentQueue() const {
             return *_presentQueue;
         }
+
+
+        [[nodiscard]] const cache::CVulkanCacheCollection& caches() const {
+            return _caches;
+        }
+
+        [[nodiscard]] cache::CVulkanCacheCollection& caches() {
+            return _caches;
+        }
+
+        [[nodiscard]] const vk::CVulkanDescriptorAllocator& descriptorAllocator() const {
+            return _descriptorAllocator;
+        }
+
+        [[nodiscard]] vk::CVulkanDescriptorAllocator& descriptorAllocator() {
+            return _descriptorAllocator;
+        }
+
+
+        [[nodiscard]] const scene::main::CVulkanSceneRenderer& mainSceneRenderer() const {
+            return *_mainSceneRenderer;
+        }
+
+        [[nodiscard]] const scene::post::CVulkanPostFXRenderer& postSceneRenderer() const {
+            return *_postSceneRenderer;
+        }
+
+        [[nodiscard]] const scene::swapchain::CVulkanSwapchainRenderer& swapchainSceneRenderer() const {
+            return *_swapchainSceneRenderer;
+        }
+
 
         [[nodiscard]] bool shouldBeResized() const {
             return _shouldBeResized;
@@ -84,10 +126,17 @@ namespace cvulkan::client::render::loop {
         uint32_t _currentFrame{0};
         std::unique_ptr<vk::CVulkanQueue> _graphicsQueue;
         std::unique_ptr<vk::CVulkanQueue> _presentQueue;
+
+        cache::CVulkanCacheCollection _caches;
+        vk::CVulkanDescriptorAllocator _descriptorAllocator;
+
+        std::unique_ptr<scene::main::CVulkanSceneRenderer> _mainSceneRenderer;
+        std::unique_ptr<scene::post::CVulkanPostFXRenderer> _postSceneRenderer;
+        std::unique_ptr<scene::swapchain::CVulkanSwapchainRenderer> _swapchainSceneRenderer;
+
         bool _shouldBeResized{false};
     };
 
-    extern std::unique_ptr<scene::CVulkanSceneRenderer> _sceneRenderer;
     extern std::unique_ptr<CVulkanRenderLoop> _renderLoop;
 
     void createRendering(vk::CVulkanContext& context);
