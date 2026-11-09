@@ -27,7 +27,7 @@ namespace cvulkan::client::render::asset {
             case VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT:
                 return shaderc_glsl_tess_evaluation_shader;
             default:
-                throw std::invalid_argument("Unsupported Vulkan shader stage");
+                throw exc::CVulkanException("Unsupported Vulkan shader stage");
         }
     }
 

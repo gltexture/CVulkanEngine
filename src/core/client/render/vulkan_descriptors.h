@@ -138,11 +138,15 @@ namespace cvulkan::client::render::vk {
 
         CLASS_NO_COPY_NO_MOVE(CVulkanDescriptorAllocator)
 
-        std::vector<CVulkanDescriptorSet>& allocateDescriptorSets(const std::string_view& id, uint32_t count, const CVulkanDescriptorSetLayout& layout);
+        const std::vector<CVulkanDescriptorSet>& allocateDescriptorSets(std::string_view id, uint32_t count, const CVulkanDescriptorSetLayout& layout);
 
-        void freeDescriptorSet(const std::string_view& id);
+        const CVulkanDescriptorSet& allocateDescriptorSet(const std::string_view id, const CVulkanDescriptorSetLayout& layout) {
+            return this->allocateDescriptorSets(id, 1, layout).front();
+        }
 
-        const CVulkanDescriptorSet& getDescriptorSet(const std::string_view& id, uint32_t pos) const;
+        void freeDescriptorSet(std::string_view id);
+
+        const CVulkanDescriptorSet& getDescriptorSet(const std::string_view id, uint32_t pos) const;
 
         [[nodiscard]] const std::unordered_map<VkDescriptorType, uint32_t>& descriptorLimits() const {
             return _descriptorLimits;

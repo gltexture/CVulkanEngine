@@ -7,6 +7,7 @@
 #include "vulkan_mem_alloc.h"
 #include "vulkan_ext.h"
 #include "scene/vulkan_render_loop.h"
+#include "utility/exceptions.h"
 
 namespace cvulkan::client::render::vk {
     void CVulkanQueueFamiliesRegistry::registerQueueFamily(const QueueFamilyBitMask bitMask, const uint32_t queueCount, const uint32_t queueFamilyIndex) {
@@ -80,7 +81,7 @@ namespace cvulkan::client::render::vk {
             if (contextBuildData._debugMode && this->_vkInstanceLrExtData.hasVkInstanceRequiredExtension(EXT_VK_EXT_DEBUG_UTILS_EXTENSION_NAME())) {
                 const auto func = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(this->_vkInstance, "vkCreateDebugUtilsMessengerEXT"));
                 if (func == nullptr) {
-                    throw std::runtime_error{"Failed to load vkCreateDebugUtilsMessengerEXT"};
+                    throw exc::CVulkanException{"Failed to load vkCreateDebugUtilsMessengerEXT"};
                 }
                 vk::util::vkCheck(func(this->_vkInstance, &vk_debug_utils_messenger_create_info_ext, nullptr, &this->_vkDebugMessenger));
                 logging::debug("Created Vulkan debug messenger");
@@ -234,11 +235,11 @@ namespace cvulkan::client::render::vk {
                         this->tryIncludeDeviceExtension(availableExtensions, EXT_VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME());
                     }
                 } else {
-                    throw std::runtime_error{"Failed to find a suitable physical device"};
+                    throw exc::CVulkanException{"Failed to find a suitable physical device"};
                 }
             }
         } else {
-            throw std::runtime_error("No suitable Vulkan physical device found");
+            throw exc::CVulkanException("No suitable Vulkan physical device found");
         }
     }
 
@@ -271,7 +272,7 @@ namespace cvulkan::client::render::vk {
         for (const auto& t: logicalDeviceBuildData._queueFamilyCreationRequests) {
             const uint32_t queueFamilyIndex = findVulkanQueueFamily(t._bitMask, physicalDevice, surface);
             if (queueFamilyIndex == UINT32_MAX) {
-                throw std::runtime_error(std::format("Graphics queue family not found (queue flags: {})", t._bitMask));
+                throw exc::CVulkanException(std::format("Graphics queue family not found (queue flags: {})", t._bitMask));
             }
             queueFamilies.emplace(queueFamilyIndex, t);
             this->_queueFamiliesRegistry.registerQueueFamily(t._bitMask, t._queueCount, queueFamilyIndex);
@@ -569,7 +570,7 @@ namespace cvulkan::client::render::vk {
             typeBits >>= 1;
         }
         if (result == UINT32_MAX) {
-            throw std::runtime_error("Failed to find suitable Vulkan memory type");
+            throw exc::CVulkanException("Failed to find suitable Vulkan memory type");
         }
         return result;
     }

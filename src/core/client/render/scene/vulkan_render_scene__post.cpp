@@ -31,7 +31,7 @@ namespace cvulkan::client::render::scene::post {
         const vk::CVulkanDescriptorSetLayout descriptorSetLayout_data {this->_context, vk::CVulkanLayoutInfo{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, 1, VK_SHADER_STAGE_FRAGMENT_BIT}};
         this->_srcSizeBuffer = std::make_unique<vk::CVulkanBuffer>(vk::buffutil::allocateHostVisibleBuffer(this->_context, this->_descriptorAllocator, sizeof(glm::vec2), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, DESC_ID_SCREEN_SIZE, descriptorSetLayout_data));
         this->setSrcSizeBuffer();
-
+        
         const vk::CVulkanSpecConstants<uint32_t> specConst {renderConfig::FXAA ? 1 : 0};
         const shader::CVulkanShaderModule shaderV = asset::shaderLoad::compileAndLoadShader(this->_context, io_utils::CVulkanResourcePath{"post/v.vert"}, VK_SHADER_STAGE_VERTEX_BIT, nullptr);
         const shader::CVulkanShaderModule shaderF = asset::shaderLoad::compileAndLoadShader(this->_context, io_utils::CVulkanResourcePath{"post/f.frag"}, VK_SHADER_STAGE_FRAGMENT_BIT, &specConst.specializationInfo());

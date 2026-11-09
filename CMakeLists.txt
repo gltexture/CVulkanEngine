@@ -1,8 +1,9 @@
 cmake_minimum_required(VERSION 3.20) 
 project(CVulkanEngine)
 
-set(CMAKE_CXX_STANDARD 20) 
-set(CMAKE_CXX_STANDARD_REQUIRED ON) 
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_BUILD_PARALLEL_LEVEL 8)
 
 include(FetchContent)
@@ -37,7 +38,7 @@ FetchContent_Declare(
 FetchContent_Declare(
         SPIRV-Tools
         GIT_REPOSITORY https://github.com/KhronosGroup/SPIRV-Tools.git
-        GIT_TAG main
+        GIT_TAG v2026.4
 )
 FetchContent_Declare(
         glslang
@@ -67,6 +68,12 @@ FetchContent_Declare(
         GIT_TAG v3.5.0
 )
 
+FetchContent_Declare(
+        imgui
+        GIT_REPOSITORY https://github.com/ocornut/imgui
+        GIT_TAG v1.93.0-docking
+)
+
 FetchContent_MakeAvailable(
         spdlog
         SPIRV-Headers
@@ -78,6 +85,19 @@ FetchContent_MakeAvailable(
         assimp
         json
         vma
+        imgui
+)
+
+add_library(imgui STATIC
+        ${imgui_SOURCE_DIR}/imgui.cpp
+        ${imgui_SOURCE_DIR}/imgui_draw.cpp
+        ${imgui_SOURCE_DIR}/imgui_tables.cpp
+        ${imgui_SOURCE_DIR}/imgui_widgets.cpp
+        ${imgui_SOURCE_DIR}/imgui_demo.cpp
+)
+
+target_include_directories(imgui PUBLIC
+        ${imgui_SOURCE_DIR}
 )
 
 find_package(Vulkan REQUIRED)
@@ -136,6 +156,10 @@ add_executable(CVulkanEngine
         src/core/utility/fun_utils.h
         src/core/client/render/scene/vulkan_render_scene__swapchain.cpp
         src/core/client/render/scene/vulkan_render_scene__swapchain.h
+        src/core/client/render/scene/vulkan_render_scene__imgui.cpp
+        src/core/client/render/scene/vulkan_render_scene__imgui.h
+        src/core/utility/exceptions.cpp
+        src/core/utility/exceptions.h
 )
 
 add_link_options("-fuse-ld=lld")
@@ -173,14 +197,16 @@ target_precompile_headers(CVulkanEngine PRIVATE
 
 target_link_libraries(
         CVulkanEngine
-        PRIVATE Vulkan::Vulkan
-        PRIVATE glfw
-        PRIVATE glm::glm
-        PRIVATE spdlog::spdlog
-        PRIVATE shaderc_combined
-        PRIVATE assimp
-        PRIVATE nlohmann_json::nlohmann_json
-        PRIVATE GPUOpen::VulkanMemoryAllocator
+        PRIVATE
+        Vulkan::Vulkan
+        glfw
+        glm::glm
+        spdlog::spdlog
+        shaderc_combined
+        assimp
+        nlohmann_json::nlohmann_json
+        GPUOpen::VulkanMemoryAllocator
+        imgui
 )
 
 target_include_directories(CVulkanEngine

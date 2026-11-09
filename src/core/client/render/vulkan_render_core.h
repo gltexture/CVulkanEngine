@@ -13,6 +13,9 @@
 #include "../../utility/logger.inl"
 
 namespace cvulkan::client::render::vk {
+    // TODO: recordTextureTransition, mipmap disabling
+    // TODO: render loop queue family shared mode
+
     namespace memalloc {
         class CVulkan_VkMemoryAllocator;
     }
@@ -320,7 +323,7 @@ namespace cvulkan::client::render::vk {
 
         inline void vkCheck(const VkResult vkResult, std::string_view errMsg) {
             if (vkResult != VK_SUCCESS) {
-                throw std::runtime_error{std::format("{} (VkResult: {})", errMsg, string_VkResult(vkResult))};
+                throw exc::CVulkanException{std::format("{} (VkResult: {})", errMsg, string_VkResult(vkResult))};
             }
         }
 

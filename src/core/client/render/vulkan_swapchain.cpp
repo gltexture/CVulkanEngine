@@ -103,7 +103,7 @@ namespace cvulkan::client::render::vk {
         uint32_t surfaceFormatCount = 0;
         vk::util::vkCheck(vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device_data.vkPhysicalDevice(), vkSurface, &surfaceFormatCount, nullptr));
         if (surfaceFormatCount == 0) {
-            throw std::runtime_error("Failed to query surface format count");
+            throw exc::CVulkanException("Failed to query surface format count");
         }
         std::vector<VkSurfaceFormatKHR> surfaceFormats(surfaceFormatCount);
         util::vkCheck(vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device_data.vkPhysicalDevice(), vkSurface, &surfaceFormatCount, surfaceFormats.data()));
@@ -129,7 +129,7 @@ namespace cvulkan::client::render::vk {
             case VK_SUCCESS:
                 break;
             default:
-                throw std::runtime_error("Failed to acquire next swapchain image");
+                throw exc::CVulkanException("Failed to acquire next swapchain image");
         }
         return imageIndex;
     }
@@ -151,7 +151,7 @@ namespace cvulkan::client::render::vk {
             case VK_SUCCESS:
                 break;
             default:
-                throw std::runtime_error("Failed to present swapchain image");
+                throw exc::CVulkanException("Failed to present swapchain image");
         }
         return false;
     }

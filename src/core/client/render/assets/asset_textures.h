@@ -25,9 +25,10 @@ namespace cvulkan::client::render::asset {
 
         CLASS_NO_COPY(CVulkanImageSrc);
 
+        bool _dataHandle{true};
         unsigned char* _data;
         size_t _dataSize;
-        glm::vec2 _size;
+        glm::ivec2 _size;
         uint32_t _channels;
     };
 

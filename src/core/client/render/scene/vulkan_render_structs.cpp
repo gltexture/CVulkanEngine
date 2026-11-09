@@ -50,11 +50,11 @@ namespace cvulkan::client::render::structs {
 
         {
             if (_vkVertexInputAttributeDescriptions.size() != NUMBER_OF_ATTRIBUTES || _vkVertexInputBindingDescriptions.size() != 1) {
-                throw std::runtime_error("Invalid Vulkan vertex input description counts");
+                throw exc::CVulkanException("Invalid Vulkan vertex input description counts");
             }
 
             if (mOffset == 0) {
-                throw std::runtime_error("Vulkan vertex stride is zero");
+                throw exc::CVulkanException("Vulkan vertex stride is zero");
             }
 
             _vkPipelineVertexInputStateCreateInfo = {

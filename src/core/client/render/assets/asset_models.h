@@ -84,7 +84,7 @@ namespace cvulkan::client::render::asset {
                     writer.write(reinterpret_cast<const char *>(&info._modifiedTime), sizeof(info._modifiedTime));
                 }
                 if (!writer) {
-                    throw std::runtime_error("Failed to write model cache");
+                    throw exc::CVulkanException("Failed to write model cache");
                 }
             }
 
@@ -94,7 +94,7 @@ namespace cvulkan::client::render::asset {
                 input.read(reinterpret_cast<char *>(&version), sizeof(version));
                 input.read(reinterpret_cast<char *>(&fileCount), sizeof(fileCount));
                 if (!input) {
-                    throw std::runtime_error("Failed to read model cache header");
+                    throw exc::CVulkanException("Failed to read model cache header");
                 }
                 this->_version = version;
                 this->_files.clear();
@@ -102,10 +102,10 @@ namespace cvulkan::client::render::asset {
                     uint64_t pathLength;
                     input.read(reinterpret_cast<char *>(&pathLength), sizeof(pathLength));
                     if (!input) {
-                        throw std::runtime_error("Failed to read model cache path length");
+                        throw exc::CVulkanException("Failed to read model cache path length");
                     }
                     if (pathLength > 1024 * 1024) {
-                        throw std::runtime_error("Model cache path is too long");
+                        throw exc::CVulkanException("Model cache path is too long");
                     }
                     std::string pathString(pathLength, '\0');
                     input.read(pathString.data(), static_cast<std::streamsize>(pathLength));
@@ -113,7 +113,7 @@ namespace cvulkan::client::render::asset {
                     input.read(reinterpret_cast<char *>(&info._size), sizeof(info._size));
                     input.read(reinterpret_cast<char *>(&info._modifiedTime), sizeof(info._modifiedTime));
                     if (!input) {
-                        throw std::runtime_error("Failed to read model cache entry");
+                        throw exc::CVulkanException("Failed to read model cache entry");
                     }
                     this->_files.emplace(std::filesystem::path(pathString), std::move(info));
                 }

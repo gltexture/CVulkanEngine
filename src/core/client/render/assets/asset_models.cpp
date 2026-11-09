@@ -92,11 +92,11 @@ namespace cvulkan::client::render::asset {
 
         const auto normalizedRelativePath = relativePath.lexically_normal();
         if (normalizedRelativePath.empty() || normalizedRelativePath.is_absolute()) {
-            throw std::runtime_error("Invalid source model path");
+            throw exc::CVulkanException("Invalid source model path");
         }
         for (const auto& component: normalizedRelativePath) {
             if (component == "..") {
-                throw std::runtime_error("Model path is outside the source models directory");
+                throw exc::CVulkanException("Model path is outside the source models directory");
             }
         }
 
@@ -113,7 +113,7 @@ namespace cvulkan::client::render::asset {
 
         const aiScene* assimpScene = importer.ReadFile(rawModelFullPath.string(), IMPORT_FLAGS);
         if (assimpScene == nullptr) {
-            throw std::runtime_error(std::format("Failed to open scene '{}': {}", rawModelFullPath.string(), importer.GetErrorString()));
+            throw exc::CVulkanException(std::format("Failed to open scene '{}': {}", rawModelFullPath.string(), importer.GetErrorString()));
         }
 
         const std::string modelId = normalizedRelativePath.generic_string();
@@ -165,12 +165,12 @@ namespace cvulkan::client::render::asset {
             };
             std::ofstream writer{outModelFile, std::ios::out | std::ios::trunc};
             if (!writer) {
-                throw std::runtime_error(std::format("Failed to open output model file '{}'", outModelFile.string()));
+                throw exc::CVulkanException(std::format("Failed to open output model file '{}'", outModelFile.string()));
             }
             const nlohmann::json json = modelData;
             writer << json.dump(4);
             if (!writer) {
-                throw std::runtime_error(std::format("Failed to write output model file '{}'", outModelFile.string()));
+                throw exc::CVulkanException(std::format("Failed to write output model file '{}'", outModelFile.string()));
             }
             logging::debug("Generated model file '{}'", outModelFile.string());
         }
@@ -178,12 +178,12 @@ namespace cvulkan::client::render::asset {
         {
             std::ofstream writer{outMaterialFile, std::ios::out | std::ios::trunc};
             if (!writer) {
-                throw std::runtime_error(std::format("Failed to open output materials file '{}'", outMaterialFile.string()));
+                throw exc::CVulkanException(std::format("Failed to open output materials file '{}'", outMaterialFile.string()));
             }
             const nlohmann::json json = materials;
             writer << json.dump(4);
             if (!writer) {
-                throw std::runtime_error(std::format("Failed to write output materials file '{}'", outMaterialFile.string()));
+                throw exc::CVulkanException(std::format("Failed to write output materials file '{}'", outMaterialFile.string()));
             }
             logging::debug("Generated materials file '{}'", outMaterialFile.string());
         }
@@ -195,7 +195,7 @@ namespace cvulkan::client::render::asset {
             const CVulkanModelCache vulkanModelCache = genModelCache(io_utils::CVulkanResourcePath{normalizedRelativePath.parent_path()});
             std::ofstream writer{outCacheFile, std::ios::out | std::ios::trunc};
             if (!writer) {
-                throw std::runtime_error(std::format("Failed to open output cache file '{}'", outCacheFile.string()));
+                throw exc::CVulkanException(std::format("Failed to open output cache file '{}'", outCacheFile.string()));
             }
             vulkanModelCache.write(writer);
             logging::debug("Generated cache file '{}'", outCacheFile.string());
@@ -424,7 +424,7 @@ namespace cvulkan::client::render::asset {
         if (texturePath.starts_with('*')) {
             const uint32_t embeddedTextureIndex = static_cast<uint32_t>(std::stoul(texturePath.substr(1)));
             if (embeddedTextureIndex >= numEmbedded) {
-                throw std::runtime_error(std::format("Invalid embedded texture index: {}", embeddedTextureIndex));
+                throw exc::CVulkanException(std::format("Invalid embedded texture index: {}", embeddedTextureIndex));
             }
 
             const aiTexture* embeddedTexture = assimpScene.mTextures[embeddedTextureIndex];
@@ -437,13 +437,13 @@ namespace cvulkan::client::render::asset {
                 std::ofstream outTexture{textureFullPath, std::ios::out | std::ios::binary | std::ios::trunc};
 
                 if (!outTexture) {
-                    throw std::runtime_error(std::format("Failed to open output texture file '{}'", textureFullPath.string()));
+                    throw exc::CVulkanException(std::format("Failed to open output texture file '{}'", textureFullPath.string()));
                 }
 
                 outTexture.write(reinterpret_cast<const char *>(embeddedTexture->pcData), embeddedTexture->mWidth);
 
                 if (!outTexture) {
-                    throw std::runtime_error(std::format("Failed to write output texture file '{}'", textureFullPath.string()));
+                    throw exc::CVulkanException(std::format("Failed to write output texture file '{}'", textureFullPath.string()));
                 }
             } else {
                 constexpr int channels = 4;
@@ -452,7 +452,7 @@ namespace cvulkan::client::render::asset {
                 const int stride = width * channels;
 
                 if (stbi_write_png(textureFullPath.string().c_str(), width, height, channels, embeddedTexture->pcData, stride) == 0) {
-                    throw std::runtime_error(std::format("Failed to encode texture '{}' as PNG", textureFullPath.string()));
+                    throw exc::CVulkanException(std::format("Failed to encode texture '{}' as PNG", textureFullPath.string()));
                 }
             }
             logging::debug("Dumped texture '{}'", textureFullPath.string());
@@ -463,7 +463,7 @@ namespace cvulkan::client::render::asset {
         const std::filesystem::path source = currentPath / texturePath;
 
         if (!std::filesystem::is_regular_file(source)) {
-            throw std::runtime_error(std::format("Texture file '{}' does not exist", source.string()));
+            throw exc::CVulkanException(std::format("Texture file '{}' does not exist", source.string()));
         }
 
         const std::filesystem::path destination = directoryToCopyTextures / texturePath;
@@ -477,7 +477,7 @@ namespace cvulkan::client::render::asset {
         const auto fullPath = io_utils::RES_RESOLVER / materialsFile;
         std::ifstream reader{fullPath, std::ios::in | std::ios::binary};
         if (!reader) {
-            throw std::runtime_error(std::format("Failed to open materials file '{}'", fullPath.string()));
+            throw exc::CVulkanException(std::format("Failed to open materials file '{}'", fullPath.string()));
         }
         nlohmann::json json;
         reader >> json;
@@ -492,7 +492,7 @@ namespace cvulkan::client::render::asset {
         const auto fullPath = io_utils::RES_RESOLVER / modelFile;
         std::ifstream reader{fullPath, std::ios::in | std::ios::binary};
         if (!reader) {
-            throw std::runtime_error(std::format("Failed to open model file '{}'", fullPath.string()));
+            throw exc::CVulkanException(std::format("Failed to open model file '{}'", fullPath.string()));
         }
         nlohmann::json json;
         reader >> json;

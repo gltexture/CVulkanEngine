@@ -4,6 +4,7 @@
 
 #include "vulkan_commands.h"
 #include "vulkan_synchronization.h"
+#include "utility/exceptions.h"
 
 namespace cvulkan::client::render::vk {
     CVulkanCommandPool::CVulkanCommandPool(const CVulkanContext& context, const uint32_t queueFamilyIndex, const bool supportReset)
@@ -63,7 +64,7 @@ namespace cvulkan::client::render::vk {
         }
         if (!this->_primary) {
             if (inheritance_info == nullptr) {
-                throw std::invalid_argument("Command buffer inheritance info must not be null");
+                throw exc::CVulkanException("Command buffer inheritance info must not be null");
             }
 
             VkCommandBufferInheritanceRenderingInfo inheritanceRenderingInfo{
@@ -115,6 +116,6 @@ namespace cvulkan::client::render::vk {
             vkSubmitInfo2.signalSemaphoreInfoCount = static_cast<uint32_t>(signalSemaphores->size());
             vkSubmitInfo2.pSignalSemaphoreInfos = signalSemaphores->data();
         }
-        vk::util::vkCheck(vkQueueSubmit2(this->_vkQueue, 1, &vkSubmitInfo2, fence != nullptr ? fence->vkFence() : VK_NULL_HANDLE), "Failed to submit command to queue");
+        util::vkCheck(vkQueueSubmit2(this->_vkQueue, 1, &vkSubmitInfo2, fence != nullptr ? fence->vkFence() : VK_NULL_HANDLE), "Failed to submit command to queue");
     }
 }

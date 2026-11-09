@@ -36,10 +36,10 @@ namespace cvulkan::io_utils {
 
         explicit CVulkanResourcePath(std::filesystem::path path) : _path(std::move(path)) {
             //if (this->_path.empty()) {
-            //    throw std::invalid_argument("Resource path is empty");
+            //    throw exc::CVulkanException("Resource path is empty");
             //}
             if (this->_path.is_absolute()) {
-                throw std::invalid_argument("ResourcePath must be relative");
+                throw exc::CVulkanException("ResourcePath must be relative");
             }
         }
 

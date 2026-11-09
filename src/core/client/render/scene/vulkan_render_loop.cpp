@@ -11,16 +11,17 @@
 #include "client/render/scene/vulkan_render_scene__post.h"
 #include "client/render/scene/vulkan_render_scene__swapchain.h"
 #include "client/render/scene/vulkan_render_scene__main.h"
+#include "utility/exceptions.h"
 
 namespace cvulkan::client::render::loop {
     CVulkanRenderLoop::CVulkanRenderLoop(vk::CVulkanContext& context) : _context{context}, _caches{context}, _descriptorAllocator{context} {
         const uint32_t graphicsQueueFamilyIndex = vk::util::findQueueFamilyIndex(context, vk::CVulkanQueueFamilyBitMasks::GRAPHICS);
         const uint32_t presentationQueueFamilyIndex = vk::util::findQueueFamilyIndex(context, vk::CVulkanQueueFamilyBitMasks::PRESENT);
         if (graphicsQueueFamilyIndex == UINT32_MAX) {
-            throw std::runtime_error("Graphics queue family index not found in registry");
+            throw exc::CVulkanException("Graphics queue family index not found in registry");
         }
         if (presentationQueueFamilyIndex == UINT32_MAX) {
-            throw std::runtime_error("Presentation queue family index not found in registry");
+            throw exc::CVulkanException("Presentation queue family index not found in registry");
         }
         {
             this->_commandPools.reserve(renderConfig::MAX_IMAGES_IN_FLIGHT);
@@ -43,7 +44,7 @@ namespace cvulkan::client::render::loop {
 
         {
             this->_graphicsQueue = std::make_unique<vk::CVulkanQueue>(this->_context, graphicsQueueFamilyIndex, 0);
-            this->_presentQueue = std::make_unique<vk::CVulkanQueue>(this->_context, presentationQueueFamilyIndex, 0);
+            this->_presentationQueue = std::make_unique<vk::CVulkanQueue>(this->_context, presentationQueueFamilyIndex, 0);
         }
 
         {
@@ -66,11 +67,11 @@ namespace cvulkan::client::render::loop {
         const vk::CVulkanCommandBuffer& commandBuffer = this->_commandBuffers[this->_currentFrame];
 
         this->waitForFence();
-        this->recordingStart(commandPool, commandBuffer);
+        recordingStart(commandPool, commandBuffer);
 
         const uint32_t imageIndex = this->_context.swapChain().acquireSwapChainNextImage(this->_presentationCompleteSemaphores[this->_currentFrame]);
         if (this->_shouldBeResized || imageIndex == UINT32_MAX) {
-            this->recordingStop(commandBuffer);
+            recordingStop(commandBuffer);
             this->resize();
             return;
         }
@@ -84,10 +85,10 @@ namespace cvulkan::client::render::loop {
             this->_swapchainSceneRenderer->renderSwapchain(commandBuffer, this->_postSceneRenderer->colorAttachment(), imageIndex);
         }
 
-        this->recordingStop(commandBuffer);
+        recordingStop(commandBuffer);
         this->submit(commandBuffer, imageIndex);
 
-        this->_shouldBeResized = this->_context.swapChain().presentImage(*this->_presentQueue, this->_renderCompleteSemaphores[imageIndex], imageIndex);
+        this->_shouldBeResized = this->_context.swapChain().presentImage(*this->_presentationQueue, this->_renderCompleteSemaphores[imageIndex], imageIndex);
         this->_currentFrame = (this->_currentFrame + 1) % renderConfig::MAX_IMAGES_IN_FLIGHT;
     }
 

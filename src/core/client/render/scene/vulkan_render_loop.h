@@ -67,7 +67,7 @@ namespace cvulkan::client::render::loop {
         }
 
         [[nodiscard]] const vk::CVulkanQueue& presentQueue() const {
-            return *_presentQueue;
+            return *_presentationQueue;
         }
 
 
@@ -125,7 +125,7 @@ namespace cvulkan::client::render::loop {
         std::vector<sync::CVulkanSemaphore> _renderCompleteSemaphores{};
         uint32_t _currentFrame{0};
         std::unique_ptr<vk::CVulkanQueue> _graphicsQueue;
-        std::unique_ptr<vk::CVulkanQueue> _presentQueue;
+        std::unique_ptr<vk::CVulkanQueue> _presentationQueue;
 
         cache::CVulkanCacheCollection _caches;
         vk::CVulkanDescriptorAllocator _descriptorAllocator;

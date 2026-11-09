@@ -8,6 +8,7 @@
 
 #include "client/render/vulkan_config.hpp"
 #include "client/render/assets/asset_models.h"
+#include "utility/exceptions.h"
 
 namespace cvulkan::client::render::cache {
     CVulkanModelsCache::~CVulkanModelsCache() {
@@ -36,14 +37,14 @@ namespace cvulkan::client::render::cache {
 
             const auto [modelIt, inserted] = this->_modelsMap.emplace(id, structs::CVulkanModel{id});
             if (!inserted) {
-                throw std::runtime_error(std::format("Model '{}' is already loaded in Vulkan models cache", id));
+                throw exc::CVulkanException(std::format("Model '{}' is already loaded in Vulkan models cache", id));
             }
 
             for (const auto& mesh: meshes) {
                 logging::debug("Loading mesh '{}' for model '{}': vertexSize={} bytes, indexSize={} bytes, materialId={}", mesh._id, id, mesh._vtxSize, mesh._idxSize, mesh._materialId);
 
                 if (mesh._idxSize == 0 || mesh._idxSize % sizeof(uint32_t) != 0) {
-                    throw std::runtime_error(std::format("Invalid index buffer size for mesh '{}' in model '{}': size={} bytes, expected a non-zero multiple of {}", mesh._id, id, mesh._idxSize, sizeof(uint32_t)));
+                    throw exc::CVulkanException(std::format("Invalid index buffer size for mesh '{}' in model '{}': size={} bytes, expected a non-zero multiple of {}", mesh._id, id, mesh._idxSize, sizeof(uint32_t)));
                 }
 
                 const auto verticesPath = io_utils::RES_RESOLVER / _vtxPath_Relative;
@@ -98,7 +99,7 @@ namespace cvulkan::client::render::cache {
         logging::debug("Texture cache contains {} textures, maximum={}", numTextures, renderConfig::MAX_TEXTURES_IN_CACHE);
 
         if (numTextures > renderConfig::MAX_TEXTURES_IN_CACHE) {
-            throw std::runtime_error(std::format("Texture cache exceeds maximum capacity: current={}, maximum={}", numTextures, renderConfig::MAX_TEXTURES_IN_CACHE));
+            throw exc::CVulkanException(std::format("Texture cache exceeds maximum capacity: current={}, maximum={}", numTextures, renderConfig::MAX_TEXTURES_IN_CACHE));
         }
 
         if (numTextures < renderConfig::MAX_TEXTURES_IN_CACHE) {
@@ -144,7 +145,7 @@ namespace cvulkan::client::render::cache {
         }
 
         if (this->_indexedTexturesMap.map().size() >= renderConfig::MAX_TEXTURES_IN_CACHE) {
-            throw std::runtime_error(std::format("Texture cache is full: cannot load texture '{}', current={}, maximum={}", id, this->_indexedTexturesMap.map().size(), renderConfig::MAX_TEXTURES_IN_CACHE));
+            throw exc::CVulkanException(std::format("Texture cache is full: cannot load texture '{}', current={}, maximum={}", id, this->_indexedTexturesMap.map().size(), renderConfig::MAX_TEXTURES_IN_CACHE));
         }
 
         logging::debug("Loading texture '{}': format={}", id, static_cast<uint32_t>(format));
@@ -154,7 +155,7 @@ namespace cvulkan::client::render::cache {
 
         const auto it = this->_indexedTexturesMap.map().find(id);
         if (it == this->_indexedTexturesMap.map().end()) {
-            throw std::runtime_error(std::format("Texture '{}' was not found in cache after insertion", id));
+            throw exc::CVulkanException(std::format("Texture '{}' was not found in cache after insertion", id));
         }
 
         logging::debug("Texture '{}' loaded into cache: textures={}", id, this->_indexedTexturesMap.map().size());
@@ -199,7 +200,7 @@ namespace cvulkan::client::render::cache {
 
         constexpr VkDeviceSize materialDataSize = sizeof(glm::vec4) + 4 * sizeof(int32_t);
         if constexpr (MAT_BUFFER_SIZE != materialDataSize) {
-            throw std::runtime_error(std::format("Material buffer size mismatch: MAT_BUFFER_SIZE={}, expected={}", MAT_BUFFER_SIZE, materialDataSize));
+            throw exc::CVulkanException(std::format("Material buffer size mismatch: MAT_BUFFER_SIZE={}, expected={}", MAT_BUFFER_SIZE, materialDataSize));
         }
 
         const VkDeviceSize bufferSize = static_cast<VkDeviceSize>(MAT_BUFFER_SIZE) * numMaterials;
@@ -223,7 +224,7 @@ namespace cvulkan::client::render::cache {
         auto* mappedMemory = static_cast<char *>(transferBufferData._src.mappedMemory());
         if (mappedMemory == nullptr) {
             transferBufferData._src.unMapMem();
-            throw std::runtime_error("Failed to map materials staging buffer");
+            throw exc::CVulkanException("Failed to map materials staging buffer");
         }
 
         VkDeviceSize offset = 0;
@@ -235,7 +236,7 @@ namespace cvulkan::client::render::cache {
 
             if (offset + MAT_BUFFER_SIZE > bufferSize) {
                 transferBufferData._src.unMapMem();
-                throw std::runtime_error(std::format("Materials buffer overflow while writing material '{}': offset={}, materialSize={}, bufferSize={}", _id, offset, MAT_BUFFER_SIZE, bufferSize));
+                throw exc::CVulkanException(std::format("Materials buffer overflow while writing material '{}': offset={}, materialSize={}, bufferSize={}", _id, offset, MAT_BUFFER_SIZE, bufferSize));
             }
 
             int32_t texturePos = -1;
@@ -249,7 +250,7 @@ namespace cvulkan::client::render::cache {
                     texturePos = texturesCache.getPosition(texturePath.string());
                     if (texturePos < 0) {
                         transferBufferData._src.unMapMem();
-                        throw std::runtime_error(std::format("Texture '{}' was loaded but has no valid cache position for material '{}'", texturePath.string(), _id));
+                        throw exc::CVulkanException(std::format("Texture '{}' was loaded but has no valid cache position for material '{}'", texturePath.string(), _id));
                     }
                     hasTextureValue32 = 1;
                     ++texturedMaterials;
@@ -290,7 +291,7 @@ namespace cvulkan::client::render::cache {
         transferBufferData._src.unMapMem();
 
         if (offset != bufferSize) {
-            throw std::runtime_error(std::format("Materials buffer size mismatch after serialization: expected={} bytes, written={} bytes", bufferSize, offset));
+            throw exc::CVulkanException(std::format("Materials buffer size mismatch after serialization: expected={} bytes, written={} bytes", bufferSize, offset));
         }
 
         logging::debug("Materials serialized successfully: materials={}, texturedMaterials={}, bytesWritten={}", numMaterials, texturedMaterials, offset);
@@ -316,7 +317,7 @@ namespace cvulkan::client::render::cache {
     uint32_t CVulkanMaterialsCache::getPosition(const std::string& id) const {
         const auto res = this->_indexedMaterialsMap.getIndexOf(id);
         if (res < 0) {
-            throw std::runtime_error(std::format("Material with id '{}' not found", id));
+            throw exc::CVulkanException(std::format("Material with id '{}' not found", id));
         }
         return static_cast<uint32_t>(res);
     }

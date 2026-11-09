@@ -8,6 +8,7 @@
 #include "vulkan_mem_alloc.h"
 #include "assets/asset_models.h"
 #include "scene/vulkan_render_structs.h"
+#include "utility/exceptions.h"
 
 namespace cvulkan::client::render::vk {
     CVulkanBuffer::CVulkanBuffer(const CVulkanContext& context, const VkDeviceSize size, const VkBufferUsageFlags bufferUsage, const VmaMemoryUsage vmaMemoryUsage, const VmaAllocationCreateFlags vmaFlags, const VkMemoryPropertyFlags reqFlags) : _context{context} {
@@ -70,25 +71,25 @@ namespace cvulkan::client::render::vk {
         logging::debug("Creating vertex transfer buffers: file='{}', offset={} bytes, size={} bytes", vtxPath.string(), bufferOffset, bufferSize);
 
         if (bufferSize == 0) {
-            throw std::runtime_error(std::format("Vertex buffer size is zero for file '{}'", vtxPath.string()));
+            throw exc::CVulkanException(std::format("Vertex buffer size is zero for file '{}'", vtxPath.string()));
         }
 
         if (bufferSize > static_cast<VkDeviceSize>(std::numeric_limits<std::streamsize>::max())) {
-            throw std::runtime_error(std::format("Vertex buffer size exceeds stream read limit: file='{}', size={} bytes", vtxPath.string(), bufferSize));
+            throw exc::CVulkanException(std::format("Vertex buffer size exceeds stream read limit: file='{}', size={} bytes", vtxPath.string(), bufferSize));
         }
 
         if (bufferOffset > static_cast<VkDeviceSize>(std::numeric_limits<std::streamoff>::max())) {
-            throw std::runtime_error(std::format("Vertex buffer offset exceeds stream seek limit: file='{}', offset={} bytes", vtxPath.string(), bufferOffset));
+            throw exc::CVulkanException(std::format("Vertex buffer offset exceeds stream seek limit: file='{}', offset={} bytes", vtxPath.string(), bufferOffset));
         }
 
         if (!std::filesystem::is_regular_file(vtxPath)) {
-            throw std::runtime_error(std::format("Vertex file does not exist or is not a regular file: '{}'", vtxPath.string()));
+            throw exc::CVulkanException(std::format("Vertex file does not exist or is not a regular file: '{}'", vtxPath.string()));
         }
 
         const std::uintmax_t fileSize = std::filesystem::file_size(vtxPath);
 
         if (bufferOffset > fileSize || bufferSize > fileSize - bufferOffset) {
-            throw std::runtime_error(std::format("Vertex data range exceeds file boundaries: file='{}', offset={} bytes, size={} bytes, file size={} bytes", vtxPath.string(), bufferOffset, bufferSize, fileSize));
+            throw exc::CVulkanException(std::format("Vertex data range exceeds file boundaries: file='{}', offset={} bytes, size={} bytes, file size={} bytes", vtxPath.string(), bufferOffset, bufferSize, fileSize));
         }
 
         CVulkanBuffer src{context, bufferSize,VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_AUTO, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT};
@@ -97,7 +98,7 @@ namespace cvulkan::client::render::vk {
         std::ifstream binFile{vtxPath, std::ios::binary | std::ios::in};
 
         if (!binFile) {
-            throw std::runtime_error(std::format("Failed to open vertex file '{}'", vtxPath.string()));
+            throw exc::CVulkanException(std::format("Failed to open vertex file '{}'", vtxPath.string()));
         }
 
         logging::debug("Mapping vertex staging buffer: size={} bytes", bufferSize);
@@ -107,14 +108,14 @@ namespace cvulkan::client::render::vk {
 
         if (mappedMemory == nullptr) {
             src.unMapMem();
-            throw std::runtime_error(std::format("Failed to map vertex staging buffer: file='{}'", vtxPath.string()));
+            throw exc::CVulkanException(std::format("Failed to map vertex staging buffer: file='{}'", vtxPath.string()));
         }
 
         binFile.seekg(static_cast<std::streamoff>(bufferOffset), std::ios::beg);
 
         if (!binFile) {
             src.unMapMem();
-            throw std::runtime_error(std::format("Failed to seek vertex file: file='{}', offset={} bytes", vtxPath.string(), bufferOffset));
+            throw exc::CVulkanException(std::format("Failed to seek vertex file: file='{}', offset={} bytes", vtxPath.string(), bufferOffset));
         }
 
         logging::debug("Reading vertex data: file='{}', offset={} bytes, size={} bytes", vtxPath.string(), bufferOffset, bufferSize);
@@ -125,7 +126,7 @@ namespace cvulkan::client::render::vk {
         src.unMapMem();
 
         if (bytesRead != static_cast<std::streamsize>(bufferSize)) {
-            throw std::runtime_error(std::format("Failed to read vertex data: file='{}', offset={} bytes, expected={} bytes, actual={} bytes", vtxPath.string(), bufferOffset, bufferSize, bytesRead));
+            throw exc::CVulkanException(std::format("Failed to read vertex data: file='{}', offset={} bytes, expected={} bytes, actual={} bytes", vtxPath.string(), bufferOffset, bufferSize, bytesRead));
         }
 
         logging::debug("Vertex staging buffer loaded successfully: file='{}', offset={} bytes, size={} bytes", vtxPath.string(), bufferOffset, bufferSize);
@@ -139,21 +140,21 @@ namespace cvulkan::client::render::vk {
         logging::debug("Creating index transfer buffers from '{}': offset={} bytes, size={} bytes", idxPath.string(), bufferOffset, bufferSize);
 
         if (bufferSize == 0) {
-            throw std::runtime_error(std::format("Index buffer size is zero for file '{}'", idxPath.string()));
+            throw exc::CVulkanException(std::format("Index buffer size is zero for file '{}'", idxPath.string()));
         }
         if (bufferSize > static_cast<VkDeviceSize>(std::numeric_limits<std::streamsize>::max())) {
-            throw std::runtime_error(std::format("Index buffer size exceeds stream read limit for file '{}': size={}", idxPath.string(), bufferSize));
+            throw exc::CVulkanException(std::format("Index buffer size exceeds stream read limit for file '{}': size={}", idxPath.string(), bufferSize));
         }
         if (bufferOffset > static_cast<VkDeviceSize>(std::numeric_limits<std::streamoff>::max())) {
-            throw std::runtime_error(std::format("Index buffer offset exceeds stream seek limit for file '{}': offset={}", idxPath.string(), bufferOffset));
+            throw exc::CVulkanException(std::format("Index buffer offset exceeds stream seek limit for file '{}': offset={}", idxPath.string(), bufferOffset));
         }
         if (!std::filesystem::is_regular_file(idxPath)) {
-            throw std::runtime_error(std::format("Index file does not exist or is not a regular file: '{}'", idxPath.string()));
+            throw exc::CVulkanException(std::format("Index file does not exist or is not a regular file: '{}'", idxPath.string()));
         }
 
         const std::uintmax_t fileSize = std::filesystem::file_size(idxPath);
         if (bufferOffset > fileSize || bufferSize > fileSize - bufferOffset) {
-            throw std::runtime_error(std::format("Index file size mismatch for '{}': offset={} bytes, expected range={} bytes, actual file size={} bytes", idxPath.string(), bufferOffset, bufferSize, fileSize));
+            throw exc::CVulkanException(std::format("Index file size mismatch for '{}': offset={} bytes, expected range={} bytes, actual file size={} bytes", idxPath.string(), bufferOffset, bufferSize, fileSize));
         }
 
         CVulkanBuffer src{context, bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_AUTO, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT};
@@ -161,7 +162,7 @@ namespace cvulkan::client::render::vk {
 
         std::ifstream binFile{idxPath, std::ios::binary | std::ios::in};
         if (!binFile) {
-            throw std::runtime_error(std::format("Failed to open index file '{}'", idxPath.string()));
+            throw exc::CVulkanException(std::format("Failed to open index file '{}'", idxPath.string()));
         }
 
         logging::debug("Mapping index staging buffer: size={} bytes", bufferSize);
@@ -169,13 +170,13 @@ namespace cvulkan::client::render::vk {
         void* mappedMemory = src.mappedMemory();
         if (mappedMemory == nullptr) {
             src.unMapMem();
-            throw std::runtime_error(std::format("Failed to map index staging buffer for file '{}'", idxPath.string()));
+            throw exc::CVulkanException(std::format("Failed to map index staging buffer for file '{}'", idxPath.string()));
         }
 
         binFile.seekg(static_cast<std::streamoff>(bufferOffset), std::ios::beg);
         if (!binFile) {
             src.unMapMem();
-            throw std::runtime_error(std::format("Failed to seek index file '{}': offset={} bytes", idxPath.string(), bufferOffset));
+            throw exc::CVulkanException(std::format("Failed to seek index file '{}': offset={} bytes", idxPath.string(), bufferOffset));
         }
 
         binFile.read(static_cast<char *>(mappedMemory), static_cast<std::streamsize>(bufferSize));
@@ -183,7 +184,7 @@ namespace cvulkan::client::render::vk {
         src.unMapMem();
 
         if (bytesRead != static_cast<std::streamsize>(bufferSize)) {
-            throw std::runtime_error(std::format("Failed to read index file '{}': offset={} bytes, expected {} bytes, read {} bytes", idxPath.string(), bufferOffset, bufferSize, bytesRead));
+            throw exc::CVulkanException(std::format("Failed to read index file '{}': offset={} bytes, expected {} bytes, read {} bytes", idxPath.string(), bufferOffset, bufferSize, bytesRead));
         }
 
         logging::debug("Index staging buffer loaded successfully: file='{}', offset={} bytes, size={} bytes", idxPath.string(), bufferOffset, bufferSize);
