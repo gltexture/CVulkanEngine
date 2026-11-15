@@ -34,7 +34,7 @@ namespace cvulkan::client::render::scene::swapchain {
 
         CLASS_NO_COPY_NO_MOVE(CVulkanSwapchainRenderer)
 
-        void renderSwapchain(const vk::CVulkanCommandBuffer& commandBuffer, const vk::CVulkanAttachment2D& srcAttachment, uint32_t imageIndex) const;
+        void renderSwapchain(const vk::CVulkanCommandBuffer& commandBuffer, const vk::CVulkanAttachment2D& srcAttachment, uint32_t imageIndex, uint32_t graphicQueueFamilyIndex, uint32_t presentationQueueFamilyIndex) const;
 
         void onResize(const vk::CVulkanAttachment2D& srcAttachment);
 

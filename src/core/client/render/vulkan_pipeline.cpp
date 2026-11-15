@@ -35,9 +35,48 @@ namespace cvulkan::client::render::vk {
         : _vkColorFormat(vkColorFormat), _vkDepthFormat(vkDepthFormat), _pushConstantRanges(pushConstantRanges), _shaderModules(shaderModules), _descriptorSetLayouts(descriptorSetLayouts), _vkVertexInputInfo(vkVertexInputInfo), _useBlend(useBlend) {
     }
 
+    void CVulkanPipeline::validateVertexInputState(const VkPipelineVertexInputStateCreateInfo& info) {
+        if (info.sType != VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO) {
+            throw exc::CVulkanException("Invalid VkPipelineVertexInputStateCreateInfo::sType");
+        }
+
+        if (info.vertexBindingDescriptionCount > 0 && info.pVertexBindingDescriptions == nullptr) {
+            throw exc::CVulkanException("Vertex binding descriptions pointer is null");
+        }
+
+        if (info.vertexAttributeDescriptionCount > 0 && info.pVertexAttributeDescriptions == nullptr) {
+            throw exc::CVulkanException("Vertex attribute descriptions pointer is null");
+        }
+
+       //if (info.vertexBindingDescriptionCount == 0) {
+       //    throw exc::CVulkanException("No vertex binding descriptions provided");
+       //}
+
+       //if (info.vertexAttributeDescriptionCount == 0) {
+       //    throw exc::CVulkanException("No vertex attribute descriptions provided");
+       //}
+
+        for (uint32_t i = 0; i < info.vertexAttributeDescriptionCount; ++i) {
+            const auto& [location, binding, format, offset] = info.pVertexAttributeDescriptions[i];
+            if (format == VK_FORMAT_UNDEFINED) {
+                throw exc::CVulkanException("Vertex attribute has undefined format");
+            }
+            logging::debug("Vertex attribute: location={}, binding={}, format={}, offset={}", location, binding,static_cast<int>(format), offset);
+        }
+
+        for (uint32_t i = 0; i < info.vertexBindingDescriptionCount; ++i) {
+            const auto& [binding, stride, inputRate] = info.pVertexBindingDescriptions[i];
+            if (stride == 0) {
+                throw exc::CVulkanException("Vertex binding has zero stride");
+            }
+            logging::debug("Vertex binding: binding={}, stride={}, inputRate={}", binding, stride, static_cast<int>(inputRate));
+        }
+    }
+
     CVulkanPipeline::CVulkanPipeline(const CVulkanContext& context, const CVulkanPipelineBuildInfo& buildInfo) : _context{context} {
         std::vector<VkPipelineShaderStageCreateInfo> shaderStages{};
         shaderStages.reserve(buildInfo.shaderModules().size());
+        validateVertexInputState(buildInfo.vkVertexInputInfo());
         for (const auto& t: buildInfo.shaderModules()) {
             VkPipelineShaderStageCreateInfo shaderStageCreateInfo{
                 .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
@@ -80,7 +119,7 @@ namespace cvulkan::client::render::vk {
             .pDynamicStates = dynamicStates.data()
         };
         VkPipelineColorBlendAttachmentState blendAttachmentState{
-            .blendEnable = VK_FALSE,
+            .blendEnable = buildInfo.isUseBlend() ? VK_TRUE : VK_FALSE,
             .colorWriteMask =
             VK_COLOR_COMPONENT_R_BIT |
             VK_COLOR_COMPONENT_G_BIT |
@@ -91,6 +130,7 @@ namespace cvulkan::client::render::vk {
             blendAttachmentState.colorBlendOp = VK_BLEND_OP_ADD;
             blendAttachmentState.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
             blendAttachmentState.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+            blendAttachmentState.alphaBlendOp = VK_BLEND_OP_ADD;
             blendAttachmentState.srcAlphaBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
             blendAttachmentState.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
         }
@@ -113,7 +153,7 @@ namespace cvulkan::client::render::vk {
             };
             depthStencilStateCreateInfoOptional.emplace(depthStencilStateCreateInfo);
         }
-        VkPipelineRenderingCreateInfo renderingCreateInfo{
+        VkPipelineRenderingCreateInfo renderingCreateInfo {
             .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO,
             .colorAttachmentCount = 1,
             .pColorAttachmentFormats = &colorFormat,

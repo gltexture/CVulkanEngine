@@ -3,12 +3,22 @@
 //
 
 #pragma once
+#include <format>
+#include <stdexcept>
+#include <stacktrace>
+#include <string>
+#include <utility>
 
 namespace cvulkan::exc {
     class CVulkanException : public std::runtime_error {
     public:
         explicit CVulkanException(const std::string& message)
-            : std::runtime_error(message), _stacktrace(std::stacktrace::current(1)) {
+            : std::runtime_error(message) , _stacktrace(std::stacktrace::current()) {
+        }
+
+        template<typename... Args>
+        explicit CVulkanException(const std::format_string<Args...> message, Args&&... args)
+            : CVulkanException(std::format(message, std::forward<Args>(args)...)) {
         }
 
         [[nodiscard]]
@@ -19,4 +29,11 @@ namespace cvulkan::exc {
     private:
         std::stacktrace _stacktrace;
     };
+
+    namespace crash {
+        class CCrashReporter {
+        public:
+            static void initialize();
+        };
+    }
 }

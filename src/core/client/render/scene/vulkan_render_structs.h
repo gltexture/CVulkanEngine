@@ -10,11 +10,6 @@
 #include "client/render/vulkan_buffers.h"
 
 namespace cvulkan::client::render::structs {
-    static constexpr uint32_t NUMBER_OF_ATTRIBUTES = 2;
-    static constexpr uint32_t POSITION_COMPONENTS = 3;
-    static constexpr uint32_t UV_COMPONENTS = 2;
-
-
     //struct CVulkanRawMeshData {
     //    std::string id;
     //    std::vector<float> positions;
@@ -27,32 +22,65 @@ namespace cvulkan::client::render::structs {
         bool _hasTransparency;
     };
 
-    class CVulkanVertexStruct {
+    class CVulkanVertexBufferStruct {
     public:
-        explicit CVulkanVertexStruct(const vk::CVulkanContext& context);
+        explicit CVulkanVertexBufferStruct(const vk::CVulkanContext& context) : _context{context} {
+        }
+        ~CVulkanVertexBufferStruct();
 
-        ~CVulkanVertexStruct();
-
-        CLASS_NO_COPY(CVulkanVertexStruct);
+        CLASS_NO_COPY_NO_MOVEASSIGN(CVulkanVertexBufferStruct);
+        CVulkanVertexBufferStruct(CVulkanVertexBufferStruct&& other) noexcept :
+        _context{other._context},
+        _vkPipelineVertexInputStateCreateInfo{other._vkPipelineVertexInputStateCreateInfo},
+        _vkVertexInputAttributeDescriptions{std::move(other._vkVertexInputAttributeDescriptions)},
+        _vkVertexInputBindingDescriptions{std::move(other._vkVertexInputBindingDescriptions)} {
+            _vkPipelineVertexInputStateCreateInfo.pVertexAttributeDescriptions = _vkVertexInputAttributeDescriptions.data();
+            _vkPipelineVertexInputStateCreateInfo.pVertexBindingDescriptions =_vkVertexInputBindingDescriptions.data();
+        }
 
         [[nodiscard]] const VkPipelineVertexInputStateCreateInfo& vkPipelineVertexInputStateCreateInfo() const {
             return _vkPipelineVertexInputStateCreateInfo;
         }
 
-    private:
+    protected:
         const vk::CVulkanContext& _context;
         VkPipelineVertexInputStateCreateInfo _vkPipelineVertexInputStateCreateInfo{};
         std::vector<VkVertexInputAttributeDescription> _vkVertexInputAttributeDescriptions{};
         std::vector<VkVertexInputBindingDescription> _vkVertexInputBindingDescriptions{};
     };
 
+    class CVulkanMeshVertexBufferStruct : public CVulkanVertexBufferStruct {
+    public:
+        static constexpr uint32_t NUMBER_OF_ATTRIBUTES = 2;
+        static constexpr uint32_t POSITION_COMPONENTS = 3;
+        static constexpr uint32_t UV_COMPONENTS = 2;
+
+        explicit CVulkanMeshVertexBufferStruct(const vk::CVulkanContext& context);
+        ~CVulkanMeshVertexBufferStruct();
+
+        CLASS_NO_COPY_NO_MOVEASSIGN(CVulkanMeshVertexBufferStruct);
+        CVulkanMeshVertexBufferStruct(CVulkanMeshVertexBufferStruct&& other) noexcept = default;
+    };
+
+    class CVulkanImGuiVertexBufferStruct : public CVulkanVertexBufferStruct {
+    public:
+        static constexpr uint32_t NUMBER_OF_ATTRIBUTES = 3;
+        static constexpr uint32_t VERTEX_SIZE = sizeof(float) * 5;
+
+        explicit CVulkanImGuiVertexBufferStruct(const vk::CVulkanContext& context);
+        ~CVulkanImGuiVertexBufferStruct();
+
+        CLASS_NO_COPY_NO_MOVEASSIGN(CVulkanImGuiVertexBufferStruct);
+        CVulkanImGuiVertexBufferStruct(CVulkanImGuiVertexBufferStruct&& other) noexcept = default;
+    };
+
     class CVulkanMesh {
     public:
-        CVulkanMesh(const std::string& id, vk::CVulkanBuffer&& verticesBuffer, vk::CVulkanBuffer&& indicesBuffer, const uint32_t& numIndices, const std::string& materialId);
+        CVulkanMesh(std::string  id, vk::CVulkanBuffer&& verticesBuffer, vk::CVulkanBuffer&& indicesBuffer, const uint32_t& numIndices, std::string  materialId);
 
         ~CVulkanMesh();
 
-        CLASS_NO_COPY_NO_ASSIGN_MOVE(CVulkanMesh);
+        CLASS_NO_COPY_NO_MOVEASSIGN(CVulkanMesh);
 
         CVulkanMesh(CVulkanMesh&& other) noexcept = default;
 
@@ -68,7 +96,7 @@ namespace cvulkan::client::render::structs {
             return _indicesBuffer;
         }
 
-        [[nodiscard]] const uint32_t& numIndices() const {
+        [[nodiscard]] uint32_t numIndices() const {
             return _numIndices;
         }
 
@@ -86,11 +114,11 @@ namespace cvulkan::client::render::structs {
 
     class CVulkanModel {
     public:
-        explicit CVulkanModel(const std::string& id);
+        explicit CVulkanModel(std::string  id);
 
         ~CVulkanModel();
 
-        CLASS_NO_COPY_NO_ASSIGN_MOVE(CVulkanModel);
+        CLASS_NO_COPY_NO_MOVEASSIGN(CVulkanModel);
 
         CVulkanModel(CVulkanModel&& other) noexcept = default;
 

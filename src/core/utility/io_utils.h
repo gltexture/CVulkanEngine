@@ -5,6 +5,7 @@
 #pragma once
 #include <filesystem>
 
+#include "exceptions.h"
 #include "sys_utils.h"
 
 namespace cvulkan::io_utils {
@@ -14,6 +15,7 @@ namespace cvulkan::io_utils {
     inline const std::filesystem::path TEXTURES{"textures"};
     inline const std::filesystem::path MODELS{"models"};
     inline const std::filesystem::path RESOURCES{"resources"};
+    inline const std::filesystem::path OUTPUT{"output"};
 
     inline const std::filesystem::path SHADERS_SOURCE{SHADERS / SOURCE};
     inline const std::filesystem::path SHADERS_COMPILED{SHADERS / COMPILED};
@@ -82,9 +84,7 @@ namespace cvulkan::io_utils {
 
         CLASS_NO_COPY_NO_MOVE(CVulkanResourceResolver)
 
-        [[nodiscard]] std
-
-        ::filesystem::path resolve(const CVulkanResourcePath& resourcePath) const;
+        [[nodiscard]] std::filesystem::path resolve(const CVulkanResourcePath& resourcePath) const;
 
         [[nodiscard]] const std::filesystem::path& root() const noexcept {
             return _root;
@@ -97,8 +97,14 @@ namespace cvulkan::io_utils {
     std::filesystem::path getExecutableDirectory();
 
 #ifdef CVULKAN_DEV_MODE
-    inline CVulkanResourceResolver RES_RESOLVER{getExecutableDirectory().parent_path() / RESOURCES};
+    inline CVulkanResourceResolver _RS_RESOLVER{getExecutableDirectory().parent_path() / RESOURCES};
 #else
-    inline CVulkanResourceResolver RES_RESOLVER{getExecutableDirectory() / RESOURCES};
+    inline CVulkanResourceResolver _PATH_RESOLVER{getExecutableDirectory() / RESOURCES};
+#endif
+
+#ifdef CVULKAN_DEV_MODE
+    inline CVulkanResourceResolver _OUT_RESOLVER{getExecutableDirectory().parent_path() / OUTPUT};
+#else
+    inline CVulkanResourceResolver _OUT_RESOLVER{getExecutableDirectory() / OUTPUT};
 #endif
 }

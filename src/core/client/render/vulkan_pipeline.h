@@ -3,7 +3,9 @@
 //
 
 #pragma once
+
 #include "utility/sys_utils.h"
+#include <span>
 
 namespace cvulkan::client::render::shader {
     class CVulkanShaderModule;
@@ -59,7 +61,7 @@ namespace cvulkan::client::render::vk {
 
         ~CVulkanPipelineBuildInfo() = default;
 
-        CLASS_NO_COPY_NO_ASSIGN_MOVE(CVulkanPipelineBuildInfo);
+        CLASS_NO_COPY_NO_MOVEASSIGN(CVulkanPipelineBuildInfo);
 
         [[nodiscard]] VkFormat vkColorFormat() const {
             return _vkColorFormat;
@@ -114,6 +116,9 @@ namespace cvulkan::client::render::vk {
         [[nodiscard]] VkPipelineLayout vkPipelineLayout() const {
             return _vkPipelineLayout;
         }
+
+    protected:
+        static void validateVertexInputState(const VkPipelineVertexInputStateCreateInfo& info);
 
     private:
         const CVulkanContext& _context;

@@ -29,7 +29,7 @@ namespace cvulkan::client::render::scene::post {
         descriptorSet.setImage(srcAttachment.view(), *this->_textureSampler, 0);
 
         const vk::CVulkanDescriptorSetLayout descriptorSetLayout_data {this->_context, vk::CVulkanLayoutInfo{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, 1, VK_SHADER_STAGE_FRAGMENT_BIT}};
-        this->_srcSizeBuffer = std::make_unique<vk::CVulkanBuffer>(vk::buffutil::allocateHostVisibleBuffer(this->_context, this->_descriptorAllocator, sizeof(glm::vec2), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, DESC_ID_SCREEN_SIZE, descriptorSetLayout_data));
+        this->_srcSizeBuffer = std::make_unique<vk::CVulkanBuffer>(vk::buff_util::allocateHostVisibleBuffer(this->_context, this->_descriptorAllocator, sizeof(glm::vec2), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, DESC_ID_SCREEN_SIZE, descriptorSetLayout_data));
         this->setSrcSizeBuffer();
         
         const vk::CVulkanSpecConstants<uint32_t> specConst {renderConfig::FXAA ? 1 : 0};
@@ -40,7 +40,7 @@ namespace cvulkan::client::render::scene::post {
             fun_utils::packCRefs(*this->_descriptorSetLayout_texture, descriptorSetLayout_data),
             fun_utils::packCRefs(shaderV, shaderF),
             {},
-            vk::buffutil::emptyVertexStruct(), COLOR_FORMAT, false};
+            vk::buff_util::emptyVertexStruct(), COLOR_FORMAT, false};
 
         this->_postPipeline = std::make_unique<vk::CVulkanPipeline>(this->_context, buildInfo);
     }
@@ -65,7 +65,7 @@ namespace cvulkan::client::render::scene::post {
         vkCmdBeginRendering(commandBuffer.vkCommandBuffer(), &this->_renderingInfo);
         vkCmdBindPipeline(commandBuffer.vkCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, this->_postPipeline->vkPipeline());
 
-        main::CVulkanSceneRenderer::setDefaultViewportAndScissor(commandBuffer, this->_context.swapChain().extent());
+        main::CVulkanSceneRenderer::setViewportAndScissor(commandBuffer, this->_context.swapChain().extent());
 
         std::vector<VkDescriptorSet> descriptorSets{};
         descriptorSets.reserve(2);

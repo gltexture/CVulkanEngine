@@ -5,6 +5,7 @@
 #pragma once
 
 #include <map>
+#include <source_location>
 #include <vector>
 
 #include "vulkan_render_cache.h"
@@ -12,6 +13,7 @@
 #include "client/render/vulkan_pipeline.h"
 #include "client/render/vulkan_transform.h"
 #include "client/render/assets/asset_models.h"
+#include "utility/DEBUG.h"
 
 namespace cvulkan::client::render::entity {
     class CVulkanSceneEntity;
@@ -184,12 +186,8 @@ namespace cvulkan::client::render::scene::main {
 
         void onResize();
 
-        static void setDefaultViewportAndScissor(const vk::CVulkanCommandBuffer& commandBuffer, const VkExtent2D extent2D) {
-            assert(extent2D.width > 0 && "Viewport width must be greater than zero");
-            assert(extent2D.height > 0 && "Viewport height must be greater than zero");
-
-            if (extent2D.width == 0 || extent2D.height == 0) {
-                logging::error("Cannot set viewport and scissor: extent width or height is zero");
+        static void setViewportAndScissor(const vk::CVulkanCommandBuffer& commandBuffer, const VkExtent2D extent2D) {
+            if (!DEBUG::CHECK(std::source_location::current(), extent2D.width > 0 && extent2D.height > 0, "Cannot set viewport and scissor: extent width or height is zero")) {
                 return;
             }
 
@@ -202,6 +200,37 @@ namespace cvulkan::client::render::scene::main {
                 .maxDepth = 1.0F
             };
             vkCmdSetViewport(commandBuffer.vkCommandBuffer(), 0, 1, &viewport);
+
+            const VkRect2D scissor {
+                .offset {
+                    .x = 0,
+                    .y = 0
+                },
+                .extent = extent2D
+            };
+            vkCmdSetScissor(commandBuffer.vkCommandBuffer(), 0, 1, &scissor);
+        }
+
+        static void setViewport(const vk::CVulkanCommandBuffer& commandBuffer, const VkExtent2D extent2D) {
+            if (!DEBUG::CHECK(std::source_location::current(), extent2D.width > 0 && extent2D.height > 0, "Cannot set viewport: extent width or height is zero")) {
+                return;
+            }
+
+            const VkViewport viewport {
+                .x = 0.0F,
+                .y = static_cast<float>(extent2D.height),
+                .width = static_cast<float>(extent2D.width),
+                .height = -static_cast<float>(extent2D.height),
+                .minDepth = 0.0F,
+                .maxDepth = 1.0F
+            };
+            vkCmdSetViewport(commandBuffer.vkCommandBuffer(), 0, 1, &viewport);
+        }
+
+        static void setScissor(const vk::CVulkanCommandBuffer& commandBuffer, const VkExtent2D extent2D) {
+            if (!DEBUG::CHECK(std::source_location::current(), extent2D.width > 0 && extent2D.height > 0, "Cannot set viewport: extent width or height is zero")) {
+                return;
+            }
 
             const VkRect2D scissor {
                 .offset {

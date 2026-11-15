@@ -33,7 +33,7 @@ namespace cvulkan::client::render::vk {
         (entry(args), ...);
 
         this->_specializationInfo = {
-            .mapEntryCount = this->_entries.size(),
+            .mapEntryCount = static_cast<uint32_t>(this->_entries.size()),
             .pMapEntries = this->_entries.data(),
             .dataSize = this->_data.size(),
             .pData = this->_data.data()

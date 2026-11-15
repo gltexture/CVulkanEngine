@@ -9,6 +9,7 @@
 #include "client/render/vulkan_images.h"
 #include "client/render/vulkan_buffers.h"
 #include "client/render/vulkan_commands.h"
+#include "utility/DEBUG.h"
 #include "utility/exceptions.h"
 
 namespace cvulkan::client::render::asset {
@@ -21,33 +22,28 @@ namespace cvulkan::client::render::asset {
     }
 
     CVulkanImageSrc imageLoad::loadImage(const std::filesystem::path& imagePath) {
-        int x;
-        int y;
-        int channels;
+        int x{};
+        int y{};
+        int channels{};
+
         unsigned char* bytes = stbi_load(imagePath.string().c_str(), &x, &y, &channels, 4);
-        if (bytes == nullptr) {
-            throw exc::CVulkanException(std::format("Failed to load image '{}'", imagePath.string()));
-        }
+        DEBUG::ASSERT(bytes != nullptr, "Failed to load image '{}': {}", imagePath.string(), stbi_failure_reason());
+        DEBUG::ASSERT(x > 0 && y > 0 && channels > 0, "Invalid image dimensions or channel count for '{}': {}x{}, channels: {}", imagePath.string(), x, y, channels);
+
         return {
             bytes,
             static_cast<size_t>(x) * static_cast<size_t>(y) * 4,
             {x, y},
-            static_cast<uint32_t>(channels)
+            4
         };
     }
 
-    CVulkanTexture2D::CVulkanTexture2D(const vk::CVulkanContext& context, const std::string& id, const CVulkanImageSrc& imageSrc, const VkFormat& format) : _id(id), _size(imageSrc._size) {
-        assert(imageSrc._data != nullptr);
-        assert(imageSrc._dataSize > 0);
-
-        logging::debug("Creating texture '{}': data={:p}, size={}", id, static_cast<const void *>(imageSrc._data), imageSrc._dataSize);
-        if (imageSrc._data == nullptr || imageSrc._dataSize <= 0) {
-            throw exc::CVulkanException(std::format("Invalid image data for texture '{}'", id));
-        }
-
+    CVulkanTexture2D::CVulkanTexture2D(const vk::CVulkanContext& context, std::string id, const CVulkanImageSrc& imageSrc, const VkFormat& format) : _id(id), _size(imageSrc._size), _genMipMaps(imageSrc._genMipMaps) {
+        DEBUG::ASSERT(std::source_location::current(), imageSrc._data != nullptr && imageSrc._dataSize > 0, "Invalid image data for texture '{}'", id);
+        logging::debug("Creating texture '{}': data={:p}, size={}", id, static_cast<const void*>(imageSrc._data), imageSrc._dataSize);
 
         this->createStgBuffer(context, imageSrc._data, imageSrc._dataSize);
-        const uint32_t mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(imageSrc._size.x, imageSrc._size.y)))) + 1;
+        const uint32_t mipLevels = imageSrc._genMipMaps ? (static_cast<uint32_t>(std::floor(std::log2(std::max(imageSrc._size.x, imageSrc._size.y)))) + 1) : 1;
         const vk::CVulkanImage2DData image2DData{
             ._format = format,
             ._mipLevels = mipLevels,
@@ -58,15 +54,15 @@ namespace cvulkan::client::render::asset {
                 .depth = 1
             }
         };
+
         this->_image = std::make_unique<vk::CVulkanImage2D>(context, image2DData);
         const vk::CVulkanImage2DViewData imageViewData{
             ._aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
             ._format = format,
             ._mipLevels = mipLevels
         };
+
         this->_imageView = std::make_unique<vk::CVulkanImage2DView>(context, imageViewData, this->_image->vkImage(), false);
-
-
         this->transparencyCheck(imageSrc);
     }
 
@@ -74,11 +70,12 @@ namespace cvulkan::client::render::asset {
 
     CVulkanTexture2D::CVulkanTexture2D(CVulkanTexture2D&& other) noexcept
         : _id(std::move(other._id)),
-          _size(other._size),
-          _recordedTransition(other._recordedTransition),
-          _image(std::move(other._image)),
-          _imageView(std::move(other._imageView)),
-          _stgBuffer(std::move(other._stgBuffer)) {
+        _size(other._size),
+        _recordedTransition(other._recordedTransition),
+        _image(std::move(other._image)),
+        _imageView(std::move(other._imageView)),
+        _stgBuffer(std::move(other._stgBuffer)),
+        _genMipMaps(other._genMipMaps) {
     }
 
     CVulkanTexture2D& CVulkanTexture2D::operator=(CVulkanTexture2D&& other) noexcept {
@@ -91,6 +88,7 @@ namespace cvulkan::client::render::asset {
         this->_image = std::move(other._image);
         this->_imageView = std::move(other._imageView);
         this->_stgBuffer = std::move(other._stgBuffer);
+        this->_genMipMaps = other._genMipMaps;
         return *this;
     }
 
@@ -106,17 +104,17 @@ namespace cvulkan::client::render::asset {
                                        VK_ACCESS_2_TRANSFER_WRITE_BIT,
                                        VK_IMAGE_ASPECT_COLOR_BIT);
             this->recordCopyBuffer(commandBuffer, *this->_stgBuffer);
-            this->recordMipMapGeneration(commandBuffer);
-            //vk::img_util::imageBarrier(
-            //    commandBuffer.vkCommandBuffer(), _image->vkImage(),
-            //    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-            //    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-            //    VK_PIPELINE_STAGE_2_TRANSFER_BIT,
-            //    VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT,
-            //    VK_ACCESS_2_TRANSFER_WRITE_BIT,
-            //    VK_ACCESS_2_SHADER_SAMPLED_READ_BIT,
-            //    VK_IMAGE_ASPECT_COLOR_BIT
-            //);
+            if (this->_genMipMaps) {
+                this->recordMipMapGeneration(commandBuffer);
+            } else {
+                vk::img_util::imageBarrier(
+                    commandBuffer.vkCommandBuffer(), _image->vkImage(),
+                    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                    VK_PIPELINE_STAGE_2_TRANSFER_BIT,VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT,
+                    VK_ACCESS_2_TRANSFER_WRITE_BIT,VK_ACCESS_2_SHADER_SAMPLED_READ_BIT,
+                    VK_IMAGE_ASPECT_COLOR_BIT
+                );
+            }
         }
     }
 
@@ -237,13 +235,7 @@ namespace cvulkan::client::render::asset {
     }
 
     void CVulkanTexture2D::createStgBuffer(const vk::CVulkanContext& context, const unsigned char* _data, const size_t& _dataSize) {
-        assert(_data != nullptr);
-        assert(_dataSize > 0);
-
-        if (_data == nullptr || _dataSize == 0) {
-            logging::error("Texture '{}' has invalid image data", this->_id);
-            throw exc::CVulkanException(std::format("Texture '{}' has invalid image data", this->_id));
-        }
+        DEBUG::ASSERT(_data != nullptr && _dataSize > 0, "Texture '{}' has invalid image data", this->_id);
 
         logging::debug("Creating staging buffer for texture '{}': {} bytes", this->_id, _dataSize);
 
@@ -253,11 +245,7 @@ namespace cvulkan::client::render::asset {
 
         void* mapped = this->_stgBuffer->mappedMemory();
 
-        assert(mapped != nullptr);
-        if (mapped == nullptr) {
-            logging::error("Failed to map staging buffer memory for texture '{}'", this->_id);
-            throw exc::CVulkanException(std::format("Failed to map staging buffer memory for texture '{}'", this->_id));
-        }
+        DEBUG::ASSERT(mapped != nullptr, "Failed to map staging buffer memory for texture '{}'", this->_id);
 
         std::memcpy(mapped, _data, _dataSize);
         logging::trace("Copied {} bytes to staging buffer for texture '{}'", _dataSize, this->_id);
@@ -275,7 +263,7 @@ namespace cvulkan::client::render::asset {
         std::atomic result{false};
         const uint32_t numPixels = static_cast<uint32_t>(imageSrc._size.x) * imageSrc._size.y;
         {
-            std::vector<std::future<void> > futures{};
+            std::vector<std::future<void>> futures{};
             for (uint32_t j = 0; j < 4; j++) {
                 const size_t start = numPixels * j / 4;
                 const size_t end = numPixels * (j + 1) / 4;

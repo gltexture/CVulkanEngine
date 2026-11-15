@@ -15,7 +15,7 @@ Type& operator=(const Type&) = delete; \
 Type(Type&&) = delete; \
 Type& operator=(Type&&) = delete;
 
-#define CLASS_NO_COPY_NO_ASSIGN_MOVE(Type) \
+#define CLASS_NO_COPY_NO_MOVEASSIGN(Type) \
 Type(const Type&) = delete; \
 Type& operator=(const Type&) = delete; \
 Type& operator=(Type&&) = delete;

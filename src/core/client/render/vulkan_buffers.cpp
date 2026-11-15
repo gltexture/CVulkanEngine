@@ -8,6 +8,7 @@
 #include "vulkan_mem_alloc.h"
 #include "assets/asset_models.h"
 #include "scene/vulkan_render_structs.h"
+#include "utility/DEBUG.h"
 #include "utility/exceptions.h"
 
 namespace cvulkan::client::render::vk {
@@ -70,128 +71,86 @@ namespace cvulkan::client::render::vk {
 
         logging::debug("Creating vertex transfer buffers: file='{}', offset={} bytes, size={} bytes", vtxPath.string(), bufferOffset, bufferSize);
 
-        if (bufferSize == 0) {
-            throw exc::CVulkanException(std::format("Vertex buffer size is zero for file '{}'", vtxPath.string()));
-        }
-
-        if (bufferSize > static_cast<VkDeviceSize>(std::numeric_limits<std::streamsize>::max())) {
-            throw exc::CVulkanException(std::format("Vertex buffer size exceeds stream read limit: file='{}', size={} bytes", vtxPath.string(), bufferSize));
-        }
-
-        if (bufferOffset > static_cast<VkDeviceSize>(std::numeric_limits<std::streamoff>::max())) {
-            throw exc::CVulkanException(std::format("Vertex buffer offset exceeds stream seek limit: file='{}', offset={} bytes", vtxPath.string(), bufferOffset));
-        }
-
-        if (!std::filesystem::is_regular_file(vtxPath)) {
-            throw exc::CVulkanException(std::format("Vertex file does not exist or is not a regular file: '{}'", vtxPath.string()));
-        }
+        DEBUG::ASSERT(bufferSize > 0, "Vertex buffer size is zero for file '{}'", vtxPath.string());
+        DEBUG::ASSERT(bufferSize <= static_cast<VkDeviceSize>(std::numeric_limits<std::streamsize>::max()), "Vertex buffer size exceeds stream read limit: file='{}', size={} bytes", vtxPath.string(), bufferSize);
+        DEBUG::ASSERT(bufferOffset <= static_cast<VkDeviceSize>(std::numeric_limits<std::streamoff>::max()), "Vertex buffer offset exceeds stream seek limit: file='{}', offset={} bytes", vtxPath.string(), bufferOffset);
+        DEBUG::ASSERT(std::filesystem::is_regular_file(vtxPath), "Vertex file does not exist or is not a regular file: '{}'", vtxPath.string());
 
         const std::uintmax_t fileSize = std::filesystem::file_size(vtxPath);
+        DEBUG::ASSERT(bufferOffset <= fileSize && bufferSize <= fileSize - bufferOffset, "Vertex data range exceeds file boundaries: file='{}', offset={} bytes, size={} bytes, file size={} bytes", vtxPath.string(), bufferOffset, bufferSize, fileSize);
 
-        if (bufferOffset > fileSize || bufferSize > fileSize - bufferOffset) {
-            throw exc::CVulkanException(std::format("Vertex data range exceeds file boundaries: file='{}', offset={} bytes, size={} bytes, file size={} bytes", vtxPath.string(), bufferOffset, bufferSize, fileSize));
-        }
-
-        CVulkanBuffer src{context, bufferSize,VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_AUTO, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT};
+        CVulkanBuffer src{context, bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_AUTO, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT};
         CVulkanBuffer dst{context, bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_AUTO, 0, 0};
 
         std::ifstream binFile{vtxPath, std::ios::binary | std::ios::in};
-
-        if (!binFile) {
-            throw exc::CVulkanException(std::format("Failed to open vertex file '{}'", vtxPath.string()));
-        }
+        DEBUG::ASSERT(binFile.is_open(), "Failed to open vertex file '{}'", vtxPath.string());
 
         logging::debug("Mapping vertex staging buffer: size={} bytes", bufferSize);
 
         src.mapMem();
         void* mappedMemory = src.mappedMemory();
-
-        if (mappedMemory == nullptr) {
-            src.unMapMem();
-            throw exc::CVulkanException(std::format("Failed to map vertex staging buffer: file='{}'", vtxPath.string()));
-        }
+        DEBUG::ASSERT(mappedMemory != nullptr, "Failed to map vertex staging buffer: file='{}'", vtxPath.string());
 
         binFile.seekg(static_cast<std::streamoff>(bufferOffset), std::ios::beg);
-
-        if (!binFile) {
-            src.unMapMem();
-            throw exc::CVulkanException(std::format("Failed to seek vertex file: file='{}', offset={} bytes", vtxPath.string(), bufferOffset));
-        }
+        DEBUG::ASSERT(binFile.good(), "Failed to seek vertex file: file='{}', offset={} bytes", vtxPath.string(), bufferOffset);
 
         logging::debug("Reading vertex data: file='{}', offset={} bytes, size={} bytes", vtxPath.string(), bufferOffset, bufferSize);
 
-        binFile.read(static_cast<char *>(mappedMemory), static_cast<std::streamsize>(bufferSize));
+        binFile.read(static_cast<char*>(mappedMemory), static_cast<std::streamsize>(bufferSize));
         const std::streamsize bytesRead = binFile.gcount();
 
         src.unMapMem();
 
-        if (bytesRead != static_cast<std::streamsize>(bufferSize)) {
-            throw exc::CVulkanException(std::format("Failed to read vertex data: file='{}', offset={} bytes, expected={} bytes, actual={} bytes", vtxPath.string(), bufferOffset, bufferSize, bytesRead));
-        }
+        DEBUG::ASSERT(bytesRead == static_cast<std::streamsize>(bufferSize), "Failed to read vertex data: file='{}', offset={} bytes, expected={} bytes, actual={} bytes", vtxPath.string(), bufferOffset, bufferSize, bytesRead);
 
         logging::debug("Vertex staging buffer loaded successfully: file='{}', offset={} bytes, size={} bytes", vtxPath.string(), bufferOffset, bufferSize);
 
         return {std::move(src), std::move(dst)};
     }
 
+
     CVulkanTransferBufferData createIndicesBuffers(const CVulkanContext& context, const asset::modelGen::CVulkanMeshData& rawMeshData, const std::filesystem::path& idxPath) {
         const VkDeviceSize bufferSize = rawMeshData._idxSize;
         const VkDeviceSize bufferOffset = rawMeshData._idxOffset;
+
         logging::debug("Creating index transfer buffers from '{}': offset={} bytes, size={} bytes", idxPath.string(), bufferOffset, bufferSize);
 
-        if (bufferSize == 0) {
-            throw exc::CVulkanException(std::format("Index buffer size is zero for file '{}'", idxPath.string()));
-        }
-        if (bufferSize > static_cast<VkDeviceSize>(std::numeric_limits<std::streamsize>::max())) {
-            throw exc::CVulkanException(std::format("Index buffer size exceeds stream read limit for file '{}': size={}", idxPath.string(), bufferSize));
-        }
-        if (bufferOffset > static_cast<VkDeviceSize>(std::numeric_limits<std::streamoff>::max())) {
-            throw exc::CVulkanException(std::format("Index buffer offset exceeds stream seek limit for file '{}': offset={}", idxPath.string(), bufferOffset));
-        }
-        if (!std::filesystem::is_regular_file(idxPath)) {
-            throw exc::CVulkanException(std::format("Index file does not exist or is not a regular file: '{}'", idxPath.string()));
-        }
+        DEBUG::ASSERT(bufferSize > 0, "Index buffer size is zero for file '{}'", idxPath.string());
+        DEBUG::ASSERT(bufferSize <= static_cast<VkDeviceSize>(std::numeric_limits<std::streamsize>::max()), "Index buffer size exceeds stream read limit for file '{}': size={}", idxPath.string(), bufferSize);
+        DEBUG::ASSERT(bufferOffset <= static_cast<VkDeviceSize>(std::numeric_limits<std::streamoff>::max()), "Index buffer offset exceeds stream seek limit for file '{}': offset={}", idxPath.string(), bufferOffset);
+        DEBUG::ASSERT(std::filesystem::is_regular_file(idxPath), "Index file does not exist or is not a regular file: '{}'", idxPath.string());
 
         const std::uintmax_t fileSize = std::filesystem::file_size(idxPath);
-        if (bufferOffset > fileSize || bufferSize > fileSize - bufferOffset) {
-            throw exc::CVulkanException(std::format("Index file size mismatch for '{}': offset={} bytes, expected range={} bytes, actual file size={} bytes", idxPath.string(), bufferOffset, bufferSize, fileSize));
-        }
+        DEBUG::ASSERT(bufferOffset <= fileSize && bufferSize <= fileSize - bufferOffset, "Index file size mismatch for '{}': offset={} bytes, expected range={} bytes, actual file size={} bytes", idxPath.string(), bufferOffset, bufferSize, fileSize);
 
         CVulkanBuffer src{context, bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_AUTO, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT};
         CVulkanBuffer dst{context, bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_AUTO, 0, 0};
 
         std::ifstream binFile{idxPath, std::ios::binary | std::ios::in};
-        if (!binFile) {
-            throw exc::CVulkanException(std::format("Failed to open index file '{}'", idxPath.string()));
-        }
+        DEBUG::ASSERT(binFile.is_open(), "Failed to open index file '{}'", idxPath.string());
 
         logging::debug("Mapping index staging buffer: size={} bytes", bufferSize);
+
         src.mapMem();
         void* mappedMemory = src.mappedMemory();
-        if (mappedMemory == nullptr) {
-            src.unMapMem();
-            throw exc::CVulkanException(std::format("Failed to map index staging buffer for file '{}'", idxPath.string()));
-        }
+        DEBUG::ASSERT(mappedMemory != nullptr, "Failed to map index staging buffer for file '{}'", idxPath.string());
 
         binFile.seekg(static_cast<std::streamoff>(bufferOffset), std::ios::beg);
-        if (!binFile) {
-            src.unMapMem();
-            throw exc::CVulkanException(std::format("Failed to seek index file '{}': offset={} bytes", idxPath.string(), bufferOffset));
-        }
+        DEBUG::ASSERT(binFile.good(), "Failed to seek index file '{}': offset={} bytes", idxPath.string(), bufferOffset);
 
-        binFile.read(static_cast<char *>(mappedMemory), static_cast<std::streamsize>(bufferSize));
+        binFile.read(static_cast<char*>(mappedMemory), static_cast<std::streamsize>(bufferSize));
         const std::streamsize bytesRead = binFile.gcount();
+
         src.unMapMem();
 
-        if (bytesRead != static_cast<std::streamsize>(bufferSize)) {
-            throw exc::CVulkanException(std::format("Failed to read index file '{}': offset={} bytes, expected {} bytes, read {} bytes", idxPath.string(), bufferOffset, bufferSize, bytesRead));
-        }
+        DEBUG::ASSERT(bytesRead == static_cast<std::streamsize>(bufferSize), "Failed to read index file '{}': offset={} bytes, expected={} bytes, read={} bytes", idxPath.string(), bufferOffset, bufferSize, bytesRead);
 
         logging::debug("Index staging buffer loaded successfully: file='{}', offset={} bytes, size={} bytes", idxPath.string(), bufferOffset, bufferSize);
+
         return {std::move(src), std::move(dst)};
     }
 
-    CVulkanBuffer buffutil::allocateHostVisibleBuffer(const CVulkanContext& context, CVulkanDescriptorAllocator& allocator, const VkDeviceSize size, const VkBufferUsageFlags usage, const std::string_view id,
+    CVulkanBuffer buff_util::allocateHostVisibleBuffer(const CVulkanContext& context, CVulkanDescriptorAllocator& allocator, const VkDeviceSize size, const VkBufferUsageFlags usage, const std::string_view id,
                                                       const CVulkanDescriptorSetLayout& layout) {
         CVulkanBuffer buffer{context, size, usage, VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT};
         const auto& t = allocator.allocateDescriptorSets(std::string{id}, 1, layout).front();
@@ -199,7 +158,7 @@ namespace cvulkan::client::render::vk {
         return buffer;
     }
 
-    std::vector<CVulkanBuffer> buffutil::allocateHostVisibleBuffers(const CVulkanContext& context, CVulkanDescriptorAllocator& allocator, const VkDeviceSize size, const VkBufferUsageFlags usage, const uint32_t buffersCount,
+    std::vector<CVulkanBuffer> buff_util::allocateHostVisibleBuffers(const CVulkanContext& context, CVulkanDescriptorAllocator& allocator, const VkDeviceSize size, const VkBufferUsageFlags usage, const uint32_t buffersCount,
                                                                     const std::string_view id, const CVulkanDescriptorSetLayout& layout) {
         std::vector<CVulkanBuffer> buffers{};
         buffers.reserve(buffersCount);
@@ -213,7 +172,7 @@ namespace cvulkan::client::render::vk {
         return buffers;
     }
 
-    void buffutil::copyMatrixToBuffer(CVulkanBuffer& buffer, const glm::mat4& matrix, const uint32_t offset) {
+    void buff_util::copyMatrixToBuffer(CVulkanBuffer& buffer, const glm::mat4& matrix, const uint32_t offset) {
         buffer.mapMem();
         std::memcpy(static_cast<char *>(buffer.mappedMemory()) + offset, &matrix, sizeof(glm::mat4));
         buffer.unMapMem();

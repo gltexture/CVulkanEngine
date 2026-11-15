@@ -34,7 +34,7 @@ namespace cvulkan::client::render::scene::swapchain {
             fun_utils::packCRefs(*this->_descriptorSetLayout_texture),
             fun_utils::packCRefs(shaderV, shaderF),
             {},
-            vk::buffutil::emptyVertexStruct(), this->_context.surface().vkFormat(), false};
+            vk::buff_util::emptyVertexStruct(), this->_context.surface().vkFormat(), false};
 
         this->_swapchainPipeline = std::make_unique<vk::CVulkanPipeline>(this->_context, buildInfo);
     }
@@ -43,23 +43,25 @@ namespace cvulkan::client::render::scene::swapchain {
         logging::info("Destroying swapchain scene renderer");
     }
 
-    void CVulkanSwapchainRenderer::renderSwapchain(const vk::CVulkanCommandBuffer& commandBuffer, const vk::CVulkanAttachment2D& srcAttachment, const uint32_t imageIndex) const {
+    void CVulkanSwapchainRenderer::renderSwapchain(const vk::CVulkanCommandBuffer& commandBuffer, const vk::CVulkanAttachment2D& srcAttachment, const uint32_t imageIndex, const uint32_t graphicQueueFamilyIndex, const uint32_t presentationQueueFamilyIndex) const {
+        const bool differentQueueFamilies {graphicQueueFamilyIndex != presentationQueueFamilyIndex};
         vk::img_util::imageBarrier(commandBuffer.vkCommandBuffer(), this->_context.swapChain().imageViews().at(imageIndex).vkImage(),
         VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                VK_PIPELINE_STAGE_2_NONE, VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+        VK_PIPELINE_STAGE_2_NONE, VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
                 VK_ACCESS_2_NONE, VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,
+                differentQueueFamilies ? presentationQueueFamilyIndex : VK_QUEUE_FAMILY_IGNORED, differentQueueFamilies ? graphicQueueFamilyIndex : VK_QUEUE_FAMILY_IGNORED,
                 VK_IMAGE_ASPECT_COLOR_BIT);
 
         vk::img_util::imageBarrier(commandBuffer.vkCommandBuffer(), srcAttachment.image().vkImage(),
-        VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT,
-                VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_2_SHADER_READ_BIT,
-                VK_IMAGE_ASPECT_COLOR_BIT);
+            VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+        VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT,
+        VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_2_SHADER_READ_BIT,
+        VK_IMAGE_ASPECT_COLOR_BIT);
 
         vkCmdBeginRendering(commandBuffer.vkCommandBuffer(), &this->_renderingInfo.at(imageIndex));
         vkCmdBindPipeline(commandBuffer.vkCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, this->_swapchainPipeline->vkPipeline());
 
-        main::CVulkanSceneRenderer::setDefaultViewportAndScissor(commandBuffer, this->_context.swapChain().extent());
+        main::CVulkanSceneRenderer::setViewportAndScissor(commandBuffer, this->_context.swapChain().extent());
 
         std::vector<VkDescriptorSet> descriptorSets{};
         descriptorSets.reserve(1);
@@ -73,6 +75,7 @@ namespace cvulkan::client::render::scene::swapchain {
             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
             VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT,
             VK_ACCESS_2_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT, VK_PIPELINE_STAGE_2_NONE,
+            differentQueueFamilies ? graphicQueueFamilyIndex : VK_QUEUE_FAMILY_IGNORED, differentQueueFamilies ? presentationQueueFamilyIndex : VK_QUEUE_FAMILY_IGNORED,
             VK_IMAGE_ASPECT_COLOR_BIT);
     }
 

@@ -90,7 +90,7 @@ namespace cvulkan::client::render::vk {
 
         ~CVulkanImage2DView();
 
-        CLASS_NO_COPY_NO_ASSIGN_MOVE(CVulkanImage2DView);
+        CLASS_NO_COPY_NO_MOVEASSIGN(CVulkanImage2DView);
 
         CVulkanImage2DView(CVulkanImage2DView&& other) noexcept : _context{other._context}, _vkImage{other._vkImage}, _vkImageView{other._vkImageView} {
             other._vkImage = VK_NULL_HANDLE;
@@ -169,6 +169,20 @@ namespace cvulkan::client::render::vk {
     };
 
     namespace img_util {
+        void imageBarrier(
+            VkCommandBuffer commandBuffer,
+            VkImage image,
+            VkImageLayout oldLayout,
+            VkImageLayout newLayout,
+            VkPipelineStageFlags2 srcStageMask,
+            VkPipelineStageFlags2 dstStageMask,
+            VkAccessFlags2 srcAccessMask,
+            VkAccessFlags2 dstAccessMask,
+            uint32_t srcQueueFamilyIndex,
+            uint32_t dstQueueFamilyIndex,
+            VkImageAspectFlags aspectMask
+        );
+
         void imageBarrier(
             VkCommandBuffer commandBuffer,
             VkImage image,

@@ -10,6 +10,10 @@
 #include "client/render/vulkan_synchronization.h"
 
 namespace cvulkan::client::render::scene {
+    namespace imgui {
+        class CVulkanImGuiRenderer;
+    }
+
     namespace main {
         class CVulkanSceneRenderer;
     }
@@ -100,6 +104,9 @@ namespace cvulkan::client::render::loop {
             return *_swapchainSceneRenderer;
         }
 
+        [[nodiscard]] const scene::imgui::CVulkanImGuiRenderer& imguiSceneRenderer() const {
+            return *_imguiSceneRenderer;
+        }
 
         [[nodiscard]] bool shouldBeResized() const {
             return _shouldBeResized;
@@ -133,11 +140,14 @@ namespace cvulkan::client::render::loop {
         std::unique_ptr<scene::main::CVulkanSceneRenderer> _mainSceneRenderer;
         std::unique_ptr<scene::post::CVulkanPostFXRenderer> _postSceneRenderer;
         std::unique_ptr<scene::swapchain::CVulkanSwapchainRenderer> _swapchainSceneRenderer;
+        std::unique_ptr<scene::imgui::CVulkanImGuiRenderer> _imguiSceneRenderer;
 
         bool _shouldBeResized{false};
+        uint32_t _presentationQueueFamilyIndex {};
+        uint32_t _graphicsQueueFamilyIndex {};
     };
 
-    extern std::unique_ptr<CVulkanRenderLoop> _renderLoop;
+    extern std::unique_ptr<CVulkanRenderLoop> RenderLoop;
 
     void createRendering(vk::CVulkanContext& context);
 

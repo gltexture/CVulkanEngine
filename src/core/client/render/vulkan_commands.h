@@ -18,7 +18,7 @@ namespace cvulkan::client::render::vk {
 
         ~CVulkanCommandPool();
 
-        CLASS_NO_COPY_NO_ASSIGN_MOVE(CVulkanCommandPool)
+        CLASS_NO_COPY_NO_MOVEASSIGN(CVulkanCommandPool)
 
         CVulkanCommandPool(CVulkanCommandPool&& other) noexcept
             : _context{other._context}, _vkCommandPool{other._vkCommandPool}, _queueFamilyIndex{other._queueFamilyIndex}, _supportReset{other._supportReset} {
@@ -44,7 +44,7 @@ namespace cvulkan::client::render::vk {
 
         ~CVulkanCommandBuffer();
 
-        CLASS_NO_COPY_NO_ASSIGN_MOVE(CVulkanCommandBuffer)
+        CLASS_NO_COPY_NO_MOVEASSIGN(CVulkanCommandBuffer)
 
         CVulkanCommandBuffer(CVulkanCommandBuffer&& other) noexcept
             : _context{other._context}, _vkCommandBuffer{other._vkCommandBuffer}, _commandPool{other._commandPool}, _primary(other._primary), _oneTimeSubmit(other._oneTimeSubmit) {

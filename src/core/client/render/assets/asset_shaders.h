@@ -6,6 +6,7 @@
 #include <filesystem>
 
 #include "client/render/vulkan_shaders.h"
+#include "utility/exceptions.h"
 
 namespace cvulkan::io_utils {
     class CVulkanResourcePath;

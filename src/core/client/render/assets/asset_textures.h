@@ -25,6 +25,7 @@ namespace cvulkan::client::render::asset {
 
         CLASS_NO_COPY(CVulkanImageSrc);
 
+        bool _genMipMaps{true};
         bool _dataHandle{true};
         unsigned char* _data;
         size_t _dataSize;
@@ -34,7 +35,7 @@ namespace cvulkan::client::render::asset {
 
     class CVulkanTexture2D {
     public:
-        CVulkanTexture2D(const vk::CVulkanContext& context, const std::string& id, const CVulkanImageSrc& imageSrc, const VkFormat& format);
+        CVulkanTexture2D(const vk::CVulkanContext& context, std::string id, const CVulkanImageSrc& imageSrc, const VkFormat& format);
 
         ~CVulkanTexture2D();
 
@@ -92,10 +93,10 @@ namespace cvulkan::client::render::asset {
         std::unique_ptr<vk::CVulkanImage2D> _image;
         std::unique_ptr<vk::CVulkanImage2DView> _imageView;
         std::unique_ptr<vk::CVulkanBuffer> _stgBuffer;
+        bool _genMipMaps{true};
         bool _hasTransparency{false};
     };
-
-
+    
     namespace imageLoad {
         CVulkanImageSrc loadImage(const std::filesystem::path& imagePath);
     }

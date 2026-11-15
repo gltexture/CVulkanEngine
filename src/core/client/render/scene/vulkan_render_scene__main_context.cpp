@@ -23,9 +23,9 @@ namespace cvulkan::client::render::scene::main::context {
         this->_descFragmentStorageLayout = std::make_unique<vk::CVulkanDescriptorSetLayout>(this->_context, vk::CVulkanLayoutInfo {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 0, 1, VK_SHADER_STAGE_FRAGMENT_BIT});
         this->_descTextureLayout = std::make_unique<vk::CVulkanDescriptorSetLayout>(this->_context, vk::CVulkanLayoutInfo {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, renderConfig::MAX_TEXTURES_IN_CACHE, VK_SHADER_STAGE_FRAGMENT_BIT});
 
-        this->_bufferProjMatrix = std::make_unique<vk::CVulkanBuffer>(vk::buffutil::allocateHostVisibleBuffer(this->_context, descriptorAllocator, sizeof(glm::mat4), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, DESC_ID_PRJ, *this->_descVertexUniformLayout));
-        this->_bufferViewMatrices = std::make_unique<std::vector<vk::CVulkanBuffer>>(vk::buffutil::allocateHostVisibleBuffers(this->_context, descriptorAllocator, sizeof(glm::mat4), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, renderConfig::MAX_IMAGES_IN_FLIGHT, DESC_ID_VIEW, *this->_descVertexUniformLayout));
-        vk::buffutil::copyMatrixToBuffer(*this->_bufferProjMatrix, this->projection().mat4Projection(), 0);
+        this->_bufferProjMatrix = std::make_unique<vk::CVulkanBuffer>(vk::buff_util::allocateHostVisibleBuffer(this->_context, descriptorAllocator, sizeof(glm::mat4), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, DESC_ID_PRJ, *this->_descVertexUniformLayout));
+        this->_bufferViewMatrices = std::make_unique<std::vector<vk::CVulkanBuffer>>(vk::buff_util::allocateHostVisibleBuffers(this->_context, descriptorAllocator, sizeof(glm::mat4), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, renderConfig::MAX_FRAMES_IN_FLIGHT, DESC_ID_VIEW, *this->_descVertexUniformLayout));
+        vk::buff_util::copyMatrixToBuffer(*this->_bufferProjMatrix, this->projection().mat4Projection(), 0);
 
         constexpr vk::CVulkanSamplerInfo samplerInfo{
             ._addressMode = VK_SAMPLER_ADDRESS_MODE_REPEAT,
@@ -49,7 +49,7 @@ namespace cvulkan::client::render::scene::main::context {
             ._size = sizeof(uint32_t)
         };
 
-        const structs::CVulkanVertexStruct vertexStruct{this->_context};
+        const structs::CVulkanMeshVertexBufferStruct vertexStruct{this->_context};
         const vk::CVulkanPipelineBuildInfo buildInfo{
             fun_utils::packCRefs(*this->_descVertexUniformLayout, *this->_descVertexUniformLayout, *this->_descFragmentStorageLayout, *this->_descTextureLayout),
             fun_utils::packCRefs(shaderV, shaderF),
@@ -81,7 +81,7 @@ namespace cvulkan::client::render::scene::main::context {
         descriptorSets.push_back(descriptorAllocator.getDescriptorSet(DESC_ID_MAT, 0).vkDescriptorSet());
         descriptorSets.push_back(descriptorAllocator.getDescriptorSet(DESC_ID_TEXT, 0).vkDescriptorSet());
 
-        vk::buffutil::copyMatrixToBuffer(this->_bufferViewMatrices->at(currentFrame), this->_currentCamera->viewMatrix(), 0);
+        vk::buff_util::copyMatrixToBuffer(this->_bufferViewMatrices->at(currentFrame), this->_currentCamera->viewMatrix(), 0);
 
         vkCmdBindPipeline(commandBuffer.vkCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, this->_defaultRenderPipeline->vkPipeline());
         vkCmdBindDescriptorSets(commandBuffer.vkCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, this->_defaultRenderPipeline->vkPipelineLayout(), 0, static_cast<uint32_t>(descriptorSets.size()), descriptorSets.data(), 0, nullptr);
@@ -120,6 +120,6 @@ namespace cvulkan::client::render::scene::main::context {
     }
 
     void CVulkanSceneContext::onResize() {
-        vk::buffutil::copyMatrixToBuffer(*this->_bufferProjMatrix, this->projection().mat4Projection(), 0);
+        vk::buff_util::copyMatrixToBuffer(*this->_bufferProjMatrix, this->projection().mat4Projection(), 0);
     }
 }

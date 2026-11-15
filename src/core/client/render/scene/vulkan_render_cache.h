@@ -37,7 +37,7 @@ namespace cvulkan::client::render::cache {
 
         ~CVulkanModelsCache();
 
-        CLASS_NO_COPY_NO_ASSIGN_MOVE(CVulkanModelsCache)
+        CLASS_NO_COPY_NO_MOVEASSIGN(CVulkanModelsCache)
 
         void loadModels(const std::vector<asset::modelGen::CVulkanModelData>& models, const vk::CVulkanCommandPool& commandPool, const vk::CVulkanQueue& queue);
 
@@ -60,13 +60,17 @@ namespace cvulkan::client::render::cache {
 
         ~CVulkanTexturesCache();
 
-        CLASS_NO_COPY_NO_ASSIGN_MOVE(CVulkanTexturesCache)
+        CLASS_NO_COPY_NO_MOVEASSIGN(CVulkanTexturesCache)
 
         void transitTextures(const vk::CVulkanCommandPool& commandPool, const vk::CVulkanQueue& queue);
 
         const asset::CVulkanTexture2D& loadTexture(const std::string& id, const asset::CVulkanImageSrc& srcImage, const VkFormat& format);
 
-        const asset::CVulkanTexture2D& loadTexture(const std::string& id, const std::filesystem::path& texturePath, const VkFormat& format);
+        const asset::CVulkanTexture2D& loadTexture(const std::string& id, const std::filesystem::path& texturePath, const VkFormat& format, bool genMipMaps);
+
+        [[nodiscard]] const asset::CVulkanTexture2D& getTexture(const std::string& id) const {
+            return this->_indexedTexturesMap.getValue(id);
+        }
 
         [[nodiscard]] const collection::IndexedMap<std::string, asset::CVulkanTexture2D>& indexedTexturesMap() const {
             return _indexedTexturesMap;
@@ -88,7 +92,7 @@ namespace cvulkan::client::render::cache {
 
         ~CVulkanMaterialsCache();
 
-        CLASS_NO_COPY_NO_ASSIGN_MOVE(CVulkanMaterialsCache)
+        CLASS_NO_COPY_NO_MOVEASSIGN(CVulkanMaterialsCache)
 
         void loadMaterials(std::vector<asset::modelGen::CVulkanMaterialData>& materials, CVulkanTexturesCache& texturesCache, const vk::CVulkanCommandPool& commandPool, const vk::CVulkanQueue& queue);
 
@@ -117,7 +121,7 @@ namespace cvulkan::client::render::cache {
             : _context{context}, _modelCache{context}, _texturesCache{context}, _materialsCache{context} {
         }
 
-        CLASS_NO_COPY_NO_ASSIGN_MOVE(CVulkanCacheCollection)
+        CLASS_NO_COPY_NO_MOVEASSIGN(CVulkanCacheCollection)
 
         [[nodiscard]] CVulkanModelsCache& modelCache() {
             return _modelCache;

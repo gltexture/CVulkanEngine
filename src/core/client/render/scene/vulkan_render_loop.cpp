@@ -11,27 +11,31 @@
 #include "client/render/scene/vulkan_render_scene__post.h"
 #include "client/render/scene/vulkan_render_scene__swapchain.h"
 #include "client/render/scene/vulkan_render_scene__main.h"
+#include "client/render/scene/vulkan_render_scene__imgui.h"
 #include "utility/exceptions.h"
 
 namespace cvulkan::client::render::loop {
+
     CVulkanRenderLoop::CVulkanRenderLoop(vk::CVulkanContext& context) : _context{context}, _caches{context}, _descriptorAllocator{context} {
-        const uint32_t graphicsQueueFamilyIndex = vk::util::findQueueFamilyIndex(context, vk::CVulkanQueueFamilyBitMasks::GRAPHICS);
-        const uint32_t presentationQueueFamilyIndex = vk::util::findQueueFamilyIndex(context, vk::CVulkanQueueFamilyBitMasks::PRESENT);
-        if (graphicsQueueFamilyIndex == UINT32_MAX) {
+        this->_graphicsQueueFamilyIndex = vk::util::findQueueFamilyIndex(context, vk::CVulkanQueueFamilyBitMasks::GRAPHICS);
+        this->_presentationQueueFamilyIndex = vk::util::findQueueFamilyIndex(context, vk::CVulkanQueueFamilyBitMasks::PRESENT);
+
+        if (this->_graphicsQueueFamilyIndex == UINT32_MAX) {
             throw exc::CVulkanException("Graphics queue family index not found in registry");
         }
-        if (presentationQueueFamilyIndex == UINT32_MAX) {
+        if (this->_presentationQueueFamilyIndex == UINT32_MAX) {
             throw exc::CVulkanException("Presentation queue family index not found in registry");
         }
+
         {
-            this->_commandPools.reserve(renderConfig::MAX_IMAGES_IN_FLIGHT);
-            this->_commandBuffers.reserve(renderConfig::MAX_IMAGES_IN_FLIGHT);
-            this->_fences.reserve(renderConfig::MAX_IMAGES_IN_FLIGHT);
-            this->_presentationCompleteSemaphores.reserve(renderConfig::MAX_IMAGES_IN_FLIGHT);
+            this->_commandPools.reserve(renderConfig::MAX_FRAMES_IN_FLIGHT);
+            this->_commandBuffers.reserve(renderConfig::MAX_FRAMES_IN_FLIGHT);
+            this->_fences.reserve(renderConfig::MAX_FRAMES_IN_FLIGHT);
+            this->_presentationCompleteSemaphores.reserve(renderConfig::MAX_FRAMES_IN_FLIGHT);
             this->_renderCompleteSemaphores.reserve(this->_context.swapChain().numImages());
 
-            for (uint32_t i = 0; i < renderConfig::MAX_IMAGES_IN_FLIGHT; ++i) {
-                this->_commandPools.emplace_back(this->_context, graphicsQueueFamilyIndex, false);
+            for (uint32_t i = 0; i < renderConfig::MAX_FRAMES_IN_FLIGHT; ++i) {
+                this->_commandPools.emplace_back(this->_context, this->_graphicsQueueFamilyIndex, false);
                 this->_commandBuffers.emplace_back(this->_context, this->_commandPools.back(), true, true);
                 this->_fences.emplace_back(this->_context, true);
                 this->_presentationCompleteSemaphores.emplace_back(this->_context);
@@ -43,14 +47,15 @@ namespace cvulkan::client::render::loop {
         }
 
         {
-            this->_graphicsQueue = std::make_unique<vk::CVulkanQueue>(this->_context, graphicsQueueFamilyIndex, 0);
-            this->_presentationQueue = std::make_unique<vk::CVulkanQueue>(this->_context, presentationQueueFamilyIndex, 0);
+            this->_graphicsQueue = std::make_unique<vk::CVulkanQueue>(this->_context, this->_graphicsQueueFamilyIndex, 0);
+            this->_presentationQueue = std::make_unique<vk::CVulkanQueue>(this->_context, this->_presentationQueueFamilyIndex, 0);
         }
 
         {
             this->_mainSceneRenderer = std::make_unique<scene::main::CVulkanSceneRenderer>(context, this->_descriptorAllocator, this->_caches);
             this->_postSceneRenderer = std::make_unique<scene::post::CVulkanPostFXRenderer>(context, this->_descriptorAllocator, this->_mainSceneRenderer->colorAttachment());
             this->_swapchainSceneRenderer = std::make_unique<scene::swapchain::CVulkanSwapchainRenderer>(context, this->_descriptorAllocator, this->_postSceneRenderer->colorAttachment());
+            this->_imguiSceneRenderer = std::make_unique<scene::imgui::CVulkanImGuiRenderer>(context, this->_descriptorAllocator, this->_postSceneRenderer->colorAttachment(), this->_caches);
         }
     }
 
@@ -82,14 +87,15 @@ namespace cvulkan::client::render::loop {
             }
             this->_mainSceneRenderer->renderScene(commandBuffer, this->_currentFrame);
             this->_postSceneRenderer->renderPostFX(commandBuffer, this->_mainSceneRenderer->colorAttachment());
-            this->_swapchainSceneRenderer->renderSwapchain(commandBuffer, this->_postSceneRenderer->colorAttachment(), imageIndex);
+            this->_imguiSceneRenderer->renderImGui(commandBuffer, this->_postSceneRenderer->colorAttachment(), this->_currentFrame);
+            this->_swapchainSceneRenderer->renderSwapchain(commandBuffer, this->_postSceneRenderer->colorAttachment(), imageIndex, this->_graphicsQueueFamilyIndex, this->_presentationQueueFamilyIndex);
         }
 
         recordingStop(commandBuffer);
         this->submit(commandBuffer, imageIndex);
 
         this->_shouldBeResized = this->_context.swapChain().presentImage(*this->_presentationQueue, this->_renderCompleteSemaphores[imageIndex], imageIndex);
-        this->_currentFrame = (this->_currentFrame + 1) % renderConfig::MAX_IMAGES_IN_FLIGHT;
+        this->_currentFrame = (this->_currentFrame + 1) % renderConfig::MAX_FRAMES_IN_FLIGHT;
     }
 
     void CVulkanRenderLoop::resize() {
@@ -102,7 +108,7 @@ namespace cvulkan::client::render::loop {
         this->_renderCompleteSemaphores.clear();
         this->_presentationCompleteSemaphores.clear();
 
-        for (uint32_t i = 0; i < renderConfig::MAX_IMAGES_IN_FLIGHT; ++i) {
+        for (uint32_t i = 0; i < renderConfig::MAX_FRAMES_IN_FLIGHT; ++i) {
             this->_presentationCompleteSemaphores.emplace_back(this->_context);
         }
 
@@ -112,6 +118,7 @@ namespace cvulkan::client::render::loop {
 
         this->_mainSceneRenderer->onResize();
         this->_postSceneRenderer->onResize(this->_mainSceneRenderer->colorAttachment());
+        this->_imguiSceneRenderer->onResize(this->_postSceneRenderer->colorAttachment());
         this->_swapchainSceneRenderer->onResize(this->_postSceneRenderer->colorAttachment());
         
         this->_shouldBeResized = false;
@@ -153,21 +160,21 @@ namespace cvulkan::client::render::loop {
         this->_graphicsQueue->submitQueue(v_commandSubmitInfos, &v_waitSemaphores, &v_signalSemaphores, &fence);
     }
 
-    std::unique_ptr<CVulkanRenderLoop> _renderLoop;
+    std::unique_ptr<CVulkanRenderLoop> RenderLoop;
 
     void createRendering(vk::CVulkanContext& context) {
-        _renderLoop = std::make_unique<CVulkanRenderLoop> (context);
+        RenderLoop = std::make_unique<CVulkanRenderLoop> (context);
     }
 
     void runRendering() {
-        if (_renderLoop != nullptr) {
-            _renderLoop->runRenderLoop();
+        if (RenderLoop != nullptr) {
+            RenderLoop->runRenderLoop();
         }
     }
 
     void destroyRendering() {
-        if (_renderLoop != nullptr) {
-            _renderLoop.reset();
+        if (RenderLoop != nullptr) {
+            RenderLoop.reset();
         }
     }
 }

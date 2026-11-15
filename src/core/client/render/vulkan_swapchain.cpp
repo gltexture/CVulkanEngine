@@ -9,6 +9,7 @@
 #include "vulkan_images.h"
 #include "vulkan_render_core.h"
 #include "vulkan_synchronization.h"
+#include "utility/exceptions.h"
 
 namespace cvulkan::client::render::vk {
     CVulkanSwapChain::CVulkanSwapChain(const CVulkanContext& context, const VkSurfaceKHR& vkSurface, const VkSurfaceCapabilitiesKHR& vkSurfaceCapabilities, const VkFormat& vkFormat, const VkColorSpaceKHR& vkColorSpace) : _context{context} {
@@ -29,7 +30,7 @@ namespace cvulkan::client::render::vk {
 
         {
             if (vkSurfaceCapabilities.currentExtent.width == UINT32_MAX) {
-                const auto windowSize = this->_context.glfwWindow().size();
+                const auto& windowSize = this->_context.glfwWindow().size();
                 this->_swapChainExtent.width = std::clamp(windowSize.x, vkSurfaceCapabilities.minImageExtent.width, vkSurfaceCapabilities.maxImageExtent.width);
                 this->_swapChainExtent.height = std::clamp(windowSize.y, vkSurfaceCapabilities.minImageExtent.height, vkSurfaceCapabilities.maxImageExtent.height);
             } else {
@@ -56,12 +57,12 @@ namespace cvulkan::client::render::vk {
             swapChainCreateInfo.presentMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
         }
 
-        vk::util::vkCheck(vkCreateSwapchainKHR(this->_context.device().vkDevice(), &swapChainCreateInfo, nullptr, &this->_vkSwapChain));
+        util::vkCheck(vkCreateSwapchainKHR(this->_context.device().vkDevice(), &swapChainCreateInfo, nullptr, &this->_vkSwapChain));
 
         {
-            vk::util::vkCheck(vkGetSwapchainImagesKHR(this->_context.device().vkDevice(), this->_vkSwapChain, &this->_numImages, nullptr), "Failed to create swapChain Images");
+            util::vkCheck(vkGetSwapchainImagesKHR(this->_context.device().vkDevice(), this->_vkSwapChain, &this->_numImages, nullptr), "Failed to create swapChain Images");
             std::vector<VkImage> images(this->numImages());
-            vk::util::vkCheck(vkGetSwapchainImagesKHR(this->_context.device().vkDevice(), this->_vkSwapChain, &this->_numImages, images.data()), "Failed to create swapChain Images");
+            util::vkCheck(vkGetSwapchainImagesKHR(this->_context.device().vkDevice(), this->_vkSwapChain, &this->_numImages, images.data()), "Failed to create swapChain Images");
 
             const CVulkanImage2DViewData image_view_data{
                 ._aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
@@ -85,8 +86,8 @@ namespace cvulkan::client::render::vk {
     }
 
     CVulkanSurface::CVulkanSurface(const CVulkanContext& context) : _context{context} {
-        vk::util::vkCheck(glfwCreateWindowSurface(context.instance().vkInstance(), this->_context.glfwWindow().glfwWindowDescriptor(), nullptr, &this->_vkSurface));
-        vk::util::vkCheck(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(context.physicalDevice().vkPhysicalDevice(), this->_vkSurface, &this->_vkSurfaceCapabilities));
+        util::vkCheck(glfwCreateWindowSurface(context.instance().vkInstance(), this->_context.glfwWindow().glfwWindowDescriptor(), nullptr, &this->_vkSurface));
+        util::vkCheck(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(context.physicalDevice().vkPhysicalDevice(), this->_vkSurface, &this->_vkSurfaceCapabilities));
         calcSurfaceFormat(this->_context.physicalDevice(), this->_vkSurface, this->_vkFormat, this->_vkColorSpace);
         logging::debug("Created Vulkan surface");
     }
@@ -101,7 +102,7 @@ namespace cvulkan::client::render::vk {
 
     void CVulkanSurface::calcSurfaceFormat(const CVulkanPhysicalDevice& physical_device_data, const VkSurfaceKHR& vkSurface, VkFormat& vkFormat, VkColorSpaceKHR& vkColorSpace) {
         uint32_t surfaceFormatCount = 0;
-        vk::util::vkCheck(vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device_data.vkPhysicalDevice(), vkSurface, &surfaceFormatCount, nullptr));
+        util::vkCheck(vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device_data.vkPhysicalDevice(), vkSurface, &surfaceFormatCount, nullptr));
         if (surfaceFormatCount == 0) {
             throw exc::CVulkanException("Failed to query surface format count");
         }

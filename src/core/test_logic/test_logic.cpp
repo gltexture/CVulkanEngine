@@ -4,13 +4,16 @@
 
 #include "test_logic.h"
 
+#include <numbers>
+
+#include "imgui.h"
 #include "client/control/client_input.h"
 #include "client/render/scene/vulkan_render_loop.h"
 #include "client/render/scene/vulkan_render_scene__main.h"
 #include "client/render/scene/vulkan_scene_objects.h"
 #include "client/render/scene/camera/view_camera.h"
+#include "client/render/scene/vulkan_render_scene__imgui.h"
 #include "utility/io_utils.h"
-
 
 namespace cvulkan::test_logic {
     constexpr static float MOUSE_SENSITIVITY = 0.5f;
@@ -30,8 +33,8 @@ namespace cvulkan::test_logic {
     }
 
     void updateInput(const double deltaTime) {
-        const auto& input = *client::input::_clientInput;
-        const auto& scene = client::render::loop::_renderLoop->mainSceneRenderer().sceneContext();
+        const auto& input = *client::input::ClientInput;
+        const auto& scene = client::render::loop::RenderLoop->mainSceneRenderer().sceneContext();
 
         const float move = static_cast<float>(deltaTime) * MOVEMENT_SPEED;
         auto* camera = scene.currentCamera();
@@ -40,36 +43,51 @@ namespace cvulkan::test_logic {
             return;
         }
 
-        if (input.isKeyDown(GLFW_KEY_W)) {
+        if (input.keyboard().isDown(GLFW_KEY_W)) {
             camera->moveForward(move);
-        } else if (input.isKeyDown(GLFW_KEY_S)) {
+        } else if (input.keyboard().isDown(GLFW_KEY_S)) {
             camera->moveBackwards(move);
         }
 
-        if (input.isKeyDown(GLFW_KEY_A)) {
+        if (input.keyboard().isDown(GLFW_KEY_A)) {
             camera->moveLeft(move);
-        } else if (input.isKeyDown(GLFW_KEY_D)) {
+        } else if (input.keyboard().isDown(GLFW_KEY_D)) {
             camera->moveRight(move);
         }
 
-        if (input.isKeyDown(GLFW_KEY_SPACE)) {
+        if (input.keyboard().isDown(GLFW_KEY_SPACE)) {
             camera->moveUp(move);
-        } else if (input.isKeyDown(GLFW_KEY_LEFT_SHIFT)) {
+        } else if (input.keyboard().isDown(GLFW_KEY_LEFT_SHIFT)) {
             camera->moveDown(move);
         }
 
         constexpr auto rotation = static_cast<float>(std::numbers::pi / 180.0 * MOUSE_SENSITIVITY);
 
-        if (input.isKeyDown(GLFW_KEY_UP)) {
+        if (input.keyboard().isDown(GLFW_KEY_UP)) {
             camera->addRotation(-rotation, 0.0f);
-        } else if (input.isKeyDown(GLFW_KEY_DOWN)) {
+        } else if (input.keyboard().isDown(GLFW_KEY_DOWN)) {
             camera->addRotation(rotation, 0.0f);
         }
 
-        if (input.isKeyDown(GLFW_KEY_LEFT)) {
+        if (input.keyboard().isDown(GLFW_KEY_LEFT)) {
             camera->addRotation(0.0f, -rotation);
-        } else if (input.isKeyDown(GLFW_KEY_RIGHT)) {
+        } else if (input.keyboard().isDown(GLFW_KEY_RIGHT)) {
             camera->addRotation(0.0f, rotation);
         }
+    }
+
+    std::vector<client::render::scene::imgui::CVulkanImGuiTextureData> iniImGui() {
+        return {};
+    }
+
+    void renderImGuiWindow() {
+        ImGuiIO& io = ImGui::GetIO();
+
+        io.AddMousePosEvent(client::input::ClientInput->mouse().currentPosition().x, client::input::ClientInput->mouse().currentPosition().y);
+        io.AddMouseButtonEvent(0, client::input::ClientInput->mouse().isDown(0));
+        io.AddMouseButtonEvent(1, client::input::ClientInput->mouse().isDown(1));
+        io.AddMouseButtonEvent(2, client::input::ClientInput->mouse().isDown(2));
+
+        ImGui::ShowDemoWindow();
     }
 }

@@ -21,7 +21,7 @@ namespace cvulkan::client::render::shader {
         CVulkanShaderModule(const vk::CVulkanContext& context, const io_utils::CVulkanResourcePath& shaderSpvFileName, VkShaderStageFlagBits vkStage, const VkSpecializationInfo* vkSpecializationInfo);
         ~CVulkanShaderModule();
 
-        CLASS_NO_COPY_NO_ASSIGN_MOVE(CVulkanShaderModule);
+        CLASS_NO_COPY_NO_MOVEASSIGN(CVulkanShaderModule);
 
         CVulkanShaderModule(CVulkanShaderModule&&) noexcept = default;
 

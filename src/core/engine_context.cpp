@@ -5,30 +5,19 @@
 #include "utility/sys_utils.h"
 
 namespace cvulkan {
-    EngineContext::EngineContext(EngineData&& engineData) : m_engineData(std::move(engineData)) {
-    }
-
-    EngineContext::~EngineContext() {
-        globalCleanUp();
-    };
-
-    void EngineContext::start() const {
+    CVulkanEngineRunContext::CVulkanEngineRunContext(EngineData&& engineData) : _engineData(std::move(engineData)) {
         {
             sys_utils::utilityInitialize();
         }
         logging::info("Initializing application");
-        printData(this->m_engineData);
-        client::initializeClient(this->m_engineData);
+        logging::info("Engine: {}", _engineData._appTitle);
+        client::initializeClient(this->_engineData);
         logging::info("Application initialized");
         client::loop();
     }
 
-    void EngineContext::globalCleanUp() {
+    CVulkanEngineRunContext::~CVulkanEngineRunContext() {
         logging::info("Shutting down application");
         client::cleanUp();
-    }
-
-    void EngineContext::printData(const EngineData& engineData) {
-        logging::info("Engine: {}", engineData.m_appTitle);
-    }
+    };
 }

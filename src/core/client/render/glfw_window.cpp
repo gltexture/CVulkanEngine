@@ -3,9 +3,10 @@
 #include <stdexcept>
 #include "GLFW/glfw3.h"
 #include "engine_context.h"
+#include "utility/exceptions.h"
 
 namespace cvulkan::client::window {
-    std::unique_ptr<CVulkanWindow> glfwWindow;
+    std::unique_ptr<CVulkanWindow> GlfwWindow;
 
     CVulkanWindow::CVulkanWindow(const EngineData& engineData) {
         if (!glfwInit()) {
@@ -24,7 +25,7 @@ namespace cvulkan::client::window {
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         glfwWindowHint(GLFW_MAXIMIZED, GLFW_FALSE);
 
-        this->_glfwWindowDescriptor = glfwCreateWindow(engineData.m_default_windowSize.x, engineData.m_default_windowSize.y, engineData.m_appTitle.c_str(), nullptr, nullptr);
+        this->_glfwWindowDescriptor = glfwCreateWindow(engineData._defaultWinSize.x, engineData._defaultWinSize.y, engineData._appTitle.c_str(), nullptr, nullptr);
         if (this->_glfwWindowDescriptor == nullptr) {
             throw exc::CVulkanException("Failed to create GLFW window");
         }
@@ -47,12 +48,12 @@ namespace cvulkan::client::window {
     }
 
     void createWindow(const EngineData& engineData) {
-        glfwWindow = std::make_unique < CVulkanWindow > (engineData);
+        GlfwWindow = std::make_unique < CVulkanWindow > (engineData);
     }
 
     void destroyWindow() {
-        if (glfwWindow != nullptr) {
-            glfwWindow.reset();
+        if (GlfwWindow != nullptr) {
+            GlfwWindow.reset();
         }
     }
 }

@@ -10,12 +10,10 @@
 #include "vulkan_descriptors.h"
 #include "vulkan_pipeline.h"
 #include "vulkan_swapchain.h"
-#include "../../utility/logger.inl"
+#include "utility/logger.inl"
+#include "utility/exceptions.h"
 
 namespace cvulkan::client::render::vk {
-    // TODO: recordTextureTransition, mipmap disabling
-    // TODO: render loop queue family shared mode
-
     namespace memalloc {
         class CVulkan_VkMemoryAllocator;
     }
@@ -296,7 +294,7 @@ namespace cvulkan::client::render::vk {
         return "VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME";
     }
 
-    extern std::unique_ptr<CVulkanContext> vulkanContext;
+    extern std::unique_ptr<CVulkanContext> VulkanContext;
 
     std::unordered_set<std::string> availableInstanceExtensions();
 

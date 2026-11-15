@@ -63,7 +63,7 @@ namespace cvulkan::client::render::scene {
         );
 
         vkCmdBeginRendering(commandBuffer.vkCommandBuffer(), &this->_vkRenderingInfo);
-        setDefaultViewportAndScissor(commandBuffer, this->_colorAttachment->image().extent2D());
+        setViewportAndScissor(commandBuffer, this->_colorAttachment->image().extent2D());
         this->_sceneContext.renderContext(commandBuffer, this->_descriptorAllocator, this->_entitiesCollection, this->_caches, currentFrame);
         vkCmdEndRendering(commandBuffer.vkCommandBuffer());
     }

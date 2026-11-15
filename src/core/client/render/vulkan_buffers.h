@@ -22,7 +22,7 @@ namespace cvulkan::client::render::vk {
 
         ~CVulkanBuffer();
 
-        CLASS_NO_COPY_NO_ASSIGN_MOVE(CVulkanBuffer);
+        CLASS_NO_COPY_NO_MOVEASSIGN(CVulkanBuffer);
 
         CVulkanBuffer(CVulkanBuffer&& other) noexcept
                 : _context{other._context}, _vkBuffer{other._vkBuffer}, _vkRequestedSize{other._vkRequestedSize}, _allocation{other._allocation}, _mappedMemory{other._mappedMemory} {
@@ -70,7 +70,7 @@ namespace cvulkan::client::render::vk {
             _buffer.unMapMem();
         }
 
-        CLASS_NO_COPY_NO_ASSIGN_MOVE(CVulkanBufferMapped)
+        CLASS_NO_COPY_NO_MOVEASSIGN(CVulkanBufferMapped)
 
         [[nodiscard]] void* data() const {
             return _data;
@@ -92,7 +92,7 @@ namespace cvulkan::client::render::vk {
 
     CVulkanTransferBufferData createIndicesBuffers(const CVulkanContext& context, const asset::modelGen::CVulkanMeshData& rawMeshData, const std::filesystem::path& idxPath);
 
-    namespace buffutil {
+    namespace buff_util {
         CVulkanBuffer allocateHostVisibleBuffer(const CVulkanContext& context, CVulkanDescriptorAllocator& allocator, VkDeviceSize size, VkBufferUsageFlags usage, std::string_view id, const CVulkanDescriptorSetLayout& layout);
 
         std::vector<CVulkanBuffer> allocateHostVisibleBuffers(const CVulkanContext& context, CVulkanDescriptorAllocator& allocator, VkDeviceSize size, VkBufferUsageFlags usage, uint32_t buffersCount, std::string_view id,

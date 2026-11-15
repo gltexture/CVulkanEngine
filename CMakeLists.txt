@@ -4,7 +4,6 @@ project(CVulkanEngine)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_BUILD_PARALLEL_LEVEL 8)
 
 include(FetchContent)
 
@@ -26,7 +25,13 @@ FetchContent_Declare(
         GIT_TAG v1.17.0
 )
 
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(ASSIMP_WARNINGS_AS_ERRORS OFF CACHE BOOL "" FORCE)
+set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(ASSIMP_BUILD_ASSIMP_TOOLS OFF CACHE BOOL "" FORCE)
+set(ASSIMP_INSTALL OFF CACHE BOOL "" FORCE)
 set(SHADERC_SKIP_TESTS ON CACHE BOOL "" FORCE)
 set(SHADERC_SKIP_EXAMPLES ON CACHE BOOL "" FORCE)
 
@@ -74,6 +79,12 @@ FetchContent_Declare(
         GIT_TAG v1.93.0-docking
 )
 
+FetchContent_Declare(
+        CrashCatch
+        GIT_REPOSITORY https://github.com/keithpotz/CrashCatch
+        GIT_TAG v1.6.0
+)
+
 FetchContent_MakeAvailable(
         spdlog
         SPIRV-Headers
@@ -86,6 +97,7 @@ FetchContent_MakeAvailable(
         json
         vma
         imgui
+        CrashCatch
 )
 
 add_library(imgui STATIC
@@ -160,27 +172,34 @@ add_executable(CVulkanEngine
         src/core/client/render/scene/vulkan_render_scene__imgui.h
         src/core/utility/exceptions.cpp
         src/core/utility/exceptions.h
+        src/core/client/control/client_input__handling.cpp
+        src/core/utility/DEBUG.tpp
+        src/core/utility/DEBUG.h
 )
 
-add_link_options("-fuse-ld=lld")
+target_compile_features(CVulkanEngine PRIVATE cxx_std_23)
 
-target_compile_definitions(CVulkanEngine PRIVATE
-        $<$<CONFIG:RelWithDebInfo>:CVULKAN_DEV_MODE>
+target_compile_options(CVulkanEngine PRIVATE
+        $<$<CONFIG:Release>:-O3>
+        $<$<CONFIG:Release>:-g>
+        $<$<CONFIG:RelWithDebInfo>:-g>
+        $<$<CONFIG:Debug>:-g>
+)
+
+target_link_options(CVulkanEngine PRIVATE
+        $<$<CONFIG:Debug>:-Wl,--pdb=>
+        $<$<CONFIG:RelWithDebInfo>:-Wl,--pdb=>
+        $<$<CONFIG:Release>:-Wl,--pdb=>
 )
 
 target_compile_definitions(CVulkanEngine PRIVATE
-        $<$<CONFIG:Release>:CVULKAN_DEV_MODE>
-        $<$<CONFIG:Release>:CVULKAN_DEBUG_MODE>
+        GLM_FORCE_DEPTH_ZERO_TO_ONE
 
         $<$<CONFIG:Debug>:CVULKAN_DEV_MODE>
         $<$<CONFIG:Debug>:CVULKAN_DEBUG_MODE>
 
         $<$<CONFIG:RelWithDebInfo>:CVULKAN_DEV_MODE>
         $<$<CONFIG:RelWithDebInfo>:CVULKAN_DEBUG_MODE>
-)
-
-target_compile_definitions(CVulkanEngine PRIVATE
-        GLM_FORCE_DEPTH_ZERO_TO_ONE
 )
 
 target_precompile_headers(CVulkanEngine PRIVATE
@@ -195,6 +214,8 @@ target_precompile_headers(CVulkanEngine PRIVATE
         <shaderc/shaderc.h>
 )
 
+target_link_libraries(CVulkanEngine PRIVATE stdc++exp)
+
 target_link_libraries(
         CVulkanEngine
         PRIVATE
@@ -207,6 +228,7 @@ target_link_libraries(
         nlohmann_json::nlohmann_json
         GPUOpen::VulkanMemoryAllocator
         imgui
+        CrashCatch
 )
 
 target_include_directories(CVulkanEngine
