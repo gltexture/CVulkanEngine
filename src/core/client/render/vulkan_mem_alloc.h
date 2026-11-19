@@ -5,7 +5,7 @@
 #pragma once
 #include <vk_mem_alloc.h>
 
-#include "utility/sys_utils.h"
+#include "utility/system.h"
 
 namespace cvulkan::client::render::vk {
     class CVulkanInstance;

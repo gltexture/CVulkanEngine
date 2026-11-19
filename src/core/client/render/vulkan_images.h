@@ -5,7 +5,7 @@
 #pragma once
 #include <vk_mem_alloc.h>
 
-#include "utility/sys_utils.h"
+#include "utility/system.h"
 
 namespace cvulkan::client::render::vk {
     static constexpr uint32_t MAX_ANISOTROPY = 16;
@@ -47,7 +47,7 @@ namespace cvulkan::client::render::vk {
         CLASS_NO_COPY(CVulkanImage2D)
 
         CVulkanImage2D(CVulkanImage2D&& other) noexcept
-            : _context(other._context), _vkImage(other._vkImage), _format(other._format), _mipLevels(other._mipLevels), _allocation(other._allocation), _extent{other._extent} {
+            : _context(other._context), _vkImage(other._vkImage), _format(other._format), _mipLevels(other._mipLevels), _allocation(other._allocation), _vkExtent{other._vkExtent} {
             other._vkImage = VK_NULL_HANDLE;
             other._allocation = VK_NULL_HANDLE;
         }
@@ -64,14 +64,14 @@ namespace cvulkan::client::render::vk {
             return _mipLevels;
         }
 
-        [[nodiscard]] VkExtent3D extent() const {
-            return _extent;
+        [[nodiscard]] VkExtent3D vkExtent3D() const {
+            return _vkExtent;
         }
 
-        [[nodiscard]] VkExtent2D extent2D() const {
+        [[nodiscard]] VkExtent2D vkExtent2D() const {
             return {
-                this->_extent.width,
-                this->_extent.height
+                this->_vkExtent.width,
+                this->_vkExtent.height
             };
         }
 
@@ -81,7 +81,7 @@ namespace cvulkan::client::render::vk {
         VkFormat _format{};
         uint32_t _mipLevels{};
         VmaAllocation _allocation{};
-        VkExtent3D _extent{};
+        VkExtent3D _vkExtent{};
     };
 
     class CVulkanImage2DView {
@@ -138,7 +138,7 @@ namespace cvulkan::client::render::vk {
             return _depthAttachment;
         }
 
-        static CVulkanAttachment2D createSimpleAttachment(const CVulkanContext& context, const VkExtent3D vkExtent, VkFormat vkFormat, VkImageUsageFlags vkUsage);
+        static std::unique_ptr<CVulkanAttachment2D> createSimpleAttachment(const CVulkanContext& context, VkExtent3D vkExtent, VkFormat vkFormat, VkImageUsageFlags vkUsage);
 
     private:
         const CVulkanContext& _context;

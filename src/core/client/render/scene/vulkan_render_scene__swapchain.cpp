@@ -4,15 +4,15 @@
 
 #include "vulkan_render_scene__swapchain.h"
 
-#include "vulkan_render_scene__main.h"
+#include "vulkan_render_scene__deferred.h"
 #include "client/render/vulkan_buffers.h"
 #include "client/render/vulkan_commands.h"
 #include "client/render/vulkan_images.h"
 #include "client/render/vulkan_pipeline.h"
 #include "client/render/vulkan_render_core.h"
 #include "client/render/assets/asset_shaders.h"
-#include "utility/fun_utils.h"
-#include "utility/io_utils.h"
+#include "utility/functionality.h"
+#include "utility/io.h"
 
 namespace cvulkan::client::render::scene::swapchain {
     CVulkanSwapchainRenderer::CVulkanSwapchainRenderer(const vk::CVulkanContext& context, vk::CVulkanDescriptorAllocator& descriptorAllocator, const vk::CVulkanAttachment2D& srcAttachment)
@@ -27,20 +27,20 @@ namespace cvulkan::client::render::scene::swapchain {
         const vk::CVulkanDescriptorSet& descriptorSet = this->_descriptorAllocator.allocateDescriptorSets(DESC_ID_ATT, 1, *this->_descriptorSetLayout_texture).at(0);
         descriptorSet.setImage(srcAttachment.view(), *this->_textureSampler, 0);
 
-        const shader::CVulkanShaderModule shaderV = asset::shaderLoad::compileAndLoadShader(this->_context, io_utils::CVulkanResourcePath{"swapchain/v.vert"}, VK_SHADER_STAGE_VERTEX_BIT, nullptr);
-        const shader::CVulkanShaderModule shaderF = asset::shaderLoad::compileAndLoadShader(this->_context, io_utils::CVulkanResourcePath{"swapchain/f.frag"}, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr);
+        const shader::CVulkanShaderModule shaderV = asset::shaderLoad::compileAndLoadShader(this->_context, io::CVulkanResourcePath{"swapchain/v.vert"}, VK_SHADER_STAGE_VERTEX_BIT, nullptr);
+        const shader::CVulkanShaderModule shaderF = asset::shaderLoad::compileAndLoadShader(this->_context, io::CVulkanResourcePath{"swapchain/f.frag"}, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr);
 
         const vk::CVulkanPipelineBuildInfo buildInfo{
-            fun_utils::packCRefs(*this->_descriptorSetLayout_texture),
-            fun_utils::packCRefs(shaderV, shaderF),
+            fun::packCRefs(*this->_descriptorSetLayout_texture),
+            fun::packCRefs(shaderV, shaderF),
             {},
-            vk::buff_util::emptyVertexStruct(), this->_context.surface().vkFormat(), false};
+            vk::buff_util::emptyVertexStruct(), {this->_context.surface().vkFormat()}, false};
 
         this->_swapchainPipeline = std::make_unique<vk::CVulkanPipeline>(this->_context, buildInfo);
     }
 
     CVulkanSwapchainRenderer::~CVulkanSwapchainRenderer() {
-        logging::info("Destroying swapchain scene renderer");
+        log::info("Destroying swapchain scene_geometry renderer");
     }
 
     void CVulkanSwapchainRenderer::renderSwapchain(const vk::CVulkanCommandBuffer& commandBuffer, const vk::CVulkanAttachment2D& srcAttachment, const uint32_t imageIndex, const uint32_t graphicQueueFamilyIndex, const uint32_t presentationQueueFamilyIndex) const {
@@ -58,10 +58,10 @@ namespace cvulkan::client::render::scene::swapchain {
         VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_2_SHADER_READ_BIT,
         VK_IMAGE_ASPECT_COLOR_BIT);
 
-        vkCmdBeginRendering(commandBuffer.vkCommandBuffer(), &this->_renderingInfo.at(imageIndex));
+        vkCmdBeginRendering(commandBuffer.vkCommandBuffer(), &this->_vkRenderingInfoArray.at(imageIndex));
         vkCmdBindPipeline(commandBuffer.vkCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, this->_swapchainPipeline->vkPipeline());
 
-        main::CVulkanSceneRenderer::setViewportAndScissor(commandBuffer, this->_context.swapChain().extent());
+        deferred::CVulkanSceneRenderer::setViewportAndScissor(commandBuffer, this->_context.swapChain().vkExtent2D());
 
         std::vector<VkDescriptorSet> descriptorSets{};
         descriptorSets.reserve(1);
@@ -86,8 +86,8 @@ namespace cvulkan::client::render::scene::swapchain {
     }
 
     void CVulkanSwapchainRenderer::createRenderingData() {
-        for (uint32_t i = 0; i < this->_colorAttachmentsInfo.size(); i++) {
-            this->_colorAttachmentsInfo[i] = {
+        for (uint32_t i = 0; i < this->_vkColorAttachmentsInfoArray.size(); i++) {
+            this->_vkColorAttachmentsInfoArray[i] = {
                 .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
                 .imageView = this->_context.swapChain().imageViews().at(i).vkImageView(),
                 .imageLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL_KHR,
@@ -97,15 +97,15 @@ namespace cvulkan::client::render::scene::swapchain {
             };
         }
 
-        for (uint32_t i = 0; i < this->_renderingInfo.size(); i++) {
-            this->_renderingInfo[i] = {
+        for (uint32_t i = 0; i < this->_vkRenderingInfoArray.size(); i++) {
+            this->_vkRenderingInfoArray[i] = {
                 .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
                 .renderArea = {
-                        {}, {this->_context.swapChain().extent().width, this->_context.swapChain().extent().height}
+                        {}, {this->_context.swapChain().vkExtent2D().width, this->_context.swapChain().vkExtent2D().height}
                 },
                 .layerCount = 1,
                 .colorAttachmentCount = 1,
-                .pColorAttachments = &this->_colorAttachmentsInfo[i]
+                .pColorAttachments = &this->_vkColorAttachmentsInfoArray[i]
             };
         }
     }

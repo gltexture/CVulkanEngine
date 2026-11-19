@@ -24,14 +24,14 @@ namespace cvulkan::client::render::vk::memalloc {
         };
 
         util::vkCheck(vmaCreateAllocator(&allocatorCreateInfo, &this->_vmaAllocator), "Failed to create VMA allocator");
-        logging::info("Created VMA");
+        log::info("Created VMA");
     }
 
     CVulkan_VkMemoryAllocator::~CVulkan_VkMemoryAllocator() {
         if (this->_vmaAllocator != VK_NULL_HANDLE) {
             vmaDestroyAllocator(this->_vmaAllocator);
             this->_vmaAllocator = VK_NULL_HANDLE;
-            logging::info("Destroyed VMA");
+            log::info("Destroyed VMA");
         }
     }
 }

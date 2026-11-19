@@ -1,5 +1,5 @@
 #pragma once
-#include "logger.h"
+#include "logging.h"
 #include <spdlog/spdlog.h>
 
 #include <string>
@@ -7,7 +7,7 @@
 #include <exception>
 #include <iostream>
 
-namespace cvulkan::logging {
+namespace cvulkan::log {
     template<typename Func>
     void safeLog(Func&& func) noexcept {
         try {

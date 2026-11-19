@@ -3,11 +3,12 @@
 //
 
 #pragma once
+#include <map>
 #include <string>
 
 
 #include "glm/gtc/quaternion.hpp"
-#include "utility/sys_utils.h"
+#include "utility/system.h"
 
 namespace cvulkan::client::render::entity {
     struct CVulkanEntityTransform {
@@ -50,5 +51,25 @@ namespace cvulkan::client::render::entity {
         std::string _id;
         std::string _modelId;
         CVulkanEntityTransform _transform;
+    };
+
+    class CVulkanSceneEntitiesCollection {
+    public:
+        CVulkanSceneEntitiesCollection();
+
+        ~CVulkanSceneEntitiesCollection() = default;
+
+        CLASS_NO_COPY_NO_MOVE(CVulkanSceneEntitiesCollection);
+
+        [[nodiscard]] const std::map<std::string, entity::CVulkanSceneEntity>& entities() const {
+            return _entities;
+        }
+
+        void addEntity(entity::CVulkanSceneEntity&& entity);
+
+        [[nodiscard]] bool hasEntity(const std::string& id) const;
+
+    private:
+        std::map<std::string, entity::CVulkanSceneEntity> _entities;
     };
 }

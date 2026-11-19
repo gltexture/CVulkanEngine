@@ -10,7 +10,7 @@
 #include "vulkan_descriptors.h"
 #include "vulkan_pipeline.h"
 #include "vulkan_swapchain.h"
-#include "utility/logger.inl"
+#include "utility/logging.inl"
 #include "utility/exceptions.h"
 
 namespace cvulkan::client::render::vk {
@@ -321,7 +321,7 @@ namespace cvulkan::client::render::vk {
 
         inline void vkCheck(const VkResult vkResult, std::string_view errMsg) {
             if (vkResult != VK_SUCCESS) {
-                throw exc::CVulkanException{std::format("{} (VkResult: {})", errMsg, string_VkResult(vkResult))};
+                throw exc::CVulkanException{fmt::format("{} (VkResult: {})", errMsg, string_VkResult(vkResult))};
             }
         }
 

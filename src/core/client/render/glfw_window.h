@@ -7,7 +7,7 @@
 
 #include "GLFW/glfw3.h"
 #include "glm/vec2.hpp"
-#include "utility/sys_utils.h"
+#include "utility/system.h"
 
 namespace cvulkan::client::window {
     class CVulkanWindow {

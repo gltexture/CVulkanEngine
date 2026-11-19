@@ -6,10 +6,11 @@
 
 #include "vulkan_mem_alloc.h"
 #include "vulkan_render_core.h"
+#include "utility/debug.h"
 
 namespace cvulkan::client::render::vk {
     CVulkanImage2D::CVulkanImage2D(const CVulkanContext& context, const CVulkanImage2DData& imageData)
-        : _context{context}, _format{imageData._format}, _mipLevels{imageData._mipLevels}, _extent{imageData._extent} {
+        : _context{context}, _format{imageData._format}, _mipLevels{imageData._mipLevels}, _vkExtent{imageData._extent} {
         const VkImageCreateInfo vkImageCreateInfo{
             .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
             .imageType = VK_IMAGE_TYPE_2D,
@@ -71,7 +72,7 @@ namespace cvulkan::client::render::vk {
 
     CVulkanAttachment2D::~CVulkanAttachment2D() = default;
 
-    CVulkanAttachment2D CVulkanAttachment2D::createSimpleAttachment(const CVulkanContext& context, const VkExtent3D vkExtent, const VkFormat vkFormat, const VkImageUsageFlags vkUsage) {
+    std::unique_ptr<CVulkanAttachment2D> CVulkanAttachment2D::createSimpleAttachment(const CVulkanContext& context, const VkExtent3D vkExtent, const VkFormat vkFormat, const VkImageUsageFlags vkUsage) {
         const CVulkanImage2DData imageData {
             ._format = vkFormat,
             ._memFlags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT,
@@ -81,27 +82,21 @@ namespace cvulkan::client::render::vk {
 
         CVulkanImage2D image{context, imageData};
 
-        VkImageAspectFlags aspectMask{};
-        bool depthAttachment{};
+        const bool colorAttachment = (vkUsage & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT) != 0;
+        const bool depthAttachment = (vkUsage & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT) != 0;
 
-        if ((vkUsage & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT) != 0) {
-            aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-            depthAttachment = false;
-        }
+        DEBUG::ASSERT(colorAttachment != depthAttachment, "Attachment must have exactly one attachment type");
 
-        if ((vkUsage & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT) != 0) {
-            aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-            depthAttachment = true;
-        }
+        const VkImageAspectFlags aspectMask = depthAttachment ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT;
 
-        const CVulkanImage2DViewData imageViewData{
+        const CVulkanImage2DViewData imageViewData {
             ._aspectMask = aspectMask,
             ._format = image.format()
         };
 
         CVulkanImage2DView view{context, imageViewData, image.vkImage(), depthAttachment};
 
-        return CVulkanAttachment2D{context, std::move(image), std::move(view), depthAttachment};
+        return std::make_unique<CVulkanAttachment2D>(context, std::move(image), std::move(view), depthAttachment);
     }
 
     CVulkanSampler::CVulkanSampler(const CVulkanContext& context, const CVulkanSamplerInfo& samplerInfo) : _context{context} {

@@ -3,7 +3,7 @@
 //
 
 #pragma once
-#include "utility/sys_utils.h"
+#include "utility/system.h"
 #include <span>
 
 namespace cvulkan::client::render::vk {
@@ -70,6 +70,9 @@ namespace cvulkan::client::render::vk {
 
     class CVulkanDescriptorSetLayout {
     public:
+        //CVulkanDescriptorSetLayout(const CVulkanContext& context, const std::initializer_list<CVulkanLayoutInfo> layoutInfoArray)
+        //    : CVulkanDescriptorSetLayout(context, std::vector(layoutInfoArray.begin(), layoutInfoArray.end())) {}
+
         CVulkanDescriptorSetLayout(const CVulkanContext& context, const std::vector<CVulkanLayoutInfo>&& layoutInfoArray);
 
         CVulkanDescriptorSetLayout(const CVulkanContext& context, CVulkanLayoutInfo&& layoutInfo)
@@ -116,6 +119,10 @@ namespace cvulkan::client::render::vk {
 
         void setBuffer(const CVulkanBuffer& buffer, VkDeviceSize range, uint32_t binding, VkDescriptorType descriptorType) const;
 
+        void setImage(const CVulkanImage2DView& imageView, const CVulkanSampler& sampler) const {
+            this->setImage(imageView, sampler, 0);
+        }
+
         void setImage(const CVulkanImage2DView& imageView, const CVulkanSampler& sampler, const uint32_t baseBinding) const {
             const std::array imageViews = {std::cref(imageView)};
             this->setImages(imageViews, sampler, baseBinding);
@@ -153,8 +160,8 @@ namespace cvulkan::client::render::vk {
 
         const CVulkanDescriptorSet& getDescriptorSet(std::string_view id, uint32_t pos) const;
 
-        [[nodiscard]] const std::unordered_map<VkDescriptorType, uint32_t>& descriptorLimits() const {
-            return _descriptorLimits;
+        [[nodiscard]] const std::unordered_map<VkDescriptorType, uint32_t>& vkDescriptorLimits() const {
+            return _vkDescriptorLimits;
         }
 
         [[nodiscard]] const std::unordered_map<std::string, CVulkanDescriptorSetInfo>& descriptorSetInfoMap() const {
@@ -172,7 +179,7 @@ namespace cvulkan::client::render::vk {
 
     private:
         const CVulkanContext& _context;
-        std::unordered_map<VkDescriptorType, uint32_t> _descriptorLimits{};
+        std::unordered_map<VkDescriptorType, uint32_t> _vkDescriptorLimits{};
         std::unordered_map<std::string, CVulkanDescriptorSetInfo> _descriptorSetInfoMap{};
         std::vector<CVulkanDescriptorPoolInfo> _descriptorPoolInfoList{};
     };

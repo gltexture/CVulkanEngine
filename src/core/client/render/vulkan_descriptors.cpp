@@ -7,14 +7,14 @@
 #include "vulkan_buffers.h"
 #include "vulkan_config.hpp"
 #include "vulkan_render_core.h"
-#include "utility/DEBUG.h"
+#include "utility/debug.h"
 #include "utility/exceptions.h"
 
-#include "utility/logger.h"
+#include "utility/logging.h"
 
 namespace cvulkan::client::render::vk {
     CVulkanDescriptorsPool::CVulkanDescriptorsPool(const CVulkanContext& context, const std::vector<CVulkanDescriptorTypeCount>& descriptorTypeCounts) : _context{context}, _descriptorTypeCounts{descriptorTypeCounts} {
-        logging::debug("Creating Vulkan descriptor pool");
+        log::debug("Creating Vulkan descriptor pool");
 
         std::vector<VkDescriptorPoolSize> poolSizes;
         poolSizes.reserve(_descriptorTypeCounts.size());
@@ -41,18 +41,19 @@ namespace cvulkan::client::render::vk {
         if (this->_vkDescriptorPool != VK_NULL_HANDLE) {
             vkDestroyDescriptorPool(this->_context.device().vkDevice(), this->_vkDescriptorPool, nullptr);
             this->_vkDescriptorPool = VK_NULL_HANDLE;
-            logging::debug("Destroyed Vulkan descriptor pool");
+            log::debug("Destroyed Vulkan descriptor pool");
         }
     }
 
     void CVulkanDescriptorsPool::freeDescriptorSet(const VkDescriptorSet& descriptorSet) const {
-        vk::util::vkCheck(vkFreeDescriptorSets(this->_context.device().vkDevice(), this->_vkDescriptorPool, 1, &descriptorSet), "Failed to free descriptor set");
+        util::vkCheck(vkFreeDescriptorSets(this->_context.device().vkDevice(), this->_vkDescriptorPool, 1, &descriptorSet), "Failed to free descriptor set");
     }
 
-    CVulkanDescriptorSetLayout::CVulkanDescriptorSetLayout(const CVulkanContext& context, const std::vector<CVulkanLayoutInfo>&& layoutInfoArray) : _context{context}, _layoutInfoArray{std::move(layoutInfoArray)} {
-        logging::debug("Creating Vulkan descriptor set layout with {} bindings", _layoutInfoArray.size());
+    CVulkanDescriptorSetLayout::CVulkanDescriptorSetLayout(const CVulkanContext& context, const std::vector<CVulkanLayoutInfo>&& layoutInfoArray)
+        : _context{context}, _layoutInfoArray{std::move(layoutInfoArray)} {
+        log::debug("Creating Vulkan descriptor set layout with {} bindings", _layoutInfoArray.size());
         for (const auto& [_descType, _binding, _descCount, _stage]: _layoutInfoArray) {
-            logging::debug("Descriptor binding {}: type={}, count={}, stages={}", _binding, static_cast<uint32_t>(_descType), _descCount, _stage);
+            log::debug("Descriptor binding {}: type={}, count={}, stages={}", _binding, static_cast<uint32_t>(_descType), _descCount, _stage);
         }
 
         std::vector<VkDescriptorSetLayoutBinding> layoutBindings;
@@ -79,11 +80,12 @@ namespace cvulkan::client::render::vk {
         if (this->_vkDescriptorSetLayout != VK_NULL_HANDLE) {
             vkDestroyDescriptorSetLayout(this->_context.device().vkDevice(), this->_vkDescriptorSetLayout, nullptr);
             this->_vkDescriptorSetLayout = VK_NULL_HANDLE;
-            logging::debug("Destroyed Vulkan descriptor set layout");
+            log::debug("Destroyed Vulkan descriptor set layout");
         }
     }
 
-    CVulkanDescriptorSet::CVulkanDescriptorSet(const CVulkanContext& context, const CVulkanDescriptorsPool& descriptorsPool, const CVulkanDescriptorSetLayout& vkDescriptorSetLayout) : _context{context}, _descriptorsPool{descriptorsPool} {
+    CVulkanDescriptorSet::CVulkanDescriptorSet(const CVulkanContext& context, const CVulkanDescriptorsPool& descriptorsPool, const CVulkanDescriptorSetLayout& vkDescriptorSetLayout)
+        : _context{context}, _descriptorsPool{descriptorsPool} {
         const VkDescriptorSetLayout layout = vkDescriptorSetLayout.vkDescriptorSetLayout();
 
         const VkDescriptorSetAllocateInfo descriptorAllocateInfo{
@@ -129,6 +131,7 @@ namespace cvulkan::client::render::vk {
         for (uint32_t i = 0; i < imageViews.size(); ++i) {
             const auto& imageView = imageViews[i];
 
+            //TODO VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL
             imageInfos.push_back({
                 .sampler = sampler.vkSampler(),
                 .imageView = imageView.get().vkImageView(),
@@ -179,16 +182,16 @@ namespace cvulkan::client::render::vk {
 
     CVulkanDescriptorAllocator::CVulkanDescriptorAllocator(const CVulkanContext& context) : _context(context) {
         this->createDescriptorLimits();
-        logging::info("Created Vulkan descriptor allocator");
+        log::info("Created Vulkan descriptor allocator");
     }
 
     CVulkanDescriptorAllocator::~CVulkanDescriptorAllocator() {
-        logging::info("Destroying Vulkan descriptor allocator");
+        log::info("Destroying Vulkan descriptor allocator");
     }
 
     const std::vector<CVulkanDescriptorSet>& CVulkanDescriptorAllocator::allocateDescriptorSets(std::string_view id, uint32_t count, const CVulkanDescriptorSetLayout& layout) {
         const std::string s_id{id};
-        logging::debug("Allocating descriptor sets '{}': count={}, bindings={}", id, count, layout.layoutInfoArray().size());
+        log::debug("Allocating descriptor sets '{}': count={}, bindings={}", id, count, layout.layoutInfoArray().size());
 
         DEBUG::ASSERT(count > 0, "Cannot allocate descriptor sets '{}': count must be greater than zero, received {}", id, count);
         DEBUG::ASSERT(!layout.layoutInfoArray().empty(), "Cannot allocate descriptor sets '{}': descriptor set layout has no bindings", id);
@@ -198,17 +201,17 @@ namespace cvulkan::client::render::vk {
 
         for (const auto& layoutInfo : layout.layoutInfoArray()) {
             DEBUG::ASSERT(layoutInfo._descCount > 0, "Descriptor binding {} has zero descriptor count in layout '{}'", layoutInfo._binding, id);
-            DEBUG::ASSERT(_descriptorLimits.contains(layoutInfo._descType), "Descriptor type {} has no configured limit", static_cast<uint32_t>(layoutInfo._descType));
+            DEBUG::ASSERT(_vkDescriptorLimits.contains(layoutInfo._descType), "Descriptor type {} has no configured limit", static_cast<uint32_t>(layoutInfo._descType));
 
-            const uint64_t requiredCount = static_cast<uint64_t>(layoutInfo._descCount) * static_cast<uint32_t>(count);
+            const uint64_t requiredCount = static_cast<uint64_t>(layoutInfo._descCount) * count;
             requiredCounts[layoutInfo._descType] += requiredCount;
 
-            const uint64_t maxTotal = _descriptorLimits.at(layoutInfo._descType);
+            const uint64_t maxTotal = _vkDescriptorLimits.at(layoutInfo._descType);
             DEBUG::ASSERT(requiredCounts.at(layoutInfo._descType) <= maxTotal, "Cannot allocate descriptor sets '{}': descriptor type {} requires {} descriptors, configured limit is {}", id, static_cast<uint32_t>(layoutInfo._descType), requiredCounts.at(layoutInfo._descType), maxTotal);
         }
 
         for (const auto& [descriptorType, requiredCount] : requiredCounts) {
-            logging::debug("Descriptor allocation requirement: type={}, count={}", static_cast<uint32_t>(descriptorType), requiredCount);
+            log::debug("Descriptor allocation requirement: type={}, count={}", static_cast<uint32_t>(descriptorType), requiredCount);
         }
 
         CVulkanDescriptorPoolInfo* targetPool{};
@@ -221,7 +224,7 @@ namespace cvulkan::client::render::vk {
             for (const auto& [descriptorType, requiredCount] : requiredCounts) {
                 if (!descriptorPoolInfo._descriptorCount.contains(descriptorType) || descriptorPoolInfo._descriptorCount.at(descriptorType) < requiredCount) {
                     const uint64_t available = descriptorPoolInfo._descriptorCount.contains(descriptorType) ? descriptorPoolInfo._descriptorCount.at(descriptorType) : 0;
-                    logging::trace("Descriptor pool {} lacks capacity for type {}: available={}, required={}", i, static_cast<uint32_t>(descriptorType), available, requiredCount);
+                    log::trace("Descriptor pool {} lacks capacity for type {}: available={}, required={}", i, static_cast<uint32_t>(descriptorType), available, requiredCount);
                     hasCapacity = false;
                     break;
                 }
@@ -230,13 +233,13 @@ namespace cvulkan::client::render::vk {
             if (hasCapacity) {
                 targetPool = &descriptorPoolInfo;
                 poolPos = i;
-                logging::debug("Selected descriptor pool {} for '{}'", poolPos, id);
+                log::debug("Selected descriptor pool {} for '{}'", poolPos, id);
                 break;
             }
         }
 
         if (targetPool == nullptr) {
-            logging::debug("Creating new descriptor pool for '{}'", id);
+            log::debug("Creating new descriptor pool for '{}'", id);
             CVulkanDescriptorPoolInfo descriptorPoolInfo = createDescriptorPoolInfo();
 
             for (const auto& [descriptorType, requiredCount] : requiredCounts) {
@@ -247,15 +250,15 @@ namespace cvulkan::client::render::vk {
             _descriptorPoolInfoList.push_back(std::move(descriptorPoolInfo));
             poolPos = static_cast<uint32_t>(_descriptorPoolInfoList.size() - 1);
             targetPool = &_descriptorPoolInfoList.back();
-            logging::debug("Created descriptor pool {} for '{}'", poolPos, id);
+            log::debug("Created descriptor pool {} for '{}'", poolPos, id);
         }
 
         std::vector<CVulkanDescriptorSet> result{};
-        result.reserve(static_cast<size_t>(count));
+        result.reserve(count);
 
-        logging::debug("Creating {} descriptor sets '{}' from pool {}", count, id, poolPos);
+        log::debug("Creating {} descriptor sets '{}' from pool {}", count, id, poolPos);
         for (uint32_t i = 0; i < static_cast<uint32_t>(count); ++i) {
-            logging::trace("Allocating descriptor set '{}': {}/{}", id, i + 1, count);
+            log::trace("Allocating descriptor set '{}': {}/{}", id, i + 1, count);
             CVulkanDescriptorSet descriptorSet{_context, targetPool->_descriptorsPool, layout};
             result.push_back(std::move(descriptorSet));
         }
@@ -265,27 +268,27 @@ namespace cvulkan::client::render::vk {
 
         for (const auto& [descriptorType, requiredCount] : requiredCounts) {
             targetPool->_descriptorCount.at(descriptorType) -= requiredCount;
-            logging::debug("Descriptor pool {} remaining capacity: type={}, remaining={}", poolPos, static_cast<uint32_t>(descriptorType), targetPool->_descriptorCount.at(descriptorType));
+            log::debug("Descriptor pool {} remaining capacity: type={}, remaining={}", poolPos, static_cast<uint32_t>(descriptorType), targetPool->_descriptorCount.at(descriptorType));
         }
 
-        logging::debug("Descriptor sets '{}' allocated successfully: count={}, pool={}", id, count, poolPos);
+        log::debug("Descriptor sets '{}' allocated successfully: count={}, pool={}", id, count, poolPos);
         return it->second._descriptorSets;
     }
 
     void CVulkanDescriptorAllocator::createDescriptorLimits() {
         const VkPhysicalDeviceLimits& limits = _context.physicalDevice().vkPhysicalDeviceProperties().limits;
-        this->_descriptorLimits.emplace(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, std::min(renderConfig::MAX_DESCRIPTORS, limits.maxDescriptorSetUniformBuffers));
-        this->_descriptorLimits.emplace(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, std::min(renderConfig::MAX_DESCRIPTORS, limits.maxDescriptorSetSamplers));
-        this->_descriptorLimits.emplace(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, std::min(renderConfig::MAX_DESCRIPTORS, limits.maxDescriptorSetStorageBuffers));
+        this->_vkDescriptorLimits.emplace(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, std::min(renderConfig::MAX_DESCRIPTORS, limits.maxDescriptorSetUniformBuffers));
+        this->_vkDescriptorLimits.emplace(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, std::min(renderConfig::MAX_DESCRIPTORS, limits.maxDescriptorSetSamplers));
+        this->_vkDescriptorLimits.emplace(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, std::min(renderConfig::MAX_DESCRIPTORS, limits.maxDescriptorSetStorageBuffers));
     }
 
     CVulkanDescriptorPoolInfo CVulkanDescriptorAllocator::createDescriptorPoolInfo() {
         std::vector<CVulkanDescriptorTypeCount> descTypeCounts;
-        descTypeCounts.reserve(this->_descriptorLimits.size());
-        for (const auto& [type, count]: this->_descriptorLimits) {
+        descTypeCounts.reserve(this->_vkDescriptorLimits.size());
+        for (const auto& [type, count]: this->_vkDescriptorLimits) {
             descTypeCounts.push_back({type, count});
         }
-        return {this->_descriptorLimits, {this->_context, descTypeCounts}};
+        return {this->_vkDescriptorLimits, {this->_context, descTypeCounts}};
     }
 
     void CVulkanDescriptorAllocator::freeDescriptorSet(const std::string_view id) {

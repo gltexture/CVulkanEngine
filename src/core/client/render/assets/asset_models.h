@@ -8,7 +8,7 @@
 #include <nlohmann/json.hpp>
 #include <assimp/material.h>
 
-#include "utility/io_utils.h"
+#include "utility/io.h"
 
 struct aiMesh;
 struct aiScene;
@@ -33,15 +33,15 @@ namespace cvulkan::client::render::asset {
         struct CVulkanModelData {
             std::string _id;
             std::vector<CVulkanMeshData> _meshes;
-            io_utils::CVulkanResourcePath _materialsPath;
-            io_utils::CVulkanResourcePath _cachePath;
-            io_utils::CVulkanResourcePath _idxPath;
-            io_utils::CVulkanResourcePath _vtxPath;
+            io::CVulkanResourcePath _materialsPath;
+            io::CVulkanResourcePath _cachePath;
+            io::CVulkanResourcePath _idxPath;
+            io::CVulkanResourcePath _vtxPath;
         };
 
         struct CVulkanMaterialData {
             std::string _id;
-            io_utils::CVulkanResourcePath _texturePath;
+            io::CVulkanResourcePath _texturePath;
             glm::vec4 _diffuseColor;
             bool _hasTransparency;
         };
@@ -121,8 +121,8 @@ namespace cvulkan::client::render::asset {
         };
 
         struct CVulkanProcessedModelOutputData {
-            io_utils::CVulkanResourcePath _outputModelJSONPath;
-            io_utils::CVulkanResourcePath _outputMaterialsJSONPath;
+            io::CVulkanResourcePath _outputModelJSONPath;
+            io::CVulkanResourcePath _outputMaterialsJSONPath;
         };
 
         void to_json(nlohmann::json& json, const CVulkanMaterialData& material);
@@ -137,16 +137,16 @@ namespace cvulkan::client::render::asset {
 
         void from_json(const nlohmann::json& json, CVulkanModelData& model);
 
-        CVulkanProcessedModelOutputData processRawModelAndGetOutputJSON(const io_utils::CVulkanResourcePath& rawModelRelativeFile);
+        CVulkanProcessedModelOutputData processRawModelAndGetOutputJSON(const io::CVulkanResourcePath& rawModelRelativeFile);
 
         CVulkanMaterialData processMaterial(const aiScene& assimpScene, const aiMaterial& assimpMaterial, const std::filesystem::path& currentPath, const std::filesystem::path& directoryToCopyTextures, const std::string& modelId,
                                             uint32_t pos);
 
         CVulkanMeshData processMesh(const aiScene& assimpScene, const aiMesh& assimpMesh, const std::vector<CVulkanMaterialData>& materials, CVulkanModelBinData& modelBinData, uint32_t pos);
 
-        CVulkanModelCache genModelCache(const io_utils::CVulkanResourcePath& rawModelRootDirectory);
+        CVulkanModelCache genModelCache(const io::CVulkanResourcePath& rawModelRootDirectory);
 
-        bool isInvalidCache(const io_utils::CVulkanResourcePath& cacheFile, const io_utils::CVulkanResourcePath& modelRootDirectory);
+        bool isInvalidCache(const io::CVulkanResourcePath& cacheFile, const io::CVulkanResourcePath& modelRootDirectory);
 
         std::vector<float> processUV(const aiMesh& aiMesh);
 
@@ -154,7 +154,7 @@ namespace cvulkan::client::render::asset {
 
         std::vector<float> processVertices(const aiMesh& aiMesh);
 
-        io_utils::CVulkanResourcePath processTextureAndGetRelativePath(const aiScene& assimpScene, const aiMaterial& assimpMaterial, const std::filesystem::path& currentPath, const std::filesystem::path& directoryToCopyTextures,
+        io::CVulkanResourcePath processTextureAndGetRelativePath(const aiScene& assimpScene, const aiMaterial& assimpMaterial, const std::filesystem::path& currentPath, const std::filesystem::path& directoryToCopyTextures,
                                                                        aiTextureType textureType);
     }
 
@@ -164,10 +164,10 @@ namespace cvulkan::client::render::asset {
             std::vector<modelGen::CVulkanMaterialData> _materialsData;
         };
 
-        std::vector<modelGen::CVulkanMaterialData> loadMaterialsJSON(const io_utils::CVulkanResourcePath& materialsFile);
+        std::vector<modelGen::CVulkanMaterialData> loadMaterialsJSON(const io::CVulkanResourcePath& materialsFile);
 
-        modelGen::CVulkanModelData loadModelJSON(const io_utils::CVulkanResourcePath& modelFile);
+        modelGen::CVulkanModelData loadModelJSON(const io::CVulkanResourcePath& modelFile);
 
-        CVulkanLoadedModelData loadModelWithMaterials(const io_utils::CVulkanResourcePath& modelFile);
+        CVulkanLoadedModelData loadModelWithMaterials(const io::CVulkanResourcePath& modelFile);
     }
 }

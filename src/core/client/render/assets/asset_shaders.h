@@ -8,7 +8,7 @@
 #include "client/render/vulkan_shaders.h"
 #include "utility/exceptions.h"
 
-namespace cvulkan::io_utils {
+namespace cvulkan::io {
     class CVulkanResourcePath;
 }
 
@@ -35,10 +35,10 @@ namespace cvulkan::client::render::asset {
     namespace shaderCompile {
         std::vector<char> compileShader(const std::string& shaderName, const std::string& shaderCode, uint32_t shaderType);
 
-        void compileShaderIfOutOfDate(const io_utils::CVulkanResourcePath& shaderSourceFile, uint32_t shaderType);
+        void compileShaderIfOutOfDate(const io::CVulkanResourcePath& shaderSourceFile, uint32_t shaderType);
     }
 
     namespace shaderLoad {
-        shader::CVulkanShaderModule compileAndLoadShader(const vk::CVulkanContext& context, const io_utils::CVulkanResourcePath& shaderSourceFile, VkShaderStageFlagBits vkStage, const VkSpecializationInfo* vkSpecializationInfo);
+        shader::CVulkanShaderModule compileAndLoadShader(const vk::CVulkanContext& context, const io::CVulkanResourcePath& shaderSourceFile, VkShaderStageFlagBits vkStage, const VkSpecializationInfo* vkSpecializationInfo);
     }
 }

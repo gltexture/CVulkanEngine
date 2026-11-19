@@ -2,7 +2,7 @@
 #include <memory>
 #include <queue>
 
-#include "utility/sys_utils.h"
+#include "utility/system.h"
 
 namespace cvulkan::client::window {
     class CVulkanWindow;

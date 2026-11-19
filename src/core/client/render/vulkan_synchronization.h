@@ -3,7 +3,7 @@
 //
 
 #pragma once
-#include "utility/sys_utils.h"
+#include "utility/system.h"
 
 namespace cvulkan::client::render::vk {
     class CVulkanContext;

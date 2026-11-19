@@ -5,10 +5,10 @@
 #pragma once
 #include <imgui.h>
 
-#include "utility/sys_utils.h"
+#include "utility/system.h"
 #include "client/render/vulkan_buffers.h"
 #include "client/render/vulkan_config.hpp"
-#include "utility/io_utils.h"
+#include "utility/io.h"
 
 namespace cvulkan::client::render::cache {
     class CVulkanCacheCollection;
@@ -37,9 +37,9 @@ namespace cvulkan::client::render::scene::imgui {
 
     public:
         ImTextureID _id;
-        io_utils::CVulkanResourcePath _texturePath;
+        io::CVulkanResourcePath _texturePath;
 
-        explicit CVulkanImGuiTextureData(io_utils::CVulkanResourcePath texturePath) : _id(_nextId.fetch_add(1, std::memory_order_relaxed)), _texturePath(std::move(texturePath)) {}
+        explicit CVulkanImGuiTextureData(io::CVulkanResourcePath texturePath) : _id(_nextId.fetch_add(1, std::memory_order_relaxed)), _texturePath(std::move(texturePath)) {}
     };
 
     class CVulkanImGuiRenderer {
@@ -66,8 +66,8 @@ namespace cvulkan::client::render::scene::imgui {
         const vk::CVulkanContext& _context;
         vk::CVulkanDescriptorAllocator& _descriptorAllocator;
         cache::CVulkanCacheCollection& _caches;
-        VkRenderingAttachmentInfo _colorAttachmentInfo {};
-        VkRenderingInfo _renderingInfo {};
+        VkRenderingAttachmentInfo _vkColorAttachmentInfo {};
+        VkRenderingInfo _vkRenderingInfo {};
         std::array<std::unique_ptr<vk::CVulkanBuffer>, renderConfig::MAX_FRAMES_IN_FLIGHT> _vtxBuffers{};
         std::array<std::unique_ptr<vk::CVulkanBuffer>, renderConfig::MAX_FRAMES_IN_FLIGHT> _idxBuffers{};
         std::unique_ptr<vk::CVulkanSampler> _fontTextureSampler {};

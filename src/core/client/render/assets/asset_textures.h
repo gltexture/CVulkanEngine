@@ -5,7 +5,7 @@
 #pragma once
 #include <filesystem>
 
-#include "utility/sys_utils.h"
+#include "utility/system.h"
 
 namespace cvulkan::client::render::vk {
     class CVulkanCommandBuffer;

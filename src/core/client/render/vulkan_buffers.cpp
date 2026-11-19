@@ -8,7 +8,7 @@
 #include "vulkan_mem_alloc.h"
 #include "assets/asset_models.h"
 #include "scene/vulkan_render_structs.h"
-#include "utility/DEBUG.h"
+#include "utility/debug.h"
 #include "utility/exceptions.h"
 
 namespace cvulkan::client::render::vk {
@@ -27,33 +27,33 @@ namespace cvulkan::client::render::vk {
             .requiredFlags = reqFlags
         };
 
-        util::vkCheck(vmaCreateBuffer(this->_context.device().vkMemoryAllocator().vmaAllocator(), &bufferCreateInfo, &memoryAllocateInfo, &this->_vkBuffer, &this->_allocation, nullptr), "Failed to create buffer");
+        util::vkCheck(vmaCreateBuffer(this->_context.device().vkMemoryAllocator().vmaAllocator(), &bufferCreateInfo, &memoryAllocateInfo, &this->_vkBuffer, &this->_vmaAllocation, nullptr), "Failed to create buffer");
     }
 
     CVulkanBuffer::~CVulkanBuffer() {
         if (this->_vkBuffer != VK_NULL_HANDLE) {
-            vmaDestroyBuffer(this->_context.device().vkMemoryAllocator().vmaAllocator(), this->_vkBuffer, this->_allocation);
+            vmaDestroyBuffer(this->_context.device().vkMemoryAllocator().vmaAllocator(), this->_vkBuffer, this->_vmaAllocation);
             this->_vkBuffer = VK_NULL_HANDLE;
-            this->_allocation = VK_NULL_HANDLE;
+            this->_vmaAllocation = VK_NULL_HANDLE;
         }
     }
 
     void* CVulkanBuffer::mapMem() {
         if (this->_mappedMemory == nullptr) {
-            util::vkCheck(vmaMapMemory(this->_context.device().vkMemoryAllocator().vmaAllocator(), this->_allocation, &this->_mappedMemory), "Failed to map buffer");
+            util::vkCheck(vmaMapMemory(this->_context.device().vkMemoryAllocator().vmaAllocator(), this->_vmaAllocation, &this->_mappedMemory), "Failed to map buffer");
         }
         return this->_mappedMemory;
     }
 
     void CVulkanBuffer::unMapMem() {
         if (this->_mappedMemory != nullptr) {
-            vmaUnmapMemory(this->_context.device().vkMemoryAllocator().vmaAllocator(), this->_allocation);
+            vmaUnmapMemory(this->_context.device().vkMemoryAllocator().vmaAllocator(), this->_vmaAllocation);
             this->_mappedMemory = nullptr;
         }
     }
 
     void CVulkanBuffer::flush() const {
-        vmaFlushAllocation(this->_context.device().vkMemoryAllocator().vmaAllocator(), this->_allocation, 0, VK_WHOLE_SIZE);
+        vmaFlushAllocation(this->_context.device().vkMemoryAllocator().vmaAllocator(), this->_vmaAllocation, 0, VK_WHOLE_SIZE);
     }
 
     void CVulkanTransferBufferData::recordTransferCommand(const CVulkanCommandBuffer& commandBuffer) const {
@@ -69,7 +69,7 @@ namespace cvulkan::client::render::vk {
         const VkDeviceSize bufferSize = rawMeshData._vtxSize;
         const VkDeviceSize bufferOffset = rawMeshData._vtxOffset;
 
-        logging::debug("Creating vertex transfer buffers: file='{}', offset={} bytes, size={} bytes", vtxPath.string(), bufferOffset, bufferSize);
+        log::debug("Creating vertex transfer buffers: file='{}', offset={} bytes, size={} bytes", vtxPath.string(), bufferOffset, bufferSize);
 
         DEBUG::ASSERT(bufferSize > 0, "Vertex buffer size is zero for file '{}'", vtxPath.string());
         DEBUG::ASSERT(bufferSize <= static_cast<VkDeviceSize>(std::numeric_limits<std::streamsize>::max()), "Vertex buffer size exceeds stream read limit: file='{}', size={} bytes", vtxPath.string(), bufferSize);
@@ -85,7 +85,7 @@ namespace cvulkan::client::render::vk {
         std::ifstream binFile{vtxPath, std::ios::binary | std::ios::in};
         DEBUG::ASSERT(binFile.is_open(), "Failed to open vertex file '{}'", vtxPath.string());
 
-        logging::debug("Mapping vertex staging buffer: size={} bytes", bufferSize);
+        log::debug("Mapping vertex staging buffer: size={} bytes", bufferSize);
 
         src.mapMem();
         void* mappedMemory = src.mappedMemory();
@@ -94,7 +94,7 @@ namespace cvulkan::client::render::vk {
         binFile.seekg(static_cast<std::streamoff>(bufferOffset), std::ios::beg);
         DEBUG::ASSERT(binFile.good(), "Failed to seek vertex file: file='{}', offset={} bytes", vtxPath.string(), bufferOffset);
 
-        logging::debug("Reading vertex data: file='{}', offset={} bytes, size={} bytes", vtxPath.string(), bufferOffset, bufferSize);
+        log::debug("Reading vertex data: file='{}', offset={} bytes, size={} bytes", vtxPath.string(), bufferOffset, bufferSize);
 
         binFile.read(static_cast<char*>(mappedMemory), static_cast<std::streamsize>(bufferSize));
         const std::streamsize bytesRead = binFile.gcount();
@@ -103,7 +103,7 @@ namespace cvulkan::client::render::vk {
 
         DEBUG::ASSERT(bytesRead == static_cast<std::streamsize>(bufferSize), "Failed to read vertex data: file='{}', offset={} bytes, expected={} bytes, actual={} bytes", vtxPath.string(), bufferOffset, bufferSize, bytesRead);
 
-        logging::debug("Vertex staging buffer loaded successfully: file='{}', offset={} bytes, size={} bytes", vtxPath.string(), bufferOffset, bufferSize);
+        log::debug("Vertex staging buffer loaded successfully: file='{}', offset={} bytes, size={} bytes", vtxPath.string(), bufferOffset, bufferSize);
 
         return {std::move(src), std::move(dst)};
     }
@@ -113,7 +113,7 @@ namespace cvulkan::client::render::vk {
         const VkDeviceSize bufferSize = rawMeshData._idxSize;
         const VkDeviceSize bufferOffset = rawMeshData._idxOffset;
 
-        logging::debug("Creating index transfer buffers from '{}': offset={} bytes, size={} bytes", idxPath.string(), bufferOffset, bufferSize);
+        log::debug("Creating index transfer buffers from '{}': offset={} bytes, size={} bytes", idxPath.string(), bufferOffset, bufferSize);
 
         DEBUG::ASSERT(bufferSize > 0, "Index buffer size is zero for file '{}'", idxPath.string());
         DEBUG::ASSERT(bufferSize <= static_cast<VkDeviceSize>(std::numeric_limits<std::streamsize>::max()), "Index buffer size exceeds stream read limit for file '{}': size={}", idxPath.string(), bufferSize);
@@ -129,7 +129,7 @@ namespace cvulkan::client::render::vk {
         std::ifstream binFile{idxPath, std::ios::binary | std::ios::in};
         DEBUG::ASSERT(binFile.is_open(), "Failed to open index file '{}'", idxPath.string());
 
-        logging::debug("Mapping index staging buffer: size={} bytes", bufferSize);
+        log::debug("Mapping index staging buffer: size={} bytes", bufferSize);
 
         src.mapMem();
         void* mappedMemory = src.mappedMemory();
@@ -145,7 +145,7 @@ namespace cvulkan::client::render::vk {
 
         DEBUG::ASSERT(bytesRead == static_cast<std::streamsize>(bufferSize), "Failed to read index file '{}': offset={} bytes, expected={} bytes, read={} bytes", idxPath.string(), bufferOffset, bufferSize, bytesRead);
 
-        logging::debug("Index staging buffer loaded successfully: file='{}', offset={} bytes, size={} bytes", idxPath.string(), bufferOffset, bufferSize);
+        log::debug("Index staging buffer loaded successfully: file='{}', offset={} bytes, size={} bytes", idxPath.string(), bufferOffset, bufferSize);
 
         return {std::move(src), std::move(dst)};
     }

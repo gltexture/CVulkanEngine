@@ -3,7 +3,7 @@
 //
 
 #include "vulkan_ext.h"
-#include "utility/logger.h"
+#include "utility/logging.h"
 
 namespace cvulkan::client::render::vk::ext {
     static constexpr VkDebugUtilsMessageSeverityFlagsEXT MESS_SEVERITY_BIT =
@@ -19,13 +19,13 @@ namespace cvulkan::client::render::vk::ext {
 
     static VkBool32 VKAPI_PTR debugVkCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageTypes, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
         if ((messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT) != 0) {
-            logging::info(DEBUG_CALL_BACK_PREF, pCallbackData->pMessage);
+            log::info(DEBUG_CALL_BACK_PREF, pCallbackData->pMessage);
         } else if ((messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) != 0) {
-            logging::warn(DEBUG_CALL_BACK_PREF, pCallbackData->pMessage);
+            log::warn(DEBUG_CALL_BACK_PREF, pCallbackData->pMessage);
         } else if ((messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) != 0) {
-            logging::error(DEBUG_CALL_BACK_PREF, pCallbackData->pMessage);
+            log::error(DEBUG_CALL_BACK_PREF, pCallbackData->pMessage);
         } else {
-            logging::debug(DEBUG_CALL_BACK_PREF, pCallbackData->pMessage);
+            log::debug(DEBUG_CALL_BACK_PREF, pCallbackData->pMessage);
         }
         return VK_FALSE;
     }

@@ -2,12 +2,12 @@
 // Created by ded on 22.10.2026.
 //
 
-#include "io_utils.h"
+#include "io.h"
 #include <Windows.h>
 
 #include "exceptions.h"
 
-namespace cvulkan::io_utils {
+namespace cvulkan::io {
 #if defined(_WIN32)
     std::filesystem::path getExecutableDirectory() {
         static const std::filesystem::path cachedPath = [] {
@@ -25,10 +25,13 @@ namespace cvulkan::io_utils {
         }();
         return cachedPath;
     }
+#elif defined(_LINUX)
+    //TODO
 #endif
 
-    std::filesystem::path CVulkanResourceResolver::resolve(const CVulkanResourcePath& resourcePath) const {
-        const auto relativePath = resourcePath.path().lexically_normal();
+
+    std::filesystem::path CVulkanResourceResolver::resolve(const std::filesystem::path& resourcePath) const {
+        const auto relativePath = resourcePath.lexically_normal();
         if (relativePath.empty() || relativePath.is_absolute()) {
             throw exc::CVulkanException("Invalid resource path");
         }

@@ -3,7 +3,7 @@
 #include <memory>
 
 #include "client/render/glfw_window.h"
-#include "utility/logger.h"
+#include "utility/logging.h"
 
 #include "client_input.h"
 

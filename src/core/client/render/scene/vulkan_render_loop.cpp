@@ -6,12 +6,13 @@
 
 #include "client/render/vulkan_commands.h"
 #include "client/render/vulkan_config.hpp"
-#include "vulkan_render_scene__main.h"
+#include "vulkan_render_scene__deferred.h"
 #include "test_logic/test_logic.h"
 #include "client/render/scene/vulkan_render_scene__post.h"
 #include "client/render/scene/vulkan_render_scene__swapchain.h"
-#include "client/render/scene/vulkan_render_scene__main.h"
+#include "client/render/scene/vulkan_render_scene__deferred.h"
 #include "client/render/scene/vulkan_render_scene__imgui.h"
+#include "debug/vulkan_imgui_window_renderer.h"
 #include "utility/exceptions.h"
 
 namespace cvulkan::client::render::loop {
@@ -52,14 +53,23 @@ namespace cvulkan::client::render::loop {
         }
 
         {
-            this->_mainSceneRenderer = std::make_unique<scene::main::CVulkanSceneRenderer>(context, this->_descriptorAllocator, this->_caches);
-            this->_postSceneRenderer = std::make_unique<scene::post::CVulkanPostFXRenderer>(context, this->_descriptorAllocator, this->_mainSceneRenderer->colorAttachment());
+            this->_deferredSceneRenderer = std::make_unique<scene::deferred::CVulkanSceneRenderer>(context, this->_descriptorAllocator, this->_caches);
+            this->_postSceneRenderer = std::make_unique<scene::post::CVulkanPostFXRenderer>(context, this->_descriptorAllocator, this->_deferredSceneRenderer->lightPassRendering().colorAttachment());
             this->_swapchainSceneRenderer = std::make_unique<scene::swapchain::CVulkanSwapchainRenderer>(context, this->_descriptorAllocator, this->_postSceneRenderer->colorAttachment());
             this->_imguiSceneRenderer = std::make_unique<scene::imgui::CVulkanImGuiRenderer>(context, this->_descriptorAllocator, this->_postSceneRenderer->colorAttachment(), this->_caches);
+        }
+
+        {
+            if constexpr (system::debug_mode) {
+                debug::imgui::createDebugImguiRenderer(context, this->_descriptorAllocator, this->_deferredSceneRenderer->geometryPassRendering().multipleRenderTargets());
+            }
         }
     }
 
     CVulkanRenderLoop::~CVulkanRenderLoop() {
+        if constexpr (system::debug_mode) {
+            debug::imgui::destroyDebugImguiRenderer();
+        }
     }
 
     void CVulkanRenderLoop::runRenderLoop() {
@@ -85,8 +95,8 @@ namespace cvulkan::client::render::loop {
             {
                 test_logic::updateInput(DeltaTime);
             }
-            this->_mainSceneRenderer->renderScene(commandBuffer, this->_currentFrame);
-            this->_postSceneRenderer->renderPostFX(commandBuffer, this->_mainSceneRenderer->colorAttachment());
+            this->_deferredSceneRenderer->renderScene(commandBuffer, this->_currentFrame);
+            this->_postSceneRenderer->renderPostFX(commandBuffer, this->_deferredSceneRenderer->lightPassRendering().colorAttachment());
             this->_imguiSceneRenderer->renderImGui(commandBuffer, this->_postSceneRenderer->colorAttachment(), this->_currentFrame);
             this->_swapchainSceneRenderer->renderSwapchain(commandBuffer, this->_postSceneRenderer->colorAttachment(), imageIndex, this->_graphicsQueueFamilyIndex, this->_presentationQueueFamilyIndex);
         }
@@ -116,8 +126,8 @@ namespace cvulkan::client::render::loop {
             this->_renderCompleteSemaphores.emplace_back(this->_context);
         }
 
-        this->_mainSceneRenderer->onResize();
-        this->_postSceneRenderer->onResize(this->_mainSceneRenderer->colorAttachment());
+        this->_deferredSceneRenderer->onResize();
+        this->_postSceneRenderer->onResize(this->_deferredSceneRenderer->lightPassRendering().colorAttachment());
         this->_imguiSceneRenderer->onResize(this->_postSceneRenderer->colorAttachment());
         this->_swapchainSceneRenderer->onResize(this->_postSceneRenderer->colorAttachment());
         

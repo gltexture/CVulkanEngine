@@ -4,7 +4,7 @@
 
 #include "vulkan_render_scene__post.h"
 
-#include "vulkan_render_scene__main.h"
+#include "vulkan_render_scene__deferred.h"
 #include "vulkan_render_structs.h"
 #include "client/render/vulkan_commands.h"
 #include "client/render/vulkan_config.hpp"
@@ -12,8 +12,8 @@
 #include "client/render/vulkan_render_core.h"
 #include "client/render/vulkan_spec_const.h"
 #include "client/render/assets/asset_shaders.h"
-#include "utility/fun_utils.h"
-#include "utility/io_utils.h"
+#include "utility/functionality.h"
+#include "utility/io.h"
 
 namespace cvulkan::client::render::scene::post {
     CVulkanPostFXRenderer::CVulkanPostFXRenderer(const vk::CVulkanContext& context, vk::CVulkanDescriptorAllocator& descriptorAllocator, const vk::CVulkanAttachment2D& srcAttachment)
@@ -33,20 +33,20 @@ namespace cvulkan::client::render::scene::post {
         this->setSrcSizeBuffer();
         
         const vk::CVulkanSpecConstants<uint32_t> specConst {renderConfig::FXAA ? 1 : 0};
-        const shader::CVulkanShaderModule shaderV = asset::shaderLoad::compileAndLoadShader(this->_context, io_utils::CVulkanResourcePath{"post/v.vert"}, VK_SHADER_STAGE_VERTEX_BIT, nullptr);
-        const shader::CVulkanShaderModule shaderF = asset::shaderLoad::compileAndLoadShader(this->_context, io_utils::CVulkanResourcePath{"post/f.frag"}, VK_SHADER_STAGE_FRAGMENT_BIT, &specConst.specializationInfo());
+        const shader::CVulkanShaderModule shaderV = asset::shaderLoad::compileAndLoadShader(this->_context, io::CVulkanResourcePath{"post/v.vert"}, VK_SHADER_STAGE_VERTEX_BIT, nullptr);
+        const shader::CVulkanShaderModule shaderF = asset::shaderLoad::compileAndLoadShader(this->_context, io::CVulkanResourcePath{"post/f.frag"}, VK_SHADER_STAGE_FRAGMENT_BIT, &specConst.vkSpecializationInfo());
 
-        const vk::CVulkanPipelineBuildInfo buildInfo{
-            fun_utils::packCRefs(*this->_descriptorSetLayout_texture, descriptorSetLayout_data),
-            fun_utils::packCRefs(shaderV, shaderF),
+        const vk::CVulkanPipelineBuildInfo buildInfo {
+            fun::packCRefs(*this->_descriptorSetLayout_texture, descriptorSetLayout_data),
+            fun::packCRefs(shaderV, shaderF),
             {},
-            vk::buff_util::emptyVertexStruct(), COLOR_FORMAT, false};
+            vk::buff_util::emptyVertexStruct(), {COLOR_FORMAT}, false};
 
         this->_postPipeline = std::make_unique<vk::CVulkanPipeline>(this->_context, buildInfo);
     }
 
     CVulkanPostFXRenderer::~CVulkanPostFXRenderer() {
-        logging::info("Destroying postfx scene renderer");
+        log::info("Destroying postfx scene_geometry renderer");
     }
 
     void CVulkanPostFXRenderer::renderPostFX(const vk::CVulkanCommandBuffer& commandBuffer, const vk::CVulkanAttachment2D& srcAttachment) const {
@@ -65,7 +65,7 @@ namespace cvulkan::client::render::scene::post {
         vkCmdBeginRendering(commandBuffer.vkCommandBuffer(), &this->_renderingInfo);
         vkCmdBindPipeline(commandBuffer.vkCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, this->_postPipeline->vkPipeline());
 
-        main::CVulkanSceneRenderer::setViewportAndScissor(commandBuffer, this->_context.swapChain().extent());
+        deferred::CVulkanSceneRenderer::setViewportAndScissor(commandBuffer, this->_context.swapChain().vkExtent2D());
 
         std::vector<VkDescriptorSet> descriptorSets{};
         descriptorSets.reserve(2);
@@ -87,12 +87,12 @@ namespace cvulkan::client::render::scene::post {
 
     void CVulkanPostFXRenderer::setSrcSizeBuffer() const {
         const vk::CVulkanBufferMapped mapped{*this->_srcSizeBuffer};
-        const glm::vec2 srcSize = {this->_context.swapChain().extent().width, this->_context.swapChain().extent().height};
+        const glm::vec2 srcSize = {this->_context.swapChain().vkExtent2D().width, this->_context.swapChain().vkExtent2D().height};
         std::memcpy(mapped.data(), &srcSize, sizeof(glm::vec2));
     }
 
     void CVulkanPostFXRenderer::createRenderingData() {
-        this->_colorAttachment = std::make_unique<vk::CVulkanAttachment2D>(vk::CVulkanAttachment2D::createSimpleAttachment(this->_context, this->_context.swapChain().extent3D(), COLOR_FORMAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT));
+        this->_colorAttachment = (vk::CVulkanAttachment2D::createSimpleAttachment(this->_context, this->_context.swapChain().vkExtent3D(), COLOR_FORMAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT));
 
         this->_colorAttachmentInfo = {
             .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
@@ -105,7 +105,7 @@ namespace cvulkan::client::render::scene::post {
 
         this->_renderingInfo = {
             .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
-            .renderArea = {{0, 0}, this->_colorAttachment->image().extent2D()},
+            .renderArea = {{0, 0}, this->_colorAttachment->image().vkExtent2D()},
             .layerCount = 1,
             .colorAttachmentCount = 1,
             .pColorAttachments = &this->_colorAttachmentInfo

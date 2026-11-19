@@ -5,9 +5,9 @@
 #pragma once
 
 #include <string_view>
-#include "utility/sys_utils.h"
+#include "utility/system.h"
 
-namespace cvulkan::io_utils {
+namespace cvulkan::io {
     class CVulkanResourcePath;
 }
 
@@ -18,7 +18,7 @@ namespace cvulkan::client::render::vk {
 namespace cvulkan::client::render::shader {
     class CVulkanShaderModule {
     public:
-        CVulkanShaderModule(const vk::CVulkanContext& context, const io_utils::CVulkanResourcePath& shaderSpvFileName, VkShaderStageFlagBits vkStage, const VkSpecializationInfo* vkSpecializationInfo);
+        CVulkanShaderModule(const vk::CVulkanContext& context, const io::CVulkanResourcePath& shaderSpvFileName, VkShaderStageFlagBits vkStage, const VkSpecializationInfo* vkSpecializationInfo);
         ~CVulkanShaderModule();
 
         CLASS_NO_COPY_NO_MOVEASSIGN(CVulkanShaderModule);

@@ -3,7 +3,7 @@
 //
 
 #pragma once
-#include "utility/sys_utils.h"
+#include "utility/system.h"
 
 namespace cvulkan::client::render::vk {
     template <typename T>
@@ -31,14 +31,14 @@ namespace cvulkan::client::render::vk {
         CVulkanSpecConstants& operator=(CVulkanSpecConstants&&) = default;
         CVulkanSpecConstants(CVulkanSpecConstants&& other) = default;
 
-        [[nodiscard]] const VkSpecializationInfo& specializationInfo() const {
-            return _specializationInfo;
+        [[nodiscard]] const VkSpecializationInfo& vkSpecializationInfo() const {
+            return _vkSpecializationInfo;
         }
 
     private:
         std::vector<char> _data {};
         std::array<VkSpecializationMapEntry, sizeof...(Args)> _entries {};
-        VkSpecializationInfo _specializationInfo{};
+        VkSpecializationInfo _vkSpecializationInfo{};
     };
 }
 

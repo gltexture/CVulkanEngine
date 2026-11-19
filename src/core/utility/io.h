@@ -3,19 +3,22 @@
 //
 
 #pragma once
+
 #include <filesystem>
-
 #include "exceptions.h"
-#include "sys_utils.h"
+#include "system.h"
 
-namespace cvulkan::io_utils {
+namespace cvulkan::io {
     inline const std::filesystem::path SOURCE{"source"};
     inline const std::filesystem::path COMPILED{"compiled"};
     inline const std::filesystem::path SHADERS{"shaders"};
     inline const std::filesystem::path TEXTURES{"textures"};
     inline const std::filesystem::path MODELS{"models"};
     inline const std::filesystem::path RESOURCES{"resources"};
+
     inline const std::filesystem::path OUTPUT{"output"};
+    inline const std::filesystem::path LOGS{"logs"};
+    inline const std::filesystem::path CRASH_LOGS{"crash_logs"};
 
     inline const std::filesystem::path SHADERS_SOURCE{SHADERS / SOURCE};
     inline const std::filesystem::path SHADERS_COMPILED{SHADERS / COMPILED};
@@ -53,6 +56,10 @@ namespace cvulkan::io_utils {
             return CVulkanResourcePath{_path / other};
         }
 
+        explicit operator std::filesystem::path() const {
+            return _path;
+        }
+
         [[nodiscard]] bool isEmpty() const {
             return _path.empty();
         }
@@ -78,13 +85,17 @@ namespace cvulkan::io_utils {
         explicit CVulkanResourceResolver(std::filesystem::path&& root) : _root(std::filesystem::absolute(std::move(root)).lexically_normal()) {
         }
 
-        [[nodiscard]] std::filesystem::path operator/(const CVulkanResourcePath& resourcePath) const {
+        [[nodiscard]] std::filesystem::path operator/(const std::filesystem::path& resourcePath) const {
             return resolve(resourcePath);
+        }
+
+        [[nodiscard]] std::filesystem::path operator/(const CVulkanResourcePath& resourcePath) const {
+            return resolve(resourcePath.path());
         }
 
         CLASS_NO_COPY_NO_MOVE(CVulkanResourceResolver)
 
-        [[nodiscard]] std::filesystem::path resolve(const CVulkanResourcePath& resourcePath) const;
+        [[nodiscard]] std::filesystem::path resolve(const std::filesystem::path& resourcePath) const;
 
         [[nodiscard]] const std::filesystem::path& root() const noexcept {
             return _root;

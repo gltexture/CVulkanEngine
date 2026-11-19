@@ -7,7 +7,7 @@
 #include <vk_mem_alloc.h>
 
 #include "vulkan_render_core.h"
-#include "utility/sys_utils.h"
+#include "utility/system.h"
 
 namespace cvulkan::client::render::asset::modelGen {
     struct CVulkanMeshData;
@@ -25,9 +25,9 @@ namespace cvulkan::client::render::vk {
         CLASS_NO_COPY_NO_MOVEASSIGN(CVulkanBuffer);
 
         CVulkanBuffer(CVulkanBuffer&& other) noexcept
-                : _context{other._context}, _vkBuffer{other._vkBuffer}, _vkRequestedSize{other._vkRequestedSize}, _allocation{other._allocation}, _mappedMemory{other._mappedMemory} {
+                : _context{other._context}, _vkBuffer{other._vkBuffer}, _vkRequestedSize{other._vkRequestedSize}, _vmaAllocation{other._vmaAllocation}, _mappedMemory{other._mappedMemory} {
             other._vkBuffer = VK_NULL_HANDLE;
-            other._allocation = VK_NULL_HANDLE;
+            other._vmaAllocation = VK_NULL_HANDLE;
             other._mappedMemory = nullptr;
         }
 
@@ -57,7 +57,7 @@ namespace cvulkan::client::render::vk {
         const CVulkanContext& _context;
         VkBuffer _vkBuffer{};
         VkDeviceSize _vkRequestedSize{};
-        VmaAllocation _allocation{};
+        VmaAllocation _vmaAllocation{};
         void* _mappedMemory{};
     };
 

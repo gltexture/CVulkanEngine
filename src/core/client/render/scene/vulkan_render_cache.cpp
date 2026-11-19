@@ -8,44 +8,44 @@
 
 #include "client/render/vulkan_config.hpp"
 #include "client/render/assets/asset_models.h"
-#include "utility/DEBUG.h"
+#include "utility/debug.h"
 #include "utility/exceptions.h"
 
 namespace cvulkan::client::render::cache {
     CVulkanModelsCache::~CVulkanModelsCache() {
-        logging::debug("Cleaned up models cache");
+        log::debug("Cleaned up models cache");
     }
 
     void CVulkanModelsCache::loadModels(const std::vector<asset::modelGen::CVulkanModelData>& models, const vk::CVulkanCommandPool& commandPool, const vk::CVulkanQueue& queue) {
-        logging::debug("Loading {} models into Vulkan", models.size());
+        log::debug("Loading {} models into Vulkan", models.size());
 
         if (models.empty()) {
-            logging::debug("No models to load");
+            log::debug("No models to load");
             return;
         }
 
         std::vector<vk::CVulkanBuffer> stagingBuffers{}; // LIFECYCLE SAVE
 
         vk::CVulkanCommandBuffer commandBuffer{this->_context, commandPool, true, true};
-        logging::debug("Beginning model transfer command recording");
+        log::debug("Beginning model transfer command recording");
         commandBuffer.beginRecording();
 
         uint64_t totalMeshes = 0;
         uint64_t totalStagingBytes = 0;
 
         for (const auto& [id, meshes, _materialsPath_Relative, _cachePath_Relative, _idxPath_Relative, _vtxPath_Relative]: models) {
-            logging::debug("Loading model '{}': meshes={}", id, meshes.size());
+            log::debug("Loading model '{}': meshes={}", id, meshes.size());
 
             const auto [modelIt, inserted] = this->_modelsMap.emplace(id, structs::CVulkanModel{id});
             DEBUG::ASSERT(inserted, "Model '{}' is already loaded in Vulkan models cache", id);
 
             for (const auto& mesh: meshes) {
-                logging::debug("Loading mesh '{}' for model '{}': vertexSize={} bytes, indexSize={} bytes, materialId={}", mesh._id, id, mesh._vtxSize, mesh._idxSize, mesh._materialId);
+                log::debug("Loading mesh '{}' for model '{}': vertexSize={} bytes, indexSize={} bytes, materialId={}", mesh._id, id, mesh._vtxSize, mesh._idxSize, mesh._materialId);
 
                 DEBUG::ASSERT(mesh._idxSize > 0 && mesh._idxSize % sizeof(uint32_t) == 0, "Invalid index buffer size for mesh '{}' in model '{}': size={} bytes, expected a non-zero multiple of {}", mesh._id, id, mesh._idxSize, sizeof(uint32_t));
 
-                const auto verticesPath = io_utils::_RS_RESOLVER / _vtxPath_Relative;
-                const auto indicesPath = io_utils::_RS_RESOLVER / _idxPath_Relative;
+                const auto verticesPath = io::_RS_RESOLVER / _vtxPath_Relative;
+                const auto indicesPath = io::_RS_RESOLVER / _idxPath_Relative;
 
                 vk::CVulkanTransferBufferData verticesBuffers = vk::createVerticesBuffer(this->_context, mesh, verticesPath);
                 vk::CVulkanTransferBufferData indicesBuffer = vk::createIndicesBuffers(this->_context, mesh, indicesPath);
@@ -62,17 +62,17 @@ namespace cvulkan::client::render::cache {
                 structs::CVulkanMesh vulkanMesh{mesh._id, std::move(verticesBuffers._dst), std::move(indicesBuffer._dst), static_cast<uint32_t>(mesh._idxSize / sizeof(uint32_t)), mesh._materialId};
                 modelIt->second.meshes().emplace_back(std::move(vulkanMesh));
 
-                logging::debug("Mesh '{}' loaded into transfer queue: indexCount={}, stagingBuffers={}", mesh._id, mesh._idxSize / sizeof(uint32_t), stagingBuffers.size());
+                log::debug("Mesh '{}' loaded into transfer queue: indexCount={}, stagingBuffers={}", mesh._id, mesh._idxSize / sizeof(uint32_t), stagingBuffers.size());
             }
         }
 
-        logging::debug("Finished recording model transfers: models={}, meshes={}, stagingBuffers={}, stagingBytes={}", models.size(), totalMeshes, stagingBuffers.size(), totalStagingBytes);
+        log::debug("Finished recording model transfers: models={}, meshes={}, stagingBuffers={}, stagingBytes={}", models.size(), totalMeshes, stagingBuffers.size(), totalStagingBytes);
         commandBuffer.endRecording();
 
-        logging::debug("Submitting model transfer commands and waiting for completion");
+        log::debug("Submitting model transfer commands and waiting for completion");
         commandBuffer.submitAndWait(queue);
 
-        logging::debug("Model loading completed: models={}, meshes={}, stagingBytes={}", models.size(), totalMeshes, totalStagingBytes);
+        log::debug("Model loading completed: models={}, meshes={}, stagingBytes={}", models.size(), totalMeshes, totalStagingBytes);
     }
 
     const structs::CVulkanModel* CVulkanModelsCache::getModel(const std::string_view id) const {
@@ -84,31 +84,31 @@ namespace cvulkan::client::render::cache {
     }
 
     CVulkanTexturesCache::~CVulkanTexturesCache() {
-        logging::debug("Cleaned up textures cache");
+        log::debug("Cleaned up textures cache");
     }
 
     void CVulkanTexturesCache::transitTextures(const vk::CVulkanCommandPool& commandPool, const vk::CVulkanQueue& queue) {
         static std::uint64_t counter = 0;
 
-        logging::debug("Transitioning textures cache layouts");
+        log::debug("Transitioning textures cache layouts");
 
         const auto numTextures = this->_indexedTexturesMap.map().size();
-        logging::debug("Texture cache contains {} textures, maximum={}", numTextures, renderConfig::MAX_TEXTURES_IN_CACHE);
+        log::debug("Texture cache contains {} textures, maximum={}", numTextures, renderConfig::MAX_TEXTURES_IN_CACHE);
 
         DEBUG::ASSERT(numTextures <= renderConfig::MAX_TEXTURES_IN_CACHE, "Texture cache exceeds maximum capacity: current={}, maximum={}", numTextures, renderConfig::MAX_TEXTURES_IN_CACHE);
 
         if (numTextures < renderConfig::MAX_TEXTURES_IN_CACHE) {
             const auto numDefaultTextures = renderConfig::MAX_TEXTURES_IN_CACHE - numTextures;
-            logging::debug("Creating {} default textures", numDefaultTextures);
+            log::debug("Creating {} default textures", numDefaultTextures);
 
             for (std::size_t i = 0; i < numDefaultTextures; i++) {
-                const std::string id = std::format("default_texture_{}", counter++);
-                logging::debug("Creating default texture '{}'", id);
-                this->loadTexture(id, io_utils::_RS_RESOLVER / io_utils::CVulkanResourcePath{io_utils::ERROR_TEXTURE}, VK_FORMAT_R8G8B8A8_SRGB, true);
+                const std::string id = fmt::format("default_texture_{}", counter++);
+                log::debug("Creating default texture '{}'", id);
+                this->loadTexture(id, io::_RS_RESOLVER / io::CVulkanResourcePath{io::ERROR_TEXTURE}, VK_FORMAT_R8G8B8A8_SRGB, true);
             }
         }
 
-        logging::debug("Recording texture layout transitions for {} textures", this->_indexedTexturesMap.map().size());
+        log::debug("Recording texture layout transitions for {} textures", this->_indexedTexturesMap.map().size());
 
         const vk::CVulkanCommandBuffer commandBuffer{this->_context, commandPool, true, true};
         commandBuffer.beginRecording();
@@ -119,29 +119,29 @@ namespace cvulkan::client::render::cache {
             ++transitionCount;
         }
 
-        logging::debug("Recorded {} texture layout transitions", transitionCount);
+        log::debug("Recorded {} texture layout transitions", transitionCount);
         commandBuffer.endRecording();
 
-        logging::debug("Submitting texture layout transitions and waiting for completion");
+        log::debug("Submitting texture layout transitions and waiting for completion");
         commandBuffer.submitAndWait(queue);
 
-        logging::debug("Destroying staging buffers for {} textures", transitionCount);
+        log::debug("Destroying staging buffers for {} textures", transitionCount);
         for (auto& v: this->_indexedTexturesMap.map() | std::views::values) {
             v.destroyStgBuffer();
         }
 
-        logging::debug("Transitioned texture cache layouts: textures={}", transitionCount);
+        log::debug("Transitioned texture cache layouts: textures={}", transitionCount);
     }
 
     const asset::CVulkanTexture2D& CVulkanTexturesCache::loadTexture(const std::string& id, const asset::CVulkanImageSrc& srcImage, const VkFormat& format) {
         if (const auto it = this->_indexedTexturesMap.map().find(id); it != this->_indexedTexturesMap.map().end()) {
-            logging::debug("Texture '{}' already exists in cache, reusing it", id);
+            log::debug("Texture '{}' already exists in cache, reusing it", id);
             return it->second;
         }
 
         DEBUG::ASSERT(this->_indexedTexturesMap.map().size() < renderConfig::MAX_TEXTURES_IN_CACHE, "Texture cache is full: cannot load texture '{}', current={}, maximum={}", id, this->_indexedTexturesMap.map().size(), renderConfig::MAX_TEXTURES_IN_CACHE);
 
-        logging::debug("Loading texture '{}': format={}", id, static_cast<uint32_t>(format));
+        log::debug("Loading texture '{}': format={}", id, static_cast<uint32_t>(format));
 
         auto texture = asset::CVulkanTexture2D{this->_context, id, srcImage, format};
         this->_indexedTexturesMap.emplace(id, std::move(texture));
@@ -149,17 +149,17 @@ namespace cvulkan::client::render::cache {
         const auto it = this->_indexedTexturesMap.map().find(id);
         DEBUG::ASSERT(it != this->_indexedTexturesMap.map().end(), "Texture '{}' was not found in cache after insertion", id);
 
-        logging::debug("Texture '{}' loaded into cache: textures={}", id, this->_indexedTexturesMap.map().size());
+        log::debug("Texture '{}' loaded into cache: textures={}", id, this->_indexedTexturesMap.map().size());
         return it->second;
     }
 
     const asset::CVulkanTexture2D& CVulkanTexturesCache::loadTexture(const std::string& id, const std::filesystem::path& texturePath, const VkFormat& format, const bool genMipMaps) {
         if (const auto it = this->_indexedTexturesMap.map().find(id); it != this->_indexedTexturesMap.map().end()) {
-            logging::debug("Texture '{}' already exists in cache, reusing it", id);
+            log::debug("Texture '{}' already exists in cache, reusing it", id);
             return it->second;
         }
 
-        logging::debug("Loading texture '{}' from '{}': format={}", id, texturePath.string(), static_cast<uint32_t>(format));
+        log::debug("Loading texture '{}' from '{}': format={}", id, texturePath.string(), static_cast<uint32_t>(format));
 
         asset::CVulkanImageSrc srcImage = asset::imageLoad::loadImage(texturePath);
         srcImage._genMipMaps = genMipMaps;
@@ -171,24 +171,24 @@ namespace cvulkan::client::render::cache {
     [[nodiscard]] int32_t CVulkanTexturesCache::getPosition(const std::string& id) const {
         const auto res = this->_indexedTexturesMap.getIndexOf(id);
         if (res < 0) {
-            logging::debug("Texture '{}' was not found in cache", id);
+            log::debug("Texture '{}' was not found in cache", id);
             return -1;
         }
 
-        logging::trace("Texture '{}' found in cache at position {}", id, res);
+        log::trace("Texture '{}' found in cache at position {}", id, res);
         return res;
     }
 
     CVulkanMaterialsCache::~CVulkanMaterialsCache() {
-        logging::debug("Cleaned up materials cache");
+        log::debug("Cleaned up materials cache");
     }
 
     void CVulkanMaterialsCache::loadMaterials(std::vector<asset::modelGen::CVulkanMaterialData>& materials, CVulkanTexturesCache& texturesCache, const vk::CVulkanCommandPool& commandPool, const vk::CVulkanQueue& queue) {
         const std::size_t numMaterials = materials.size();
-        logging::debug("Loading {} materials into Vulkan", numMaterials);
+        log::debug("Loading {} materials into Vulkan", numMaterials);
 
         if (materials.empty()) {
-            logging::debug("No materials to load");
+            log::debug("No materials to load");
             return;
         }
 
@@ -196,7 +196,7 @@ namespace cvulkan::client::render::cache {
         static_assert(MAT_BUFFER_SIZE == materialDataSize, "Material buffer size mismatch");
 
         const VkDeviceSize bufferSize = static_cast<VkDeviceSize>(MAT_BUFFER_SIZE) * numMaterials;
-        logging::debug("Allocating materials storage buffer: materials={}, bufferSize={} bytes, materialSize={} bytes", numMaterials, bufferSize, MAT_BUFFER_SIZE);
+        log::debug("Allocating materials storage buffer: materials={}, bufferSize={} bytes, materialSize={} bytes", numMaterials, bufferSize, MAT_BUFFER_SIZE);
 
         vk::CVulkanBuffer srcBuffer{this->_context, bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_AUTO,
             VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT};
@@ -210,7 +210,7 @@ namespace cvulkan::client::render::cache {
             ._dst = std::move(matBuffer),
         };
 
-        logging::debug("Mapping materials staging buffer: size={} bytes", bufferSize);
+        log::debug("Mapping materials staging buffer: size={} bytes", bufferSize);
         transferBufferData._src.mapMem();
 
         auto* mappedMemory = static_cast<char*>(transferBufferData._src.mappedMemory());
@@ -221,10 +221,11 @@ namespace cvulkan::client::render::cache {
 
         for (std::size_t i = 0; i < numMaterials; i++) {
             auto& [_id, _texturePath, _diffuseColor, _hasTransparency] = materials.at(i);
-            logging::debug("Processing material '{}': index={}, texturePath='{}'", _id, i, _texturePath.path().string());
+            log::debug("Processing material '{}': index={}, texturePath='{}'", _id, i, _texturePath.path().string());
 
             if (offset + MAT_BUFFER_SIZE > bufferSize) {
                 transferBufferData._src.unMapMem();
+
                 DEBUG::ASSERT(false, "Materials buffer overflow while writing material '{}': offset={}, materialSize={}, bufferSize={}", _id, offset, MAT_BUFFER_SIZE, bufferSize);
             }
 
@@ -232,7 +233,7 @@ namespace cvulkan::client::render::cache {
             int32_t hasTextureValue32 = 0;
 
             if (!_texturePath.isEmpty()) {
-                const std::filesystem::path texturePath = io_utils::_RS_RESOLVER / _texturePath;
+                const std::filesystem::path texturePath = io::_RS_RESOLVER / _texturePath;
 
                 if (std::filesystem::is_regular_file(texturePath)) {
                     const asset::CVulkanTexture2D& texture2D = texturesCache.loadTexture(texturePath.string(), texturePath, VK_FORMAT_R8G8B8A8_SRGB, true);
@@ -247,7 +248,7 @@ namespace cvulkan::client::render::cache {
                     hasTextureValue32 = 1;
                     ++texturedMaterials;
                 } else {
-                    logging::warn("Texture file does not exist for material '{}': '{}'. Material will use diffuse color only", _id, texturePath.string());
+                    log::warn("Texture file does not exist for material '{}': '{}'. Material will use diffuse color only", _id, texturePath.string());
                 }
             }
 
@@ -258,7 +259,7 @@ namespace cvulkan::client::render::cache {
             const structs::CVulkanMaterial material{_id, _hasTransparency};
 
             if (this->_indexedMaterialsMap.map().contains(material._id)) {
-                logging::warn("Material '{}' already exists in cache and will be replaced", material._id);
+                log::warn("Material '{}' already exists in cache and will be replaced", material._id);
             }
 
             this->_indexedMaterialsMap.emplace(material._id, material);
@@ -281,23 +282,23 @@ namespace cvulkan::client::render::cache {
                 offset += sizeof(padding);
             }
 
-            logging::debug("Material '{}' serialized: textureEnabled={}, texturePosition={}, bytesWritten={}", _id, hasTextureValue32, texturePos, offset);
+            log::debug("Material '{}' serialized: textureEnabled={}, texturePosition={}, bytesWritten={}", _id, hasTextureValue32, texturePos, offset);
         }
 
         transferBufferData._src.unMapMem();
 
         DEBUG::ASSERT(offset == bufferSize, "Materials buffer size mismatch after serialization: expected={} bytes, written={} bytes", bufferSize, offset);
 
-        logging::debug("Materials serialized successfully: materials={}, texturedMaterials={}, bytesWritten={}", numMaterials, texturedMaterials, offset);
+        log::debug("Materials serialized successfully: materials={}, texturedMaterials={}, bytesWritten={}", numMaterials, texturedMaterials, offset);
 
         transferBufferData.recordTransferCommand(commandBuffer);
         commandBuffer.endRecording();
 
-        logging::debug("Submitting materials buffer transfer and waiting for completion");
+        log::debug("Submitting materials buffer transfer and waiting for completion");
         commandBuffer.submitAndWait(queue);
 
         this->_materialsBuffer = std::make_unique<vk::CVulkanBuffer>(std::move(transferBufferData._dst));
-        logging::debug("Materials storage buffer uploaded successfully: materials={}, size={} bytes", numMaterials, bufferSize);
+        log::debug("Materials storage buffer uploaded successfully: materials={}, size={} bytes", numMaterials, bufferSize);
     }
 
     const structs::CVulkanMaterial* CVulkanMaterialsCache::getMaterial(const std::string& id) const {

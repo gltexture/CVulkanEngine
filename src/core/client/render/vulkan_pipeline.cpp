@@ -16,24 +16,82 @@ namespace cvulkan::client::render::vk {
             .sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO,
         };
         vk::util::vkCheck(vkCreatePipelineCache(this->_context.device().vkDevice(), &pipelineCacheCreateInfo, nullptr, &this->_vkPipelineCache), "Error creating vkPipeline cache");
-        logging::info("Created Vulkan pipeline cache");
+        log::info("Created Vulkan pipeline cache");
     }
 
     CVulkanPipelineCache::~CVulkanPipelineCache() {
         if (this->_vkPipelineCache != VK_NULL_HANDLE) {
             vkDestroyPipelineCache(this->_context.device().vkDevice(), this->_vkPipelineCache, nullptr);
-            logging::info("Destroyed Vulkan pipeline cache");
+            log::info("Destroyed Vulkan pipeline cache");
             this->_vkPipelineCache = VK_NULL_HANDLE;
         }
     }
 
-    CVulkanPipelineBuildInfo::CVulkanPipelineBuildInfo(const std::span<CRef_CVulkanDescriptorSetLayout> descriptorSetLayouts,
-                                 const std::span<CRef_CVulkanShaderModule> shaderModules,
-                                 const std::span<CRef_CVulkanPushConstantRange> pushConstantRanges,
-                                 const VkPipelineVertexInputStateCreateInfo& vkVertexInputInfo,
-                                 const VkFormat vkColorFormat, const VkFormat vkDepthFormat, const bool useBlend)
-        : _vkColorFormat(vkColorFormat), _vkDepthFormat(vkDepthFormat), _pushConstantRanges(pushConstantRanges), _shaderModules(shaderModules), _descriptorSetLayouts(descriptorSetLayouts), _vkVertexInputInfo(vkVertexInputInfo), _useBlend(useBlend) {
-    }
+    CVulkanPipelineBuildInfo::CVulkanPipelineBuildInfo(
+        const std::span<CRef_CVulkanDescriptorSetLayout> descriptorSetLayouts,
+        const std::span<CRef_CVulkanShaderModule> shaderModules,
+        const std::span<CRef_CVulkanPushConstantRange> pushConstantRanges,
+        const VkPipelineVertexInputStateCreateInfo& vkVertexInputInfo,
+        const std::span<const VkFormat> vkColorFormats, const VkFormat vkDepthFormat, const bool useBlend)
+    : _vkColorFormats(vkColorFormats),
+    _vkDepthFormat(vkDepthFormat),
+    _pushConstantRanges(pushConstantRanges),
+    _shaderModules(shaderModules),
+    _descriptorSetLayouts(descriptorSetLayouts),
+    _vkVertexInputInfo(vkVertexInputInfo),
+    _useBlend(useBlend) {}
+
+        CVulkanPipelineBuildInfo::CVulkanPipelineBuildInfo(
+        const std::span<const CRef_CVulkanDescriptorSetLayout> descriptorSetLayouts,
+        const std::span<const CRef_CVulkanShaderModule> shaderModules,
+        const std::span<const CRef_CVulkanPushConstantRange> pushConstantRanges,
+        const VkPipelineVertexInputStateCreateInfo& vkVertexInputInfo,
+        const std::span<const VkFormat> vkColorFormats,
+        const bool useBlend
+    ) : CVulkanPipelineBuildInfo(
+        descriptorSetLayouts,
+        shaderModules,
+        pushConstantRanges,
+        vkVertexInputInfo,
+        vkColorFormats,
+        VK_FORMAT_UNDEFINED,
+        useBlend
+    ) {}
+
+    CVulkanPipelineBuildInfo::CVulkanPipelineBuildInfo(
+        const std::span<const CRef_CVulkanDescriptorSetLayout> descriptorSetLayouts,
+        const std::span<const CRef_CVulkanShaderModule> shaderModules,
+        const std::span<const CRef_CVulkanPushConstantRange> pushConstantRanges,
+        const VkPipelineVertexInputStateCreateInfo& vkVertexInputInfo,
+        const std::initializer_list<VkFormat> vkColorFormats,
+        const VkFormat vkDepthFormat,
+        const bool useBlend
+    ) : CVulkanPipelineBuildInfo(
+        descriptorSetLayouts,
+        shaderModules,
+        pushConstantRanges,
+        vkVertexInputInfo,
+        std::span{vkColorFormats.begin(), vkColorFormats.size()},
+        vkDepthFormat,
+        useBlend
+    ) {}
+
+    CVulkanPipelineBuildInfo::CVulkanPipelineBuildInfo(
+        const std::span<const CRef_CVulkanDescriptorSetLayout> descriptorSetLayouts,
+        const std::span<const CRef_CVulkanShaderModule> shaderModules,
+        const std::span<const CRef_CVulkanPushConstantRange> pushConstantRanges,
+        const VkPipelineVertexInputStateCreateInfo& vkVertexInputInfo,
+        const std::initializer_list<VkFormat> vkColorFormats,
+        const bool useBlend
+    ) : CVulkanPipelineBuildInfo(
+        descriptorSetLayouts,
+        shaderModules,
+        pushConstantRanges,
+        vkVertexInputInfo,
+        std::span{vkColorFormats.begin(), vkColorFormats.size()},
+        VK_FORMAT_UNDEFINED,
+        useBlend
+    ) {}
 
     void CVulkanPipeline::validateVertexInputState(const VkPipelineVertexInputStateCreateInfo& info) {
         if (info.sType != VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO) {
@@ -61,7 +119,7 @@ namespace cvulkan::client::render::vk {
             if (format == VK_FORMAT_UNDEFINED) {
                 throw exc::CVulkanException("Vertex attribute has undefined format");
             }
-            logging::debug("Vertex attribute: location={}, binding={}, format={}, offset={}", location, binding,static_cast<int>(format), offset);
+            log::debug("Vertex attribute: location={}, binding={}, format={}, offset={}", location, binding,static_cast<int>(format), offset);
         }
 
         for (uint32_t i = 0; i < info.vertexBindingDescriptionCount; ++i) {
@@ -69,7 +127,7 @@ namespace cvulkan::client::render::vk {
             if (stride == 0) {
                 throw exc::CVulkanException("Vertex binding has zero stride");
             }
-            logging::debug("Vertex binding: binding={}, stride={}, inputRate={}", binding, stride, static_cast<int>(inputRate));
+            log::debug("Vertex binding: binding={}, stride={}, inputRate={}", binding, stride, static_cast<int>(inputRate));
         }
     }
 
@@ -139,7 +197,6 @@ namespace cvulkan::client::render::vk {
             .attachmentCount = 1,
             .pAttachments = &blendAttachmentState
         };
-        const VkFormat colorFormat = buildInfo.vkColorFormat();
         const VkFormat depthFormat = buildInfo.vkDepthFormat();
         std::optional<VkPipelineDepthStencilStateCreateInfo> depthStencilStateCreateInfoOptional{};
         if (buildInfo.vkDepthFormat() != VK_FORMAT_UNDEFINED) {
@@ -155,8 +212,8 @@ namespace cvulkan::client::render::vk {
         }
         VkPipelineRenderingCreateInfo renderingCreateInfo {
             .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO,
-            .colorAttachmentCount = 1,
-            .pColorAttachmentFormats = &colorFormat,
+            .colorAttachmentCount = static_cast<uint32_t>(buildInfo.vkColorFormats().size()),
+            .pColorAttachmentFormats = buildInfo.vkColorFormats().data(),
             .depthAttachmentFormat = depthFormat
         };
 

@@ -25,16 +25,16 @@ namespace cvulkan::client::render::vk {
                 imageCount = std::min(requestedImages, maxImages);
             }
             imageCount = std::max(imageCount, minImages);
-            logging::debug("Requested {} swapchain images", imageCount);
+            log::debug("Requested {} swapchain images", imageCount);
         }
 
         {
             if (vkSurfaceCapabilities.currentExtent.width == UINT32_MAX) {
                 const auto& windowSize = this->_context.glfwWindow().size();
-                this->_swapChainExtent.width = std::clamp(windowSize.x, vkSurfaceCapabilities.minImageExtent.width, vkSurfaceCapabilities.maxImageExtent.width);
-                this->_swapChainExtent.height = std::clamp(windowSize.y, vkSurfaceCapabilities.minImageExtent.height, vkSurfaceCapabilities.maxImageExtent.height);
+                this->_vkSwapChainExtent.width = std::clamp(windowSize.x, vkSurfaceCapabilities.minImageExtent.width, vkSurfaceCapabilities.maxImageExtent.width);
+                this->_vkSwapChainExtent.height = std::clamp(windowSize.y, vkSurfaceCapabilities.minImageExtent.height, vkSurfaceCapabilities.maxImageExtent.height);
             } else {
-                this->_swapChainExtent = vkSurfaceCapabilities.currentExtent;
+                this->_vkSwapChainExtent = vkSurfaceCapabilities.currentExtent;
             }
         }
 
@@ -44,7 +44,7 @@ namespace cvulkan::client::render::vk {
         swapChainCreateInfo.minImageCount = imageCount;
         swapChainCreateInfo.imageFormat = vkFormat;
         swapChainCreateInfo.imageColorSpace = vkColorSpace;
-        swapChainCreateInfo.imageExtent = this->_swapChainExtent;
+        swapChainCreateInfo.imageExtent = this->_vkSwapChainExtent;
         swapChainCreateInfo.imageArrayLayers = 1;
         swapChainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
         swapChainCreateInfo.preTransform = vkSurfaceCapabilities.currentTransform;
@@ -74,14 +74,14 @@ namespace cvulkan::client::render::vk {
             }
         }
 
-        logging::info("Created Vulkan swapchain");
+        log::info("Created Vulkan swapchain");
     }
 
     CVulkanSwapChain::~CVulkanSwapChain() {
         if (this->_vkSwapChain != VK_NULL_HANDLE) {
             vkDestroySwapchainKHR(this->_context.device().vkDevice(), this->_vkSwapChain, nullptr);
             this->_vkSwapChain = VK_NULL_HANDLE;
-            logging::info("Destroyed Vulkan swapchain");
+            log::info("Destroyed Vulkan swapchain");
         }
     }
 
@@ -89,14 +89,14 @@ namespace cvulkan::client::render::vk {
         util::vkCheck(glfwCreateWindowSurface(context.instance().vkInstance(), this->_context.glfwWindow().glfwWindowDescriptor(), nullptr, &this->_vkSurface));
         util::vkCheck(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(context.physicalDevice().vkPhysicalDevice(), this->_vkSurface, &this->_vkSurfaceCapabilities));
         calcSurfaceFormat(this->_context.physicalDevice(), this->_vkSurface, this->_vkFormat, this->_vkColorSpace);
-        logging::debug("Created Vulkan surface");
+        log::debug("Created Vulkan surface");
     }
 
     CVulkanSurface::~CVulkanSurface() {
         if (this->_vkSurface != VK_NULL_HANDLE) {
             vkDestroySurfaceKHR(this->_context.instance().vkInstance(), this->_vkSurface, nullptr);
             this->_vkSurface = VK_NULL_HANDLE;
-            logging::debug("Destroyed Vulkan surface");
+            log::debug("Destroyed Vulkan surface");
         }
     }
 
@@ -114,7 +114,7 @@ namespace cvulkan::client::render::vk {
             if (f == VK_FORMAT_B8G8R8A8_UNORM && c == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
                 vkFormat = f;
                 vkColorSpace = c;
-                logging::debug("Using surface format {}, color space {}", static_cast<int>(f), static_cast<int>(c));
+                log::debug("Using surface format {}, color space {}", static_cast<int>(f), static_cast<int>(c));
                 break;
             }
         }

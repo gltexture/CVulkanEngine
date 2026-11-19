@@ -3,7 +3,7 @@
 //
 #pragma once
 
-#include "utility/logger.h"
+#include "utility/logging.h"
 
 namespace cvulkan::client::render::vk {
     template<ValidSpecConst... Args>
@@ -32,17 +32,17 @@ namespace cvulkan::client::render::vk {
 
         (entry(args), ...);
 
-        this->_specializationInfo = {
+        this->_vkSpecializationInfo = {
             .mapEntryCount = static_cast<uint32_t>(this->_entries.size()),
             .pMapEntries = this->_entries.data(),
             .dataSize = this->_data.size(),
             .pData = this->_data.data()
         };
-        logging::debug("Created specialization constant");
+        log::debug("Created specialization constant");
     }
 
     template<ValidSpecConst ... Args>
     CVulkanSpecConstants<Args...>::~CVulkanSpecConstants() {
-        logging::debug("Destroyed specialization constant");
+        log::debug("Destroyed specialization constant");
     }
 }

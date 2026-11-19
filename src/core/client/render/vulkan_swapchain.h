@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "vulkan_images.h"
-#include "utility/sys_utils.h"
+#include "utility/system.h"
 
 namespace cvulkan::client::render::sync {
     class CVulkanSemaphore;
@@ -41,19 +41,19 @@ namespace cvulkan::client::render::vk {
             return _numImages;
         }
 
-        [[nodiscard]] VkExtent2D extent() const {
-            return _swapChainExtent;
+        [[nodiscard]] VkExtent2D vkExtent2D() const {
+            return _vkSwapChainExtent;
         }
 
-        [[nodiscard]] VkExtent3D extent3D() const {
-            return {this->extent().width, this->extent().height, 1};
+        [[nodiscard]] VkExtent3D vkExtent3D() const {
+            return {this->vkExtent2D().width, this->vkExtent2D().height, 1};
         }
 
         [[nodiscard]] bool presentImage(const CVulkanQueue& queue, const sync::CVulkanSemaphore& renderCompleteSemaphore, const uint32_t& imageIndex) const;
 
     private:
         const CVulkanContext& _context;
-        VkExtent2D _swapChainExtent{};
+        VkExtent2D _vkSwapChainExtent{};
         uint32_t _numImages = UINT32_MAX;
         VkSwapchainKHR _vkSwapChain{};
         std::vector<CVulkanImage2DView> _imageViews{};

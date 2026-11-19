@@ -7,14 +7,15 @@
 #include <imgui.h>
 
 #include "vulkan_render_cache.h"
-#include "vulkan_render_scene__main.h"
+#include "vulkan_render_scene__deferred.h"
 #include "client/control/client_input.h"
 #include "client/render/vulkan_commands.h"
 #include "client/render/assets/asset_shaders.h"
 #include "client/render/assets/asset_textures.h"
+#include "debug/vulkan_imgui_window_renderer.h"
 #include "test_logic/test_logic.h"
-#include "utility/fun_utils.h"
-#include "utility/io_utils.h"
+#include "utility/functionality.h"
+#include "utility/io.h"
 
 namespace cvulkan::client::render::scene::imgui {
     CVulkanImGuiRenderer::CVulkanImGuiRenderer(const vk::CVulkanContext& context, vk::CVulkanDescriptorAllocator& descriptorAllocator, const vk::CVulkanAttachment2D& dstAttachment, cache::CVulkanCacheCollection& caches)
@@ -34,17 +35,17 @@ namespace cvulkan::client::render::scene::imgui {
         ImGui::GetIO().Fonts->SetTexID(reinterpret_cast<ImTextureID>(_texturePtr.get()));
         this->_guiTextures.emplace(reinterpret_cast<ImTextureID>(_texturePtr.get()), descriptorSet.vkDescriptorSet());
 
-        const shader::CVulkanShaderModule shaderV = asset::shaderLoad::compileAndLoadShader(this->_context, io_utils::CVulkanResourcePath{"imgui/v.vert"}, VK_SHADER_STAGE_VERTEX_BIT, nullptr);
-        const shader::CVulkanShaderModule shaderF = asset::shaderLoad::compileAndLoadShader(this->_context, io_utils::CVulkanResourcePath{"imgui/f.frag"}, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr);
+        const shader::CVulkanShaderModule shaderV = asset::shaderLoad::compileAndLoadShader(this->_context, io::CVulkanResourcePath{"imgui/v.vert"}, VK_SHADER_STAGE_VERTEX_BIT, nullptr);
+        const shader::CVulkanShaderModule shaderF = asset::shaderLoad::compileAndLoadShader(this->_context, io::CVulkanResourcePath{"imgui/f.frag"}, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr);
 
         constexpr vk::CVulkanPushConstantRange pushConstantRange1 {VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::vec2)};
         const auto bufferStruct = structs::CVulkanImGuiVertexBufferStruct {context};
 
         const vk::CVulkanPipelineBuildInfo buildInfo{
-            fun_utils::packCRefs(*this->_descriptorSetLayout_texture),
-            fun_utils::packCRefs(shaderV, shaderF),
-            fun_utils::packCRefs(pushConstantRange1),
-            bufferStruct.vkPipelineVertexInputStateCreateInfo(), COLOR_FORMAT, true};
+            fun::packCRefs(*this->_descriptorSetLayout_texture),
+            fun::packCRefs(shaderV, shaderF),
+            fun::packCRefs(pushConstantRange1),
+            bufferStruct.vkPipelineVertexInputStateCreateInfo(), {COLOR_FORMAT}, true};
 
         this->_imguiPipeline = std::make_unique<vk::CVulkanPipeline>(this->_context, buildInfo);
 
@@ -63,6 +64,11 @@ namespace cvulkan::client::render::scene::imgui {
         {
             test_logic::renderImGuiWindow();
         }
+        {
+            if (debug::imgui::ImguiDebugWindowRenderer != nullptr) {
+                debug::imgui::ImguiDebugWindowRenderer->renderDebugWindow();
+            }
+        }
         ImGui::EndFrame();
         ImGui::Render();
     }
@@ -80,10 +86,10 @@ namespace cvulkan::client::render::scene::imgui {
             return;
         }
 
-        vkCmdBeginRendering(commandBuffer.vkCommandBuffer(), &this->_renderingInfo);
+        vkCmdBeginRendering(commandBuffer.vkCommandBuffer(), &this->_vkRenderingInfo);
         vkCmdBindPipeline(commandBuffer.vkCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, this->_imguiPipeline->vkPipeline());
 
-        main::CVulkanSceneRenderer::setViewport(commandBuffer, dstAttachment.image().extent2D());
+        deferred::CVulkanSceneRenderer::setViewport(commandBuffer, dstAttachment.image().vkExtent2D());
 
         constexpr VkDeviceSize offset = 0;
         const VkBuffer vertexBuffer = this->_vtxBuffers.at(imageIndex)->vkBuffer();
@@ -108,7 +114,13 @@ namespace cvulkan::client::render::scene::imgui {
                 const ImDrawCmd& drawCmd = cmdList->CmdBuffer[j];
 
                 ImTextureID textureId = drawCmd.GetTexID();
-                const VkDescriptorSet& descriptorSet = this->_guiTextures.at(textureId);
+                VkDescriptorSet descriptorSet {};
+                if (const auto it = this->_guiTextures.find(textureId); it != this->_guiTextures.end()) {
+                    descriptorSet = it->second;
+                } else {
+                    descriptorSet = reinterpret_cast<VkDescriptorSet>(textureId);
+                }
+
                 vkCmdBindDescriptorSets(commandBuffer.vkCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, this->_imguiPipeline->vkPipelineLayout(), 0, 1, &descriptorSet, 0, nullptr);
 
                 const ImVec2 clipMin {
@@ -143,17 +155,20 @@ namespace cvulkan::client::render::scene::imgui {
 
     void CVulkanImGuiRenderer::onResize(const vk::CVulkanAttachment2D& dstAttachment) {
         ImGuiIO& io = ImGui::GetIO();
-        const auto& [width, height] = this->_context.swapChain().extent();
+        const auto& [width, height] = this->_context.swapChain().vkExtent2D();
         io.DisplaySize = ImVec2(
             static_cast<float>(width),
             static_cast<float>(height)
         );
         this->createRenderingData(dstAttachment);
+        if (debug::imgui::ImguiDebugWindowRenderer != nullptr) {
+            debug::imgui::ImguiDebugWindowRenderer->onResize();
+        }
     }
 
     void CVulkanImGuiRenderer::loadTextures(const std::span<CVulkanImGuiTextureData> textures) {
         for (const auto& [_id, _texturePath] : textures) {
-            const std::filesystem::path textureFullPath = io_utils::_RS_RESOLVER / _texturePath;
+            const std::filesystem::path textureFullPath = io::_RS_RESOLVER / _texturePath;
             const asset::CVulkanTexture2D& texture2D = this->_caches.texturesCache().loadTexture(textureFullPath.string(), textureFullPath, VK_FORMAT_R8G8B8A8_SRGB, false);
             const vk::CVulkanDescriptorSet& descriptorSet = this->_descriptorAllocator.allocateDescriptorSet(textureFullPath.string(), *this->_descriptorSetLayout_texture);
             descriptorSet.setImage(texture2D.imageView(), *this->_fontTextureSampler, this->_descriptorSetLayout_texture->layoutInfo()._binding);
@@ -162,7 +177,7 @@ namespace cvulkan::client::render::scene::imgui {
     }
 
     void CVulkanImGuiRenderer::createRenderingData(const vk::CVulkanAttachment2D& dstAttachment) {
-        this->_colorAttachmentInfo = {
+        this->_vkColorAttachmentInfo = {
             .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
             .imageView = dstAttachment.view().vkImageView(),
             .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
@@ -170,15 +185,15 @@ namespace cvulkan::client::render::scene::imgui {
             .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
         };
 
-        this->_renderingInfo = {
+        this->_vkRenderingInfo = {
             .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
             .renderArea = {
                 .offset = {.x = 0, .y = 0},
-                .extent = dstAttachment.image().extent2D()
+                .extent = dstAttachment.image().vkExtent2D()
             },
             .layerCount = 1,
             .colorAttachmentCount = 1,
-            .pColorAttachments = &this->_colorAttachmentInfo
+            .pColorAttachments = &this->_vkColorAttachmentInfo
         };
     }
 
@@ -188,8 +203,8 @@ namespace cvulkan::client::render::scene::imgui {
         ImGuiIO& io = ImGui::GetIO();
         io.IniFilename = nullptr;
         io.DisplaySize = {
-            static_cast<float>(this->_context.swapChain().extent().width),
-            static_cast<float>(this->_context.swapChain().extent().height)
+            static_cast<float>(this->_context.swapChain().vkExtent2D().width),
+            static_cast<float>(this->_context.swapChain().vkExtent2D().height)
         };
         io.DisplayFramebufferScale = {1.0f, 1.0f};
 

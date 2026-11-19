@@ -9,13 +9,13 @@
 
 #include "vulkan_render_core.h"
 #include "utility/exceptions.h"
-#include "utility/io_utils.h"
+#include "utility/io.h"
 
 namespace cvulkan::client::render::shader {
-    CVulkanShaderModule::CVulkanShaderModule(const vk::CVulkanContext& context, const io_utils::CVulkanResourcePath& shaderSpvFileName, const VkShaderStageFlagBits vkStage, const VkSpecializationInfo* vkSpecializationInfo)
+    CVulkanShaderModule::CVulkanShaderModule(const vk::CVulkanContext& context, const io::CVulkanResourcePath& shaderSpvFileName, const VkShaderStageFlagBits vkStage, const VkSpecializationInfo* vkSpecializationInfo)
         : _context{context}, _vkStage(vkStage), _vkSpecializationInfo(vkSpecializationInfo) {
-        const std::filesystem::path spvFile = io_utils::_RS_RESOLVER / (io_utils::CVulkanResourcePath{io_utils::SHADERS_COMPILED} / shaderSpvFileName);
-        logging::debug("Loading shader module: '{}'", spvFile.string());
+        const std::filesystem::path spvFile = io::_RS_RESOLVER / (io::CVulkanResourcePath{io::SHADERS_COMPILED} / shaderSpvFileName);
+        log::debug("Loading shader module: '{}'", spvFile.string());
 
         if (!std::filesystem::exists(spvFile)) {
             throw exc::CVulkanException("Shader file does not exist: '{}'", spvFile.string());
@@ -59,9 +59,9 @@ namespace cvulkan::client::render::shader {
             .pCode = spvCode,
         };
 
-        logging::debug("Creating shader module: stage={}, size={} bytes", static_cast<uint32_t>(this->_vkStage), fileSize);
+        log::debug("Creating shader module: stage={}, size={} bytes", static_cast<uint32_t>(this->_vkStage), fileSize);
         vk::util::vkCheck(vkCreateShaderModule(this->_context.device().vkDevice(), &spvModuleCreateInfo, nullptr, &this->_vkShaderModule), "Failed to create shader module");
-        logging::debug("Shader module created successfully: '{}'", spvFile.string());
+        log::debug("Shader module created successfully: '{}'", spvFile.string());
     }
 
     CVulkanShaderModule::~CVulkanShaderModule() {

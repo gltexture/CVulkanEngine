@@ -4,7 +4,7 @@
 
 #pragma once
 
-namespace cvulkan::fun_utils {
+namespace cvulkan::fun {
     template <typename T, typename... Args>
     requires(std::same_as<T, Args> && ...)
     std::array<std::reference_wrapper<const T>, 1 + sizeof...(Args)> packCRefs(const T& first, const Args&... args) {

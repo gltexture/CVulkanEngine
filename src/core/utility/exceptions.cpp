@@ -5,7 +5,7 @@
 #include "exceptions.h"
 
 #include "CrashCatch.hpp"
-#include "io_utils.h"
+#include "io.h"
 
 namespace cvulkan::exc {
     void crash::CCrashReporter::initialize() {
@@ -14,7 +14,7 @@ namespace cvulkan::exc {
         config.appVersion = "1.0.0";
         config.buildConfig = "Release";
 
-        config.dumpFolder = io_utils::_OUT_RESOLVER / io_utils::CVulkanResourcePath{"crash_logs"};
+        config.dumpFolder = io::_OUT_RESOLVER / io::CRASH_LOGS;
 
         config.enableTextLog = true;
         config.includeStackTrace = true;

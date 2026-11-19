@@ -125,7 +125,6 @@ add_executable(CVulkanEngine
         src/core/client/render/vulkan_swapchain.cpp
         src/core/client/render/scene/vulkan_render_loop.cpp
         src/core/client/render/vulkan_buffers.cpp
-        src/core/client/render/scene/vulkan_render_scene__main.cpp
         src/core/client/render/scene/vulkan_render_structs.cpp
         src/core/client/render/scene/vulkan_render_cache.cpp
         src/core/client/render/vulkan_shaders.cpp
@@ -148,11 +147,11 @@ add_executable(CVulkanEngine
         src/core/client/render/vulkan_descriptors.h
         src/core/client/render/_impl/stbi_impl.cpp
         src/core/client/render/_impl/stbiw_impl.cpp
-        src/core/utility/sys_utils.cpp
-        src/core/utility/sys_utils.h
-        src/core/utility/io_utils.cpp
-        src/core/utility/io_utils.h
-        src/core/client/render/scene/vulkan_render_scene__main_context.cpp
+        src/core/utility/system.cpp
+        src/core/utility/system.h
+        src/core/utility/io.cpp
+        src/core/utility/io.h
+        src/core/client/render/scene/vulkan_render_scene__deferred_context.cpp
         src/core/client/render/scene/camera/view_camera.cpp
         src/core/client/render/scene/camera/view_camera.h
         src/core/test_logic/test_logic.cpp
@@ -164,8 +163,8 @@ add_executable(CVulkanEngine
         src/core/client/render/scene/vulkan_render_scene__post.h
         src/core/client/render/vulkan_spec_const.tpp
         src/core/client/render/vulkan_spec_const.h
-        src/core/utility/fun_utils.cpp
-        src/core/utility/fun_utils.h
+        src/core/utility/functionality.cpp
+        src/core/utility/functionality.h
         src/core/client/render/scene/vulkan_render_scene__swapchain.cpp
         src/core/client/render/scene/vulkan_render_scene__swapchain.h
         src/core/client/render/scene/vulkan_render_scene__imgui.cpp
@@ -175,6 +174,12 @@ add_executable(CVulkanEngine
         src/core/client/control/client_input__handling.cpp
         src/core/utility/DEBUG.tpp
         src/core/utility/DEBUG.h
+        src/core/client/render/scene/cvulkan_render_mrt.cpp
+        src/core/client/render/scene/cvulkan_render_mrt.h
+        src/core/client/render/scene/vulkan_render_scene__deferred_lpass.cpp
+        src/core/client/render/scene/vulkan_render_scene__deferred_gpass.cpp
+        src/core/client/render/scene/debug/vulkan_imgui_window_renderer.cpp
+        src/core/client/render/scene/debug/vulkan_imgui_window_renderer.h
 )
 
 target_compile_features(CVulkanEngine PRIVATE cxx_std_23)

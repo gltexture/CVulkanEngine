@@ -3,7 +3,7 @@
 //
 
 #pragma once
-#include <format>
+
 #include <stdexcept>
 #include <stacktrace>
 #include <string>
@@ -17,8 +17,8 @@ namespace cvulkan::exc {
         }
 
         template<typename... Args>
-        explicit CVulkanException(const std::format_string<Args...> message, Args&&... args)
-            : CVulkanException(std::format(message, std::forward<Args>(args)...)) {
+        explicit CVulkanException(const fmt::format_string<Args...> message, Args&&... args)
+            : CVulkanException(fmt::format(message, std::forward<Args>(args)...)) {
         }
 
         [[nodiscard]]

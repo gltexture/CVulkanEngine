@@ -7,17 +7,17 @@
 #include <fstream>
 
 
-#include "utility/DEBUG.h"
+#include "utility/debug.h"
 #include "utility/exceptions.h"
-#include "utility/logger.h"
-#include "utility/io_utils.h"
-#include "utility/sys_utils.h"
+#include "utility/logging.h"
+#include "utility/io.h"
+#include "utility/system.h"
 
 namespace cvulkan::client::render::asset {
     std::vector<char> shaderCompile::compileShader(const std::string& shaderName, const std::string& shaderCode, uint32_t shaderType) {
         const shaderc_compiler_t compiler = shaderc_compiler_initialize();
         const shaderc_compile_options_t options = shaderc_compile_options_initialize();
-        if (sys_utils::debug_mode) {
+        if (system::debug_mode) {
             shaderc_compile_options_set_generate_debug_info(options);
             shaderc_compile_options_set_optimization_level(options, shaderc_optimization_level_zero);
             shaderc_compile_options_set_source_language(options, shaderc_source_language_glsl);
@@ -44,13 +44,13 @@ namespace cvulkan::client::render::asset {
         return compiledShader;
     }
 
-    void shaderCompile::compileShaderIfOutOfDate(const io_utils::CVulkanResourcePath& shaderSourceFile, const uint32_t shaderType) {
+    void shaderCompile::compileShaderIfOutOfDate(const io::CVulkanResourcePath& shaderSourceFile, const uint32_t shaderType) {
         const std::filesystem::path relativePath = shaderSourceFile.path();
         std::filesystem::path spvRelativePath = relativePath;
         spvRelativePath += ".spv";
 
-        const std::filesystem::path glslFile = io_utils::_RS_RESOLVER / io_utils::CVulkanResourcePath{io_utils::SHADERS_SOURCE / relativePath};
-        const std::filesystem::path spvFile = io_utils::_RS_RESOLVER / io_utils::CVulkanResourcePath{io_utils::SHADERS_COMPILED / spvRelativePath};
+        const std::filesystem::path glslFile = io::_RS_RESOLVER / io::CVulkanResourcePath{io::SHADERS_SOURCE / relativePath};
+        const std::filesystem::path spvFile = io::_RS_RESOLVER / io::CVulkanResourcePath{io::SHADERS_COMPILED / spvRelativePath};
 
         DEBUG::ASSERT(std::filesystem::is_regular_file(glslFile), "Shader source file '{}' does not exist or is not a regular file", glslFile.string());
 
@@ -73,18 +73,18 @@ namespace cvulkan::client::render::asset {
             file.write(compiledBytes.data(), static_cast<std::streamsize>(compiledBytes.size()));
             DEBUG::ASSERT(file.good(), "Failed to write SPIR-V file '{}'", spvFile.string());
 
-            logging::info("Compiled shader '{}'", spvRelativePath.filename().string());
+            log::info("Compiled shader '{}'", spvRelativePath.string());
         } else {
-            logging::info("Shader '{}' is up to date, skipping compilation", spvRelativePath.filename().string());
+            log::info("Shader '{}' is up to date, skipping compilation", spvRelativePath.string());
         }
     }
 
-    shader::CVulkanShaderModule shaderLoad::compileAndLoadShader(const vk::CVulkanContext& context, const io_utils::CVulkanResourcePath& shaderSourceFile, VkShaderStageFlagBits vkStage, const VkSpecializationInfo* vkSpecializationInfo) {
+    shader::CVulkanShaderModule shaderLoad::compileAndLoadShader(const vk::CVulkanContext& context, const io::CVulkanResourcePath& shaderSourceFile, VkShaderStageFlagBits vkStage, const VkSpecializationInfo* vkSpecializationInfo) {
         shaderCompile::compileShaderIfOutOfDate(shaderSourceFile, toShadercKind(vkStage));
 
         const std::filesystem::path& relativePath = shaderSourceFile.path();
         std::filesystem::path spvRelativePath = relativePath;
         spvRelativePath += ".spv";
-        return {context, io_utils::CVulkanResourcePath{spvRelativePath}, vkStage, vkSpecializationInfo};
+        return {context, io::CVulkanResourcePath{spvRelativePath}, vkStage, vkSpecializationInfo};
     }
 }

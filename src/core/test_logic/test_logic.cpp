@@ -9,23 +9,23 @@
 #include "imgui.h"
 #include "client/control/client_input.h"
 #include "client/render/scene/vulkan_render_loop.h"
-#include "client/render/scene/vulkan_render_scene__main.h"
+#include "client/render/scene/vulkan_render_scene__deferred.h"
 #include "client/render/scene/vulkan_scene_objects.h"
 #include "client/render/scene/camera/view_camera.h"
 #include "client/render/scene/vulkan_render_scene__imgui.h"
-#include "utility/io_utils.h"
+#include "utility/io.h"
 
 namespace cvulkan::test_logic {
     constexpr static float MOUSE_SENSITIVITY = 0.5f;
     constexpr static float MOVEMENT_SPEED = 5.0f;
 
-    static client::render::scene::main::context::ModelId SCENE_MODEL_ID{};
+    static client::render::scene::deferred::context::ModelId SCENE_MODEL_ID{};
 
-    void initSceneResources(client::render::scene::main::context::CVulkanSceneResourcesInitializer& sceneResourcesInitializer) {
-        SCENE_MODEL_ID = sceneResourcesInitializer.loadModelWithMaterials(io_utils::CVulkanResourcePath{"limbo_final/limbo.gltf"});
+    void initSceneResources(client::render::scene::deferred::context::CVulkanSceneResourcesInitializer& sceneResourcesInitializer) {
+        SCENE_MODEL_ID = sceneResourcesInitializer.loadModelWithMaterials(io::CVulkanResourcePath{"limbo_final/limbo.gltf"});
     }
 
-    void initSceneObjects(client::render::scene::main::CVulkanSceneEntitiesCollection& entitiesCollection) {
+    void initSceneObjects(client::render::entity::CVulkanSceneEntitiesCollection& entitiesCollection) {
         client::render::entity::CVulkanSceneEntity entity = {"CubeEnt", SCENE_MODEL_ID};
         entity.transform()._position = {0.0f, 0.0f, -6.0f};
         entity.transform()._rotation = glm::angleAxis(glm::radians(0.0f), glm::vec3(1.0f, 1.0f, 1.0f));
@@ -34,7 +34,7 @@ namespace cvulkan::test_logic {
 
     void updateInput(const double deltaTime) {
         const auto& input = *client::input::ClientInput;
-        const auto& scene = client::render::loop::RenderLoop->mainSceneRenderer().sceneContext();
+        const auto& scene = client::render::loop::RenderLoop->deferredSceneRenderer().geometryPassRendering().sceneContext();
 
         const float move = static_cast<float>(deltaTime) * MOVEMENT_SPEED;
         auto* camera = scene.currentCamera();
@@ -88,6 +88,13 @@ namespace cvulkan::test_logic {
         io.AddMouseButtonEvent(1, client::input::ClientInput->mouse().isDown(1));
         io.AddMouseButtonEvent(2, client::input::ClientInput->mouse().isDown(2));
 
-        ImGui::ShowDemoWindow();
+        //const auto& descAlloc = client::render::loop::RenderLoop->descriptorAllocator();
+        //const auto& gpass = client::render::loop::RenderLoop->deferredSceneRenderer().geometryPassRendering();
+        //const VkDescriptorSet descriptorSet = descAlloc.getDescriptorSet(client::render::scene::deferred::lpass::DESC_ID_ATT, 0).vkDescriptorSet();
+        //ImGui::Begin("MRT Debug");
+        //constexpr ImVec2 imageSize{400.0f, 300.0f};
+        //ImGui::Text("Albedo");
+        //ImGui::Image(descriptorSet, imageSize);
+        //ImGui::End();
     }
 }

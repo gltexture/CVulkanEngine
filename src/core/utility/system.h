@@ -4,7 +4,7 @@
 
 #pragma once
 
-namespace cvulkan::sys_utils {
+namespace cvulkan::system {
 #define CLASS_NO_COPY(Type) \
 Type(const Type&) = delete; \
 Type& operator=(const Type&) = delete;
@@ -46,6 +46,4 @@ Type& operator=(Type&&) = delete;
     constexpr bool checkOS(const OSType osTypeToCheck) {
         return osTypeToCheck == osType;
     }
-
-    void utilityInitialize();
 }

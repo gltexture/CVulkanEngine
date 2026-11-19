@@ -4,7 +4,7 @@
 
 #pragma once
 #include "client/render/vulkan_config.hpp"
-#include "utility/sys_utils.h"
+#include "utility/system.h"
 
 namespace cvulkan::client::render::scene::context {
     class CVulkanSceneContext;
@@ -44,8 +44,8 @@ namespace cvulkan::client::render::scene::swapchain {
     private:
         const vk::CVulkanContext& _context;
         vk::CVulkanDescriptorAllocator& _descriptorAllocator;
-        std::array<VkRenderingAttachmentInfo, renderConfig::SWAP_CHAIN_IMAGES> _colorAttachmentsInfo {};
-        std::array<VkRenderingInfo, renderConfig::SWAP_CHAIN_IMAGES> _renderingInfo {};
+        std::array<VkRenderingAttachmentInfo, renderConfig::SWAP_CHAIN_IMAGES> _vkColorAttachmentsInfoArray {};
+        std::array<VkRenderingInfo, renderConfig::SWAP_CHAIN_IMAGES> _vkRenderingInfoArray {};
         std::unique_ptr<vk::CVulkanSampler> _textureSampler {};
         std::unique_ptr<vk::CVulkanPipeline> _swapchainPipeline {};
         std::unique_ptr<vk::CVulkanDescriptorSetLayout> _descriptorSetLayout_texture {};

@@ -6,7 +6,7 @@
 
 #include <utility>
 
-#include "utility/DEBUG.h"
+#include "utility/debug.h"
 #include "utility/exceptions.h"
 
 namespace cvulkan::client::render::structs {
@@ -15,7 +15,7 @@ namespace cvulkan::client::render::structs {
         static_assert(POSITION_COMPONENTS == 3);
         static_assert(UV_COMPONENTS == 2);
 
-        logging::debug("Creating Vulkan Mesh-vertex input structure: attributes={}, bindings={}", NUMBER_OF_ATTRIBUTES, 1);
+        log::debug("Creating Vulkan Mesh-vertex input structure: attributes={}, bindings={}", NUMBER_OF_ATTRIBUTES, 1);
 
         this->_vkVertexInputAttributeDescriptions.resize(NUMBER_OF_ATTRIBUTES);
         this->_vkVertexInputBindingDescriptions.resize(1);
@@ -30,7 +30,7 @@ namespace cvulkan::client::render::structs {
             format = VK_FORMAT_R32G32B32_SFLOAT;
             offset = mOffset;
             mOffset += POSITION_COMPONENTS * sizeof(float);
-            logging::debug("Mesh-Vertex attribute: location={}, binding={}, format=VK_FORMAT_R32G32B32_SFLOAT, offset={}, size={}", location, binding, offset, POSITION_COMPONENTS * sizeof(float));
+            log::debug("Mesh-Vertex attribute: location={}, binding={}, format=VK_FORMAT_R32G32B32_SFLOAT, offset={}, size={}", location, binding, offset, POSITION_COMPONENTS * sizeof(float));
         }
 
         {
@@ -41,7 +41,7 @@ namespace cvulkan::client::render::structs {
             format = VK_FORMAT_R32G32_SFLOAT;
             offset = mOffset;
             mOffset += UV_COMPONENTS * sizeof(float);
-            logging::debug("Mesh-Vertex attribute: location={}, binding={}, format=VK_FORMAT_R32G32_SFLOAT, offset={}, size={}", location, binding, static_cast<uint32_t>(format), offset, UV_COMPONENTS * sizeof(float));
+            log::debug("Mesh-Vertex attribute: location={}, binding={}, format=VK_FORMAT_R32G32_SFLOAT, offset={}, size={}", location, binding, static_cast<uint32_t>(format), offset, UV_COMPONENTS * sizeof(float));
         }
 
         {
@@ -50,7 +50,7 @@ namespace cvulkan::client::render::structs {
             binding = 0;
             stride = m_stride;
             inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-            logging::debug("Mesh-Vertex binding: binding={}, stride={}, inputRate=VK_VERTEX_INPUT_RATE_VERTEX", binding, stride);
+            log::debug("Mesh-Vertex binding: binding={}, stride={}, inputRate=VK_VERTEX_INPUT_RATE_VERTEX", binding, stride);
         }
 
         DEBUG::ASSERT(this->_vkVertexInputAttributeDescriptions.size() == NUMBER_OF_ATTRIBUTES && this->_vkVertexInputBindingDescriptions.size() == 1, "Invalid Vulkan Mesh-vertex input description counts");
@@ -64,14 +64,14 @@ namespace cvulkan::client::render::structs {
             .pVertexAttributeDescriptions = this->_vkVertexInputAttributeDescriptions.data(),
         };
 
-        logging::debug("Vulkan Mesh-vertex input structure created: attributes={}, bindings={}, stride={} bytes", this->_vkPipelineVertexInputStateCreateInfo.vertexAttributeDescriptionCount, this->_vkPipelineVertexInputStateCreateInfo.vertexBindingDescriptionCount, this->_vkVertexInputBindingDescriptions[0].stride);
+        log::debug("Vulkan Mesh-vertex input structure created: attributes={}, bindings={}, stride={} bytes", this->_vkPipelineVertexInputStateCreateInfo.vertexAttributeDescriptionCount, this->_vkPipelineVertexInputStateCreateInfo.vertexBindingDescriptionCount, this->_vkVertexInputBindingDescriptions[0].stride);
     }
 
 
     CVulkanImGuiVertexBufferStruct::CVulkanImGuiVertexBufferStruct(const vk::CVulkanContext& context) : CVulkanVertexBufferStruct(context) {
         static_assert(NUMBER_OF_ATTRIBUTES == 3);
 
-        logging::debug("Creating Vulkan ImGui-vertex input structure: attributes={}, bindings={}", NUMBER_OF_ATTRIBUTES, 1);
+        log::debug("Creating Vulkan ImGui-vertex input structure: attributes={}, bindings={}", NUMBER_OF_ATTRIBUTES, 1);
 
         this->_vkVertexInputAttributeDescriptions.resize(NUMBER_OF_ATTRIBUTES);
         this->_vkVertexInputBindingDescriptions.resize(1);
@@ -86,7 +86,7 @@ namespace cvulkan::client::render::structs {
             format = VK_FORMAT_R32G32_SFLOAT;
             offset = mOffset;
             mOffset += 2 * sizeof(float);
-            logging::debug("ImGui-Vertex attribute: location={}, binding={}, format=VK_FORMAT_R32G32_SFLOAT, offset={}, size={}", location, binding, offset, 2 * sizeof(float));
+            log::debug("ImGui-Vertex attribute: location={}, binding={}, format=VK_FORMAT_R32G32_SFLOAT, offset={}, size={}", location, binding, offset, 2 * sizeof(float));
         }
 
         {   // UV
@@ -97,7 +97,7 @@ namespace cvulkan::client::render::structs {
             format = VK_FORMAT_R32G32_SFLOAT;
             offset = mOffset;
             mOffset += 2 * sizeof(float);
-            logging::debug("ImGui-Vertex attribute: location={}, binding={}, format=VK_FORMAT_R32G32_SFLOAT, offset={}, size={}", location, binding, offset, 2 * sizeof(float));
+            log::debug("ImGui-Vertex attribute: location={}, binding={}, format=VK_FORMAT_R32G32_SFLOAT, offset={}, size={}", location, binding, offset, 2 * sizeof(float));
         }
 
         {   // COLOR
@@ -108,7 +108,7 @@ namespace cvulkan::client::render::structs {
             format = VK_FORMAT_R8G8B8A8_UNORM;
             offset = mOffset;
             mOffset += sizeof(uint8_t) * 4;
-            logging::debug("ImGui-Vertex attribute: location={}, binding={}, format=VK_FORMAT_R8G8B8A8_UNORM, offset={}, size={}", location, binding, offset, sizeof(uint8_t) * 4);
+            log::debug("ImGui-Vertex attribute: location={}, binding={}, format=VK_FORMAT_R8G8B8A8_UNORM, offset={}, size={}", location, binding, offset, sizeof(uint8_t) * 4);
         }
 
         {
@@ -116,7 +116,7 @@ namespace cvulkan::client::render::structs {
             binding = 0;
             stride = VERTEX_SIZE;
             inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-            logging::debug("ImGui-Vertex binding: binding={}, stride={}, inputRate=VK_VERTEX_INPUT_RATE_VERTEX", binding, stride);
+            log::debug("ImGui-Vertex binding: binding={}, stride={}, inputRate=VK_VERTEX_INPUT_RATE_VERTEX", binding, stride);
         }
 
         DEBUG::ASSERT(this->_vkVertexInputAttributeDescriptions.size() == NUMBER_OF_ATTRIBUTES && this->_vkVertexInputBindingDescriptions.size() == 1, "Invalid ImGui Mesh-vertex input description counts");
@@ -131,7 +131,7 @@ namespace cvulkan::client::render::structs {
             .pVertexAttributeDescriptions = this->_vkVertexInputAttributeDescriptions.data(),
         };
 
-        logging::debug("Vulkan ImGui-vertex input structure created: attributes={}, bindings={}, stride={} bytes",
+        log::debug("Vulkan ImGui-vertex input structure created: attributes={}, bindings={}, stride={} bytes",
             this->_vkPipelineVertexInputStateCreateInfo.vertexAttributeDescriptionCount, this->_vkPipelineVertexInputStateCreateInfo.vertexBindingDescriptionCount, this->_vkVertexInputBindingDescriptions[0].stride);
     }
 

@@ -7,20 +7,20 @@
 
 namespace cvulkan::DEBUG {
     template<typename... Args>
-    bool CHECK(std::source_location location, bool condition, std::string_view message, Args&&... args);
+    bool CHECK(std::source_location location, bool condition, fmt::format_string<Args...> message, Args&&... args);
 
     template<typename... Args>
-    void ASSERT(std::source_location location, bool condition, std::string_view message, Args&&... args);
+    void ASSERT(std::source_location location, bool condition, fmt::format_string<Args...> message, Args&&... args);
 
     template<typename... Args>
-    bool CHECK(bool condition, std::string_view message, Args&&... args) {
+    bool CHECK(bool condition, fmt::format_string<Args...> message, Args&&... args) {
         return CHECK(std::source_location::current(), condition, message, std::forward<Args>(args)...);
     }
 
     template<typename... Args>
-    void ASSERT(bool condition, std::string_view message, Args&&... args) {
+    void ASSERT(bool condition, fmt::format_string<Args...> message, Args&&... args) {
         ASSERT(std::source_location::current(), condition, message, std::forward<Args>(args)...);
     }
 }
 
-#include "DEBUG.tpp"
+#include "debug.tpp"

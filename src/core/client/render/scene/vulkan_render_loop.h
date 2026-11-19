@@ -14,16 +14,16 @@ namespace cvulkan::client::render::scene {
         class CVulkanImGuiRenderer;
     }
 
-    namespace main {
-        class CVulkanSceneRenderer;
-    }
-
     namespace swapchain {
         class CVulkanSwapchainRenderer;
     }
 
     namespace post {
         class CVulkanPostFXRenderer;
+    }
+
+    namespace deferred {
+        class CVulkanSceneRenderer;
     }
 }
 
@@ -92,8 +92,8 @@ namespace cvulkan::client::render::loop {
         }
 
 
-        [[nodiscard]] const scene::main::CVulkanSceneRenderer& mainSceneRenderer() const {
-            return *_mainSceneRenderer;
+        [[nodiscard]] const scene::deferred::CVulkanSceneRenderer& deferredSceneRenderer() const {
+            return *_deferredSceneRenderer;
         }
 
         [[nodiscard]] const scene::post::CVulkanPostFXRenderer& postSceneRenderer() const {
@@ -137,7 +137,7 @@ namespace cvulkan::client::render::loop {
         cache::CVulkanCacheCollection _caches;
         vk::CVulkanDescriptorAllocator _descriptorAllocator;
 
-        std::unique_ptr<scene::main::CVulkanSceneRenderer> _mainSceneRenderer;
+        std::unique_ptr<scene::deferred::CVulkanSceneRenderer> _deferredSceneRenderer;
         std::unique_ptr<scene::post::CVulkanPostFXRenderer> _postSceneRenderer;
         std::unique_ptr<scene::swapchain::CVulkanSwapchainRenderer> _swapchainSceneRenderer;
         std::unique_ptr<scene::imgui::CVulkanImGuiRenderer> _imguiSceneRenderer;

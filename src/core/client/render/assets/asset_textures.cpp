@@ -9,13 +9,13 @@
 #include "client/render/vulkan_images.h"
 #include "client/render/vulkan_buffers.h"
 #include "client/render/vulkan_commands.h"
-#include "utility/DEBUG.h"
+#include "utility/debug.h"
 #include "utility/exceptions.h"
 
 namespace cvulkan::client::render::asset {
     CVulkanImageSrc::~CVulkanImageSrc() {
         if (this->_dataHandle && this->_data != nullptr) {
-            logging::trace("Freeing stbi image data: addr={:p}, size={}", static_cast<void *>(_data), _dataSize);
+            log::trace("Freeing stbi image data: addr={:p}, size={}", static_cast<void *>(_data), _dataSize);
             stbi_image_free(this->_data);
             this->_data = nullptr;
         }
@@ -40,7 +40,7 @@ namespace cvulkan::client::render::asset {
 
     CVulkanTexture2D::CVulkanTexture2D(const vk::CVulkanContext& context, std::string id, const CVulkanImageSrc& imageSrc, const VkFormat& format) : _id(id), _size(imageSrc._size), _genMipMaps(imageSrc._genMipMaps) {
         DEBUG::ASSERT(std::source_location::current(), imageSrc._data != nullptr && imageSrc._dataSize > 0, "Invalid image data for texture '{}'", id);
-        logging::debug("Creating texture '{}': data={:p}, size={}", id, static_cast<const void*>(imageSrc._data), imageSrc._dataSize);
+        log::debug("Creating texture '{}': data={:p}, size={}", id, static_cast<const void*>(imageSrc._data), imageSrc._dataSize);
 
         this->createStgBuffer(context, imageSrc._data, imageSrc._dataSize);
         const uint32_t mipLevels = imageSrc._genMipMaps ? (static_cast<uint32_t>(std::floor(std::log2(std::max(imageSrc._size.x, imageSrc._size.y)))) + 1) : 1;
@@ -237,7 +237,7 @@ namespace cvulkan::client::render::asset {
     void CVulkanTexture2D::createStgBuffer(const vk::CVulkanContext& context, const unsigned char* _data, const size_t& _dataSize) {
         DEBUG::ASSERT(_data != nullptr && _dataSize > 0, "Texture '{}' has invalid image data", this->_id);
 
-        logging::debug("Creating staging buffer for texture '{}': {} bytes", this->_id, _dataSize);
+        log::debug("Creating staging buffer for texture '{}': {} bytes", this->_id, _dataSize);
 
         this->_stgBuffer = std::make_unique<vk::CVulkanBuffer>(context, static_cast<VkDeviceSize>(_dataSize), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_AUTO, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
@@ -248,7 +248,7 @@ namespace cvulkan::client::render::asset {
         DEBUG::ASSERT(mapped != nullptr, "Failed to map staging buffer memory for texture '{}'", this->_id);
 
         std::memcpy(mapped, _data, _dataSize);
-        logging::trace("Copied {} bytes to staging buffer for texture '{}'", _dataSize, this->_id);
+        log::trace("Copied {} bytes to staging buffer for texture '{}'", _dataSize, this->_id);
         this->_stgBuffer->unMapMem();
     }
 
