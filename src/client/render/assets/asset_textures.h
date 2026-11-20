@@ -1,0 +1,103 @@
+//
+// Created by ded on 08.10.2026.
+//
+
+#pragma once
+#include <filesystem>
+
+#include "core/utility/system.h"
+
+namespace cvulkan::client::render::vk {
+    class CVulkanCommandBuffer;
+    class CVulkanContext;
+    class CVulkanBuffer;
+    class CVulkanImage2DView;
+    class CVulkanImage2D;
+}
+
+namespace cvulkan::client::render::asset {
+    struct CVulkanImageSrc {
+        ~CVulkanImageSrc();
+
+        CVulkanImageSrc(unsigned char* data, const size_t dataSize, const glm::ivec2 size, const uint32_t channels)
+            : _data(data), _dataSize(dataSize), _size(size), _channels(channels) {
+        }
+
+        CLASS_NO_COPY(CVulkanImageSrc);
+
+        bool _genMipMaps{true};
+        bool _dataHandle{true};
+        unsigned char* _data;
+        size_t _dataSize;
+        glm::ivec2 _size;
+        uint32_t _channels;
+    };
+
+    class CVulkanTexture2D {
+    public:
+        CVulkanTexture2D(const vk::CVulkanContext& context, std::string id, const CVulkanImageSrc& imageSrc, const VkFormat& format);
+
+        ~CVulkanTexture2D();
+
+        CLASS_NO_COPY(CVulkanTexture2D);
+
+        CVulkanTexture2D(CVulkanTexture2D&& other) noexcept;
+
+        CVulkanTexture2D& operator=(CVulkanTexture2D&& other) noexcept;
+
+        void recordTextureTransition(const vk::CVulkanCommandBuffer& commandBuffer);
+
+        void recordCopyBuffer(const vk::CVulkanCommandBuffer& commandBuffer, const vk::CVulkanBuffer& bufferData) const;
+
+        void destroyStgBuffer();
+
+        [[nodiscard]] const std::string& id() const {
+            return _id;
+        }
+
+        [[nodiscard]] const glm::vec2& size() const {
+            return _size;
+        }
+
+        [[nodiscard]] bool recordedTransitionFlag() const {
+            return _recordedTransition;
+        }
+
+        [[nodiscard]] const vk::CVulkanImage2D& image() const {
+            return *_image;
+        }
+
+        [[nodiscard]] const vk::CVulkanImage2DView& imageView() const {
+            return *_imageView;
+        }
+
+        [[nodiscard]] const vk::CVulkanBuffer* stgBuffer() const {
+            return _stgBuffer.get();
+        }
+
+        [[nodiscard]] bool hasTransparency() const {
+            return _hasTransparency;
+        }
+
+    protected:
+        void createStgBuffer(const vk::CVulkanContext& context, const unsigned char* _data, const size_t& _dataSize);
+
+        void transparencyCheck(const CVulkanImageSrc& imageSrc);
+
+        void recordMipMapGeneration(const vk::CVulkanCommandBuffer& commandBuffer) const;
+
+    private:
+        std::string _id;
+        glm::vec2 _size;
+        bool _recordedTransition{false};
+        std::unique_ptr<vk::CVulkanImage2D> _image;
+        std::unique_ptr<vk::CVulkanImage2DView> _imageView;
+        std::unique_ptr<vk::CVulkanBuffer> _stgBuffer;
+        bool _genMipMaps{true};
+        bool _hasTransparency{false};
+    };
+    
+    namespace imageLoad {
+        CVulkanImageSrc loadImage(const std::filesystem::path& imagePath);
+    }
+}

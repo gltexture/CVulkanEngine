@@ -1,0 +1,198 @@
+//
+// Created by ded on 24.09.2026.
+//
+
+#pragma once
+#include <vk_mem_alloc.h>
+
+#include "core/utility/system.h"
+
+namespace cvulkan::client::render::vk {
+    static constexpr uint32_t MAX_ANISOTROPY = 16;
+
+    class CVulkanContext;
+
+    struct CVulkanImage2DData {
+        uint32_t _arrayLayers = 1;
+        VkFormat _format = VK_FORMAT_R8G8B8A8_SRGB;
+        uint32_t _mipLevels = 1;
+        VkSampleCountFlagBits _sampleCount = VK_SAMPLE_COUNT_1_BIT;
+        VmaAllocationCreateFlags _memFlags{};
+        VkImageUsageFlags _memUsage{};
+        VkExtent3D _extent{};
+    };
+
+    struct CVulkanImage2DViewData {
+        VkImageAspectFlags _aspectMask{};
+        uint32_t _baseArrayLayer = 0;
+        VkFormat _format{};
+        uint32_t _layerCount = 1;
+        uint32_t _mipLevels = 1;
+        VkImageViewType _viewType = VK_IMAGE_VIEW_TYPE_2D;
+    };
+
+    struct CVulkanSamplerInfo {
+        VkSamplerAddressMode _addressMode;
+        VkBorderColor _borderColor;
+        float _mipLevels;
+        bool _anisotropy;
+    };
+
+    class CVulkanImage2D {
+    public:
+        CVulkanImage2D(const CVulkanContext& context, const CVulkanImage2DData& imageData);
+
+        ~CVulkanImage2D();
+
+        CLASS_NO_COPY(CVulkanImage2D)
+
+        CVulkanImage2D(CVulkanImage2D&& other) noexcept
+            : _context(other._context), _vkImage(other._vkImage), _format(other._format), _mipLevels(other._mipLevels), _allocation(other._allocation), _vkExtent{other._vkExtent} {
+            other._vkImage = VK_NULL_HANDLE;
+            other._allocation = VK_NULL_HANDLE;
+        }
+
+        [[nodiscard]] VkImage vkImage() const {
+            return _vkImage;
+        }
+
+        [[nodiscard]] const VkFormat& format() const {
+            return _format;
+        }
+
+        [[nodiscard]] uint32_t mipLevels() const {
+            return _mipLevels;
+        }
+
+        [[nodiscard]] VkExtent3D vkExtent3D() const {
+            return _vkExtent;
+        }
+
+        [[nodiscard]] VkExtent2D vkExtent2D() const {
+            return {
+                this->_vkExtent.width,
+                this->_vkExtent.height
+            };
+        }
+
+    private:
+        const CVulkanContext& _context;
+        VkImage _vkImage{};
+        VkFormat _format{};
+        uint32_t _mipLevels{};
+        VmaAllocation _allocation{};
+        VkExtent3D _vkExtent{};
+    };
+
+    class CVulkanImage2DView {
+    public:
+        CVulkanImage2DView(const CVulkanContext& context, const CVulkanImage2DViewData& imageViewData, const VkImage& vkImage, bool depthImage);
+
+        ~CVulkanImage2DView();
+
+        CLASS_NO_COPY_NO_MOVEASSIGN(CVulkanImage2DView);
+
+        CVulkanImage2DView(CVulkanImage2DView&& other) noexcept : _context{other._context}, _vkImage{other._vkImage}, _vkImageView{other._vkImageView} {
+            other._vkImage = VK_NULL_HANDLE;
+            other._vkImageView = VK_NULL_HANDLE;
+        }
+
+        [[nodiscard]] VkImage vkImage() const {
+            return _vkImage;
+        }
+
+        [[nodiscard]] VkImageView vkImageView() const {
+            return _vkImageView;
+        }
+
+        [[nodiscard]] bool depthImage() const {
+            return _depthImage;
+        }
+
+    private:
+        const CVulkanContext& _context;
+        VkImage _vkImage{};
+        VkImageView _vkImageView{};
+        bool _depthImage{};
+    };
+
+    class CVulkanAttachment2D {
+    public:
+        CVulkanAttachment2D(const CVulkanContext& context, CVulkanImage2D&& image, CVulkanImage2DView&& view, bool depthAttachment);
+
+        ~CVulkanAttachment2D();
+
+        CLASS_NO_COPY(CVulkanAttachment2D)
+
+        CVulkanAttachment2D(CVulkanAttachment2D&& other) noexcept = default;
+
+        [[nodiscard]] const CVulkanImage2D& image() const {
+            return _image;
+        }
+
+        [[nodiscard]] const CVulkanImage2DView& view() const {
+            return _view;
+        }
+
+        [[nodiscard]] bool depthAttachment() const {
+            return _depthAttachment;
+        }
+
+        static std::unique_ptr<CVulkanAttachment2D> createSimpleAttachment(const CVulkanContext& context, VkExtent3D vkExtent, VkFormat vkFormat, VkImageUsageFlags vkUsage);
+
+    private:
+        const CVulkanContext& _context;
+        CVulkanImage2D _image;
+        CVulkanImage2DView _view;
+        bool _depthAttachment;
+    };
+
+    class CVulkanSampler {
+    public:
+        CVulkanSampler(const CVulkanContext& context, const CVulkanSamplerInfo& samplerInfo);
+
+        ~CVulkanSampler();
+
+        CLASS_NO_COPY(CVulkanSampler)
+
+        CVulkanSampler(CVulkanSampler&& other) noexcept : _context(other._context), _vkSampler(other._vkSampler) {
+            other._vkSampler = VK_NULL_HANDLE;
+        }
+
+        [[nodiscard]] VkSampler vkSampler() const {
+            return _vkSampler;
+        }
+
+    private:
+        const CVulkanContext& _context;
+        VkSampler _vkSampler{};
+    };
+
+    namespace img_util {
+        void imageBarrier(
+            VkCommandBuffer commandBuffer,
+            VkImage image,
+            VkImageLayout oldLayout,
+            VkImageLayout newLayout,
+            VkPipelineStageFlags2 srcStageMask,
+            VkPipelineStageFlags2 dstStageMask,
+            VkAccessFlags2 srcAccessMask,
+            VkAccessFlags2 dstAccessMask,
+            uint32_t srcQueueFamilyIndex,
+            uint32_t dstQueueFamilyIndex,
+            VkImageAspectFlags aspectMask
+        );
+
+        void imageBarrier(
+            VkCommandBuffer commandBuffer,
+            VkImage image,
+            VkImageLayout oldLayout,
+            VkImageLayout newLayout,
+            VkPipelineStageFlags2 srcStageMask,
+            VkPipelineStageFlags2 dstStageMask,
+            VkAccessFlags2 srcAccessMask,
+            VkAccessFlags2 dstAccessMask,
+            VkImageAspectFlags aspectMask
+        );
+    }
+}

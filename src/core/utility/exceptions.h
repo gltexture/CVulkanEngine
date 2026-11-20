@@ -8,6 +8,7 @@
 #include <stacktrace>
 #include <string>
 #include <utility>
+#include <spdlog/fmt/fmt.h>
 
 namespace cvulkan::exc {
     class CVulkanException : public std::runtime_error {

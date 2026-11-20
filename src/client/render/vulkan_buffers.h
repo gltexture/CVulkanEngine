@@ -1,0 +1,115 @@
+//
+// Created by ded on 13.09.2026.
+//
+
+#pragma once
+#include <filesystem>
+#include <vk_mem_alloc.h>
+
+#include "vulkan_render_core.h"
+#include "core/utility/system.h"
+
+namespace cvulkan::client::render::asset::modelGen {
+    struct CVulkanMeshData;
+}
+
+namespace cvulkan::client::render::vk {
+    class CVulkanCommandBuffer;
+
+    class CVulkanBuffer {
+    public:
+        CVulkanBuffer(const CVulkanContext& context, VkDeviceSize size, VkBufferUsageFlags bufferUsage, VmaMemoryUsage vmaMemoryUsage, VmaAllocationCreateFlags vmaFlags, VkMemoryPropertyFlags reqFlags);
+        ~CVulkanBuffer();
+
+        CLASS_NO_COPY_NO_MOVEASSIGN(CVulkanBuffer);
+
+        CVulkanBuffer(CVulkanBuffer&& other) noexcept
+                : _context{other._context}, _vkBuffer{other._vkBuffer}, _vkRequestedSize{other._vkRequestedSize}, _vmaAllocation{other._vmaAllocation}, _mappedMemory{other._mappedMemory} {
+            other._vkBuffer = VK_NULL_HANDLE;
+            other._vmaAllocation = VK_NULL_HANDLE;
+            other._mappedMemory = nullptr;
+        }
+
+        void* mapMem();
+
+        void unMapMem();
+
+        void flush() const;
+
+        [[nodiscard]] VkDeviceAddress getBufferAddress() const;
+
+        [[nodiscard]] VkBuffer vkBuffer() const {
+            return _vkBuffer;
+        }
+
+        [[nodiscard]] const VkDeviceSize& vkRequestedSize() const {
+            return _vkRequestedSize;
+        }
+
+        [[nodiscard]] const void* mappedMemory() const {
+            return _mappedMemory;
+        }
+
+        [[nodiscard]] void* mappedMemory() {
+            return _mappedMemory;
+        }
+
+    private:
+        const CVulkanContext& _context;
+        VkDeviceAddress _vkDeviceAddress {0};
+        VkBuffer _vkBuffer{};
+        VkDeviceSize _vkRequestedSize{};
+        VmaAllocation _vmaAllocation{};
+        void* _mappedMemory{};
+    };
+
+    class CVulkanBufferMapped {
+    public:
+        explicit CVulkanBufferMapped(CVulkanBuffer& buffer) : _buffer(buffer), _data(buffer.mapMem()) {
+        }
+
+        ~CVulkanBufferMapped() {
+            _buffer.unMapMem();
+        }
+
+        CLASS_NO_COPY_NO_MOVEASSIGN(CVulkanBufferMapped)
+
+        [[nodiscard]] void* data() const {
+            return _data;
+        }
+
+    private:
+        CVulkanBuffer& _buffer;
+        void* _data;
+    };
+
+    struct CVulkanTransferBufferData {
+        CVulkanBuffer _src;
+        CVulkanBuffer _dst;
+
+        void recordTransferCommand(const CVulkanCommandBuffer& commandBuffer) const;
+    };
+
+    CVulkanTransferBufferData createVerticesBuffer(const CVulkanContext& context, const asset::modelGen::CVulkanMeshData& rawMeshData, const std::filesystem::path& vtxPath);
+
+    CVulkanTransferBufferData createIndicesBuffers(const CVulkanContext& context, const asset::modelGen::CVulkanMeshData& rawMeshData, const std::filesystem::path& idxPath);
+
+    namespace buff_util {
+        CVulkanBuffer allocateHostVisibleBuffer(const CVulkanContext& context, CVulkanDescriptorAllocator& allocator, VkDeviceSize size, VkBufferUsageFlags usage, std::string_view id, const CVulkanDescriptorSetLayout& layout);
+
+        std::vector<CVulkanBuffer> allocateHostVisibleBuffers(const CVulkanContext& context, CVulkanDescriptorAllocator& allocator, VkDeviceSize size, VkBufferUsageFlags usage, uint32_t buffersCount, std::string_view id,
+                                                              const CVulkanDescriptorSetLayout& layout);
+
+        inline VkPipelineVertexInputStateCreateInfo emptyVertexStruct() {
+            return {
+                .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+                .vertexBindingDescriptionCount = 0,
+                .vertexAttributeDescriptionCount = 0
+              };
+        };
+
+        void copyMatrixToBuffer(CVulkanBuffer& buffer, const glm::mat4& matrix, uint32_t offset);
+
+        //VkDeviceAddress getBufferAddress(const CVulkanContext& context, const CVulkanBuffer& buffer);
+    }
+}

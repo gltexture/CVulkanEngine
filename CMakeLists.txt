@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.20) 
+cmake_minimum_required(VERSION 3.20)
 project(CVulkanEngine)
 
 set(CMAKE_CXX_STANDARD 23)
@@ -25,31 +25,24 @@ FetchContent_Declare(
         GIT_TAG v1.17.0
 )
 
-set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
-set(ASSIMP_WARNINGS_AS_ERRORS OFF CACHE BOOL "" FORCE)
-set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-set(ASSIMP_BUILD_ASSIMP_TOOLS OFF CACHE BOOL "" FORCE)
-set(ASSIMP_INSTALL OFF CACHE BOOL "" FORCE)
-set(SHADERC_SKIP_TESTS ON CACHE BOOL "" FORCE)
-set(SHADERC_SKIP_EXAMPLES ON CACHE BOOL "" FORCE)
-
 FetchContent_Declare(
         SPIRV-Headers
         GIT_REPOSITORY https://github.com/KhronosGroup/SPIRV-Headers.git
-        GIT_TAG main
+        GIT_TAG vulkan-sdk-1.4.363.0
 )
+
 FetchContent_Declare(
         SPIRV-Tools
         GIT_REPOSITORY https://github.com/KhronosGroup/SPIRV-Tools.git
         GIT_TAG v2026.4
 )
+
 FetchContent_Declare(
         glslang
         GIT_REPOSITORY https://github.com/KhronosGroup/glslang.git
-        GIT_TAG main
+        GIT_TAG vulkan-sdk-1.4.363.0
 )
+
 FetchContent_Declare(
         shaderc
         GIT_REPOSITORY https://github.com/google/shaderc.git
@@ -61,6 +54,7 @@ FetchContent_Declare(
         GIT_REPOSITORY https://github.com/assimp/assimp.git
         GIT_TAG v6.0.5
 )
+
 FetchContent_Declare(
         json
         GIT_REPOSITORY https://github.com/nlohmann/json.git
@@ -84,6 +78,18 @@ FetchContent_Declare(
         GIT_REPOSITORY https://github.com/keithpotz/CrashCatch
         GIT_TAG v1.6.0
 )
+
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+
+set(ASSIMP_WARNINGS_AS_ERRORS OFF CACHE BOOL "" FORCE)
+set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(ASSIMP_BUILD_ASSIMP_TOOLS OFF CACHE BOOL "" FORCE)
+set(ASSIMP_INSTALL OFF CACHE BOOL "" FORCE)
+
+set(SHADERC_SKIP_TESTS ON CACHE BOOL "" FORCE)
+set(SHADERC_SKIP_EXAMPLES ON CACHE BOOL "" FORCE)
 
 FetchContent_MakeAvailable(
         spdlog
@@ -113,120 +119,150 @@ target_include_directories(imgui PUBLIC
 )
 
 find_package(Vulkan REQUIRED)
-add_executable(CVulkanEngine
-        src/main.cpp
-        src/core/client/client_runtime.cpp
-        src/core/client/render/glfw_window.cpp
-        src/core/client/control/client_input.cpp
-        src/core/client/render/vulkan_render_core.cpp
-        src/core/client/render/vulkan_ext.cpp
-        src/core/client/render/vulkan_commands.cpp
-        src/core/client/render/vulkan_synchronization.cpp
-        src/core/client/render/vulkan_swapchain.cpp
-        src/core/client/render/scene/vulkan_render_loop.cpp
-        src/core/client/render/vulkan_buffers.cpp
-        src/core/client/render/scene/vulkan_render_structs.cpp
-        src/core/client/render/scene/vulkan_render_cache.cpp
-        src/core/client/render/vulkan_shaders.cpp
-        src/core/client/render/vulkan_pipeline.cpp
-        src/core/engine_context.cpp
-        src/core/client/render/vulkan_images.cpp
-        src/core/client/render/vulkan_images.h
-        src/core/client/render/vulkan_transform.cpp
-        src/core/client/render/vulkan_transform.h
-        src/core/client/render/scene/vulkan_scene_objects.cpp
-        src/core/client/render/scene/vulkan_scene_objects.h
-        src/core/client/render/assets/asset_shaders.cpp
-        src/core/client/render/assets/asset_shaders.h
-        src/core/client/render/assets/asset_models.cpp
-        src/core/client/render/assets/asset_models.h
-        src/core/client/render/assets/asset_textures.cpp
-        src/core/client/render/assets/asset_textures.h
-        src/core/utility/collections.hpp
-        src/core/client/render/vulkan_descriptors.cpp
-        src/core/client/render/vulkan_descriptors.h
-        src/core/client/render/_impl/stbi_impl.cpp
-        src/core/client/render/_impl/stbiw_impl.cpp
+
+function(configure_engine_target target)
+    target_compile_features(${target} PUBLIC cxx_std_23)
+
+    target_compile_definitions(${target} PUBLIC
+            GLM_FORCE_DEPTH_ZERO_TO_ONE
+
+            $<$<CONFIG:Debug>:CVULKAN_DEV_MODE>
+            $<$<CONFIG:Debug>:CVULKAN_DEBUG_MODE>
+
+            $<$<CONFIG:RelWithDebInfo>:CVULKAN_DEV_MODE>
+            $<$<CONFIG:RelWithDebInfo>:CVULKAN_DEBUG_MODE>
+    )
+
+    target_compile_options(${target} PRIVATE
+            $<$<AND:$<CONFIG:Release>,$<CXX_COMPILER_ID:GNU,Clang>>:-O3>
+            $<$<AND:$<CONFIG:Release>,$<CXX_COMPILER_ID:GNU,Clang>>:-g>
+            $<$<AND:$<CONFIG:RelWithDebInfo>,$<CXX_COMPILER_ID:GNU,Clang>>:-g>
+            $<$<AND:$<CONFIG:Debug>,$<CXX_COMPILER_ID:GNU,Clang>>:-g>
+    )
+endfunction()
+
+# Core
+
+add_library(engine_core STATIC
+
         src/core/utility/system.cpp
-        src/core/utility/system.h
         src/core/utility/io.cpp
-        src/core/utility/io.h
-        src/core/client/render/scene/vulkan_render_scene__deferred_context.cpp
-        src/core/client/render/scene/camera/view_camera.cpp
-        src/core/client/render/scene/camera/view_camera.h
-        src/core/test_logic/test_logic.cpp
-        src/core/test_logic/test_logic.h
-        src/core/client/render/_impl/vma_impl.cpp
-        src/core/client/render/vulkan_mem_alloc.cpp
-        src/core/client/render/vulkan_mem_alloc.h
-        src/core/client/render/scene/vulkan_render_scene__post.cpp
-        src/core/client/render/scene/vulkan_render_scene__post.h
-        src/core/client/render/vulkan_spec_const.tpp
-        src/core/client/render/vulkan_spec_const.h
         src/core/utility/functionality.cpp
-        src/core/utility/functionality.h
-        src/core/client/render/scene/vulkan_render_scene__swapchain.cpp
-        src/core/client/render/scene/vulkan_render_scene__swapchain.h
-        src/core/client/render/scene/vulkan_render_scene__imgui.cpp
-        src/core/client/render/scene/vulkan_render_scene__imgui.h
         src/core/utility/exceptions.cpp
-        src/core/utility/exceptions.h
-        src/core/client/control/client_input__handling.cpp
-        src/core/utility/DEBUG.tpp
-        src/core/utility/DEBUG.h
-        src/core/client/render/scene/cvulkan_render_mrt.cpp
-        src/core/client/render/scene/cvulkan_render_mrt.h
-        src/core/client/render/scene/vulkan_render_scene__deferred_lpass.cpp
-        src/core/client/render/scene/vulkan_render_scene__deferred_gpass.cpp
-        src/core/client/render/scene/debug/vulkan_imgui_window_renderer.cpp
-        src/core/client/render/scene/debug/vulkan_imgui_window_renderer.h
 )
 
-target_compile_features(CVulkanEngine PRIVATE cxx_std_23)
-
-target_compile_options(CVulkanEngine PRIVATE
-        $<$<CONFIG:Release>:-O3>
-        $<$<CONFIG:Release>:-g>
-        $<$<CONFIG:RelWithDebInfo>:-g>
-        $<$<CONFIG:Debug>:-g>
+target_include_directories(engine_core PUBLIC
+        ${PROJECT_SOURCE_DIR}/src
+        ${PROJECT_SOURCE_DIR}/libs
 )
 
-target_link_options(CVulkanEngine PRIVATE
-        $<$<CONFIG:Debug>:-Wl,--pdb=>
-        $<$<CONFIG:RelWithDebInfo>:-Wl,--pdb=>
-        $<$<CONFIG:Release>:-Wl,--pdb=>
+target_link_libraries(engine_core PUBLIC
+        glm::glm
+        spdlog::spdlog
+        nlohmann_json::nlohmann_json
+        CrashCatch
 )
 
-target_compile_definitions(CVulkanEngine PRIVATE
-        GLM_FORCE_DEPTH_ZERO_TO_ONE
-
-        $<$<CONFIG:Debug>:CVULKAN_DEV_MODE>
-        $<$<CONFIG:Debug>:CVULKAN_DEBUG_MODE>
-
-        $<$<CONFIG:RelWithDebInfo>:CVULKAN_DEV_MODE>
-        $<$<CONFIG:RelWithDebInfo>:CVULKAN_DEBUG_MODE>
+target_link_libraries(engine_core PRIVATE
+        stdc++exp
 )
 
-target_precompile_headers(CVulkanEngine PRIVATE
-        <vulkan/vulkan_core.h>
-        <GLFW/glfw3.h>
+configure_engine_target(engine_core)
+
+target_precompile_headers(engine_core PRIVATE
         <glm/glm.hpp>
+        <glm/gtc/matrix_transform.hpp>
+        <glm/gtc/quaternion.hpp>
         <spdlog/spdlog.h>
         <vector>
+        <array>
         <memory>
         <string>
         <string_view>
-        <shaderc/shaderc.h>
+        <optional>
+        <variant>
+        <functional>
+        <algorithm>
+        <utility>
+        <type_traits>
+        <concepts>
+        <cstdint>
+        <cstddef>
+        <cstring>
+        <filesystem>
+        <unordered_map>
+        <unordered_set>
+        <map>
+        <set>
+        <chrono>
+        <thread>
+        <mutex>
+        <atomic>
+        <format>
+        <nlohmann/json.hpp>
 )
 
-target_link_libraries(CVulkanEngine PRIVATE stdc++exp)
+# Client
 
-target_link_libraries(
-        CVulkanEngine
-        PRIVATE
+add_library(engine_client STATIC
+        src/client/client_runtime.cpp
+
+        src/client/render/glfw_window.cpp
+        src/client/control/client_input.cpp
+        src/client/control/client_input__handling.cpp
+
+        src/client/render/vulkan_render_core.cpp
+        src/client/render/vulkan_ext.cpp
+        src/client/render/vulkan_commands.cpp
+        src/client/render/vulkan_synchronization.cpp
+        src/client/render/vulkan_swapchain.cpp
+        src/client/render/vulkan_buffers.cpp
+        src/client/render/vulkan_shaders.cpp
+        src/client/render/vulkan_pipeline.cpp
+        src/client/render/vulkan_images.cpp
+        src/client/render/vulkan_transform.cpp
+        src/client/render/vulkan_descriptors.cpp
+        src/client/render/vulkan_mem_alloc.cpp
+
+        src/client/render/_impl/stbi_impl.cpp
+        src/client/render/_impl/stbiw_impl.cpp
+        src/client/render/_impl/vma_impl.cpp
+
+        src/client/render/scene/vulkan_render_loop.cpp
+        src/client/render/scene/vulkan_render_structs.cpp
+        src/client/render/scene/vulkan_render_cache.cpp
+        src/client/render/scene/vulkan_scene_objects.cpp
+        src/client/render/scene/vulkan_render_scene__deferred_context.cpp
+        src/client/render/scene/vulkan_render_scene__post.cpp
+        src/client/render/scene/vulkan_render_scene__swapchain.cpp
+        src/client/render/scene/vulkan_render_scene__imgui.cpp
+        src/client/render/scene/cvulkan_render_mrt.cpp
+        src/client/render/scene/vulkan_render_scene__deferred_lpass.cpp
+        src/client/render/scene/vulkan_render_scene__deferred_gpass.cpp
+
+        src/client/render/scene/camera/view_camera.cpp
+
+        src/client/render/assets/asset_shaders.cpp
+        src/client/render/assets/asset_models.cpp
+        src/client/render/assets/asset_textures.cpp
+
+        src/client/render/scene/debug/vulkan_imgui_window_renderer.cpp
+        src/client/test_logic/test_logic.cpp
+)
+
+target_include_directories(engine_client PUBLIC
+        ${PROJECT_SOURCE_DIR}/src
+        ${PROJECT_SOURCE_DIR}/libs
+)
+
+target_link_libraries(engine_client
+        PUBLIC
+        engine_core
         Vulkan::Vulkan
         glfw
         glm::glm
+
+        PRIVATE
         spdlog::spdlog
         shaderc_combined
         assimp
@@ -236,9 +272,55 @@ target_link_libraries(
         CrashCatch
 )
 
-target_include_directories(CVulkanEngine
-        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/libs
+configure_engine_target(engine_client)
+
+target_precompile_headers(engine_client PRIVATE
+        <vulkan/vulkan.hpp>
+        <vulkan/vulkan_core.h>
+        <GLFW/glfw3.h>
+        <glm/glm.hpp>
+        <glm/gtc/matrix_transform.hpp>
+        <glm/gtc/type_ptr.hpp>
+        <glm/gtc/quaternion.hpp>
+        <spdlog/spdlog.h>
+        <shaderc/shaderc.h>
+        <vk_mem_alloc.h>
+        <vector>
+        <array>
+        <memory>
+        <string>
+        <string_view>
+        <optional>
+        <variant>
+        <functional>
+        <algorithm>
+        <unordered_map>
+        <unordered_set>
+        <cstdint>
+        <cstring>
 )
-target_include_directories(CVulkanEngine
-        PRIVATE ${CMAKE_SOURCE_DIR}/src/core
+
+# Server
+
+add_library(engine_server STATIC
+        src/server/server_runtime.cpp
+        src/server/server_runtime.h)
+
+target_link_libraries(engine_server INTERFACE
+        engine_core
+)
+
+target_include_directories(engine_server PUBLIC
+        ${PROJECT_SOURCE_DIR}/src
+        ${PROJECT_SOURCE_DIR}/libs
+)
+
+# Client
+
+add_executable(client_app
+        src/main.cpp
+)
+
+target_link_libraries(client_app PRIVATE
+        engine_client
 )

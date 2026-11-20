@@ -1,0 +1,159 @@
+//
+// Created by ded on 07.09.2026.
+//
+
+#include "vulkan_swapchain.h"
+
+#include "vulkan_commands.h"
+#include "vulkan_config.hpp"
+#include "vulkan_images.h"
+#include "vulkan_render_core.h"
+#include "vulkan_synchronization.h"
+#include "core/utility/exceptions.h"
+
+namespace cvulkan::client::render::vk {
+    CVulkanSwapChain::CVulkanSwapChain(const CVulkanContext& context, const VkSurfaceKHR& vkSurface, const VkSurfaceCapabilitiesKHR& vkSurfaceCapabilities, const VkFormat& vkFormat, const VkColorSpaceKHR& vkColorSpace) : _context{context} {
+        constexpr uint32_t requestedImages = renderConfig::SWAP_CHAIN_IMAGES;
+
+        uint32_t imageCount = -1;
+
+        {
+            const uint32_t minImages = vkSurfaceCapabilities.minImageCount;
+            const uint32_t maxImages = vkSurfaceCapabilities.maxImageCount;
+            imageCount = minImages;
+            if (maxImages != 0) {
+                imageCount = std::min(requestedImages, maxImages);
+            }
+            imageCount = std::max(imageCount, minImages);
+            log::debug("Requested {} swapchain images", imageCount);
+        }
+
+        {
+            if (vkSurfaceCapabilities.currentExtent.width == UINT32_MAX) {
+                const auto& windowSize = this->_context.glfwWindow().size();
+                this->_vkSwapChainExtent.width = std::clamp(windowSize.x, vkSurfaceCapabilities.minImageExtent.width, vkSurfaceCapabilities.maxImageExtent.width);
+                this->_vkSwapChainExtent.height = std::clamp(windowSize.y, vkSurfaceCapabilities.minImageExtent.height, vkSurfaceCapabilities.maxImageExtent.height);
+            } else {
+                this->_vkSwapChainExtent = vkSurfaceCapabilities.currentExtent;
+            }
+        }
+
+        VkSwapchainCreateInfoKHR swapChainCreateInfo{};
+        swapChainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+        swapChainCreateInfo.surface = vkSurface;
+        swapChainCreateInfo.minImageCount = imageCount;
+        swapChainCreateInfo.imageFormat = vkFormat;
+        swapChainCreateInfo.imageColorSpace = vkColorSpace;
+        swapChainCreateInfo.imageExtent = this->_vkSwapChainExtent;
+        swapChainCreateInfo.imageArrayLayers = 1;
+        swapChainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+        swapChainCreateInfo.preTransform = vkSurfaceCapabilities.currentTransform;
+        swapChainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+        swapChainCreateInfo.clipped = VK_TRUE;
+
+        if (renderConfig::VSYNC) {
+            swapChainCreateInfo.presentMode = VK_PRESENT_MODE_FIFO_KHR;
+        } else {
+            swapChainCreateInfo.presentMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
+        }
+
+        util::vkCheck(vkCreateSwapchainKHR(this->_context.device().vkDevice(), &swapChainCreateInfo, nullptr, &this->_vkSwapChain));
+
+        {
+            util::vkCheck(vkGetSwapchainImagesKHR(this->_context.device().vkDevice(), this->_vkSwapChain, &this->_numImages, nullptr), "Failed to create swapChain Images");
+            std::vector<VkImage> images(this->numImages());
+            util::vkCheck(vkGetSwapchainImagesKHR(this->_context.device().vkDevice(), this->_vkSwapChain, &this->_numImages, images.data()), "Failed to create swapChain Images");
+
+            const CVulkanImage2DViewData image_view_data{
+                ._aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                ._format = vkFormat
+            };
+            this->_imageViews.reserve(images.size());
+            for (const auto image: images) {
+                this->_imageViews.emplace_back(this->_context, image_view_data, image, false);
+            }
+        }
+
+        log::info("Created Vulkan swapchain");
+    }
+
+    CVulkanSwapChain::~CVulkanSwapChain() {
+        if (this->_vkSwapChain != VK_NULL_HANDLE) {
+            vkDestroySwapchainKHR(this->_context.device().vkDevice(), this->_vkSwapChain, nullptr);
+            this->_vkSwapChain = VK_NULL_HANDLE;
+            log::info("Destroyed Vulkan swapchain");
+        }
+    }
+
+    CVulkanSurface::CVulkanSurface(const CVulkanContext& context) : _context{context} {
+        util::vkCheck(glfwCreateWindowSurface(context.instance().vkInstance(), this->_context.glfwWindow().glfwWindowDescriptor(), nullptr, &this->_vkSurface));
+        util::vkCheck(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(context.physicalDevice().vkPhysicalDevice(), this->_vkSurface, &this->_vkSurfaceCapabilities));
+        calcSurfaceFormat(this->_context.physicalDevice(), this->_vkSurface, this->_vkFormat, this->_vkColorSpace);
+        log::debug("Created Vulkan surface");
+    }
+
+    CVulkanSurface::~CVulkanSurface() {
+        if (this->_vkSurface != VK_NULL_HANDLE) {
+            vkDestroySurfaceKHR(this->_context.instance().vkInstance(), this->_vkSurface, nullptr);
+            this->_vkSurface = VK_NULL_HANDLE;
+            log::debug("Destroyed Vulkan surface");
+        }
+    }
+
+    void CVulkanSurface::calcSurfaceFormat(const CVulkanPhysicalDevice& physical_device_data, const VkSurfaceKHR& vkSurface, VkFormat& vkFormat, VkColorSpaceKHR& vkColorSpace) {
+        uint32_t surfaceFormatCount = 0;
+        util::vkCheck(vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device_data.vkPhysicalDevice(), vkSurface, &surfaceFormatCount, nullptr));
+        if (surfaceFormatCount == 0) {
+            throw exc::CVulkanException("Failed to query surface format count");
+        }
+        std::vector<VkSurfaceFormatKHR> surfaceFormats(surfaceFormatCount);
+        util::vkCheck(vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device_data.vkPhysicalDevice(), vkSurface, &surfaceFormatCount, surfaceFormats.data()));
+        vkFormat = VK_FORMAT_B8G8R8A8_UNORM;
+        vkColorSpace = surfaceFormats[0].colorSpace;
+        for (const auto& [f, c]: surfaceFormats) {
+            if (f == VK_FORMAT_B8G8R8A8_UNORM && c == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+                vkFormat = f;
+                vkColorSpace = c;
+                log::debug("Using surface format {}, color space {}", static_cast<int>(f), static_cast<int>(c));
+                break;
+            }
+        }
+    }
+
+    uint32_t CVulkanSwapChain::acquireSwapChainNextImage(const sync::CVulkanSemaphore& semaphore) const {
+        uint32_t imageIndex = 0;
+        switch (VkResult result = vkAcquireNextImageKHR(this->_context.device().vkDevice(), this->_vkSwapChain, UINT64_MAX, semaphore.vkSemaphore(), nullptr, &imageIndex)) {
+            case VK_ERROR_OUT_OF_DATE_KHR:
+                return UINT32_MAX;
+            case VK_SUBOPTIMAL_KHR:
+                break;
+            case VK_SUCCESS:
+                break;
+            default:
+                throw exc::CVulkanException("Failed to acquire next swapchain image");
+        }
+        return imageIndex;
+    }
+
+    bool CVulkanSwapChain::presentImage(const CVulkanQueue& queue, const sync::CVulkanSemaphore& renderCompleteSemaphore, const uint32_t& imageIndex) const {
+        const VkSemaphore vkSemaphore = renderCompleteSemaphore.vkSemaphore();
+        const VkPresentInfoKHR presentInfo{
+            .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+            .waitSemaphoreCount = 1,
+            .pWaitSemaphores = &vkSemaphore,
+            .swapchainCount = 1,
+            .pSwapchains = &this->_vkSwapChain,
+            .pImageIndices = &imageIndex,
+        };
+        switch (VkResult result = vkQueuePresentKHR(queue.vkQueue(), &presentInfo)) {
+            case VK_ERROR_OUT_OF_DATE_KHR:
+                return true;
+            case VK_SUBOPTIMAL_KHR:
+            case VK_SUCCESS:
+                break;
+            default:
+                throw exc::CVulkanException("Failed to present swapchain image");
+        }
+        return false;
+    }
+}

@@ -1,8 +1,8 @@
 #include <iostream>
 
-#include "core/engine_context.h"
-#include "utility/exceptions.h"
-#include "utility/logging.h"
+#include "client/client_runtime.h"
+#include "core/utility/exceptions.h"
+#include "core/utility/logging.h"
 
 using namespace cvulkan;
 
@@ -35,8 +35,7 @@ int main() {
     {
         std::cout << "cpp " << __cplusplus << '\n';
         try {
-            log::debug("Destroyed Vulkan descriptor set layout {}");
-            CVulkanEngineRunContext({"TestVulkan"} );
+            client::CVulkanClientRuntime({"TestVulkan", 1280, 720});
         }
         catch (const exc::CVulkanException e) {
             std::cerr << "Exception: " << e.what() << '\n';
