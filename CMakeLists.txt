@@ -7,78 +7,6 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 include(FetchContent)
 
-FetchContent_Declare(
-        glm
-        GIT_REPOSITORY https://github.com/g-truc/glm.git
-        GIT_TAG 1.0.3
-)
-
-FetchContent_Declare(
-        glfw
-        GIT_REPOSITORY https://github.com/glfw/glfw.git
-        GIT_TAG 3.5.1
-)
-
-FetchContent_Declare(
-        spdlog
-        GIT_REPOSITORY https://github.com/gabime/spdlog.git
-        GIT_TAG v1.17.0
-)
-
-FetchContent_Declare(
-        SPIRV-Headers
-        GIT_REPOSITORY https://github.com/KhronosGroup/SPIRV-Headers.git
-        GIT_TAG vulkan-sdk-1.4.363.0
-)
-
-FetchContent_Declare(
-        SPIRV-Tools
-        GIT_REPOSITORY https://github.com/KhronosGroup/SPIRV-Tools.git
-        GIT_TAG v2026.4
-)
-
-FetchContent_Declare(
-        glslang
-        GIT_REPOSITORY https://github.com/KhronosGroup/glslang.git
-        GIT_TAG vulkan-sdk-1.4.363.0
-)
-
-FetchContent_Declare(
-        shaderc
-        GIT_REPOSITORY https://github.com/google/shaderc.git
-        GIT_TAG v2026.4
-)
-
-FetchContent_Declare(
-        assimp
-        GIT_REPOSITORY https://github.com/assimp/assimp.git
-        GIT_TAG v6.0.5
-)
-
-FetchContent_Declare(
-        json
-        GIT_REPOSITORY https://github.com/nlohmann/json.git
-        GIT_TAG v3.12.0
-)
-
-FetchContent_Declare(
-        vma
-        GIT_REPOSITORY https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
-        GIT_TAG v3.5.0
-)
-
-FetchContent_Declare(
-        imgui
-        GIT_REPOSITORY https://github.com/ocornut/imgui
-        GIT_TAG v1.93.0-docking
-)
-
-FetchContent_Declare(
-        CrashCatch
-        GIT_REPOSITORY https://github.com/keithpotz/CrashCatch
-        GIT_TAG v1.6.0
-)
-
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
@@ -90,6 +18,103 @@ set(ASSIMP_INSTALL OFF CACHE BOOL "" FORCE)
 
 set(SHADERC_SKIP_TESTS ON CACHE BOOL "" FORCE)
 set(SHADERC_SKIP_EXAMPLES ON CACHE BOOL "" FORCE)
+
+set(TARGET_HELLO_WORLD OFF CACHE BOOL "" FORCE)
+set(TARGET_UNIT_TESTS OFF CACHE BOOL "" FORCE)
+set(TARGET_SAMPLES OFF CACHE BOOL "" FORCE)
+set(TARGET_PERFORMANCE_TEST OFF CACHE BOOL "" FORCE)
+set(TARGET_VIEWER OFF CACHE BOOL "" FORCE)
+
+FetchContent_Declare(
+        glm
+        GIT_REPOSITORY https://github.com/g-truc/glm.git
+        GIT_TAG 1.0.3
+        GIT_SHALLOW TRUE
+)
+
+FetchContent_Declare(
+        glfw
+        GIT_REPOSITORY https://github.com/glfw/glfw.git
+        GIT_TAG 3.5.1
+        GIT_SHALLOW TRUE
+)
+
+FetchContent_Declare(
+        spdlog
+        GIT_REPOSITORY https://github.com/gabime/spdlog.git
+        GIT_TAG v1.17.0
+        GIT_SHALLOW TRUE
+)
+
+FetchContent_Declare(
+        SPIRV-Headers
+        GIT_REPOSITORY https://github.com/KhronosGroup/SPIRV-Headers.git
+        GIT_TAG vulkan-sdk-1.4.363.0
+        GIT_SHALLOW TRUE
+)
+
+FetchContent_Declare(
+        SPIRV-Tools
+        GIT_REPOSITORY https://github.com/KhronosGroup/SPIRV-Tools.git
+        GIT_TAG v2026.4
+        GIT_SHALLOW TRUE
+)
+
+FetchContent_Declare(
+        glslang
+        GIT_REPOSITORY https://github.com/KhronosGroup/glslang.git
+        GIT_TAG vulkan-sdk-1.4.363.0
+        GIT_SHALLOW TRUE
+)
+
+FetchContent_Declare(
+        shaderc
+        GIT_REPOSITORY https://github.com/google/shaderc.git
+        GIT_TAG v2026.4
+        GIT_SHALLOW TRUE
+)
+
+FetchContent_Declare(
+        assimp
+        GIT_REPOSITORY https://github.com/assimp/assimp.git
+        GIT_TAG v6.0.5
+        GIT_SHALLOW TRUE
+)
+
+FetchContent_Declare(
+        json
+        GIT_REPOSITORY https://github.com/nlohmann/json.git
+        GIT_TAG v3.12.0
+        GIT_SHALLOW TRUE
+)
+
+FetchContent_Declare(
+        vma
+        GIT_REPOSITORY https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
+        GIT_TAG v3.5.0
+        GIT_SHALLOW TRUE
+)
+
+FetchContent_Declare(
+        imgui
+        GIT_REPOSITORY https://github.com/ocornut/imgui
+        GIT_TAG v1.93.0-docking
+        GIT_SHALLOW TRUE
+)
+
+FetchContent_Declare(
+        CrashCatch
+        GIT_REPOSITORY https://github.com/keithpotz/CrashCatch
+        GIT_TAG v1.6.0
+        GIT_SHALLOW TRUE
+)
+
+FetchContent_Declare(
+        JoltPhysics
+        GIT_REPOSITORY https://github.com/jrouwe/JoltPhysics
+        GIT_TAG v5.7.0
+        GIT_SHALLOW TRUE
+)
 
 FetchContent_MakeAvailable(
         spdlog
@@ -104,6 +129,7 @@ FetchContent_MakeAvailable(
         vma
         imgui
         CrashCatch
+        JoltPhysics
 )
 
 add_library(imgui STATIC
@@ -144,16 +170,23 @@ endfunction()
 # Core
 
 add_library(engine_core STATIC
-
         src/core/utility/system.cpp
         src/core/utility/io.cpp
         src/core/utility/functionality.cpp
         src/core/utility/exceptions.cpp
+        src/core/physics/jolt_core.cpp
+        src/core/physics/jolt_core.h
+)
+
+FetchContent_GetProperties(
+        Jolt
+        SOURCE_DIR _jolt_source_dir
 )
 
 target_include_directories(engine_core PUBLIC
         ${PROJECT_SOURCE_DIR}/src
         ${PROJECT_SOURCE_DIR}/libs
+        ${CMAKE_BINARY_DIR}/_deps/joltphysics-src
 )
 
 target_link_libraries(engine_core PUBLIC
@@ -161,6 +194,7 @@ target_link_libraries(engine_core PUBLIC
         spdlog::spdlog
         nlohmann_json::nlohmann_json
         CrashCatch
+        Jolt
 )
 
 target_link_libraries(engine_core PRIVATE
@@ -304,7 +338,8 @@ target_precompile_headers(engine_client PRIVATE
 
 add_library(engine_server STATIC
         src/server/server_runtime.cpp
-        src/server/server_runtime.h)
+        src/server/server_runtime.h
+)
 
 target_link_libraries(engine_server INTERFACE
         engine_core
